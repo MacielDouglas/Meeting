@@ -14,6 +14,7 @@
   --muted-foreground: #71717a;
   --border: #e4e4e7;
   --input: #e4e4e7;
+  --ring: #0ea5e9;
   --radius: 1rem;
 }
 
@@ -30,6 +31,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

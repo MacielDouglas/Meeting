@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { OnlineStatus } from "@/features/offline/OnlineStatus";
 import { QueryProvider } from "@/features/offline/QueryProvider";
+import { BottomNav } from "@/shared/components/BottomNav";
 import { es } from "@/shared/i18n/es";
 import "./globals.css";
 
@@ -50,10 +51,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
         <QueryProvider>
-          <div className="app-shell flex flex-col gap-3">
+          <div className="app-shell flex flex-col gap-3 pb-20">
             <OnlineStatus />
             {children}
           </div>
+          <BottomNav />
         </QueryProvider>
       </body>
     </html>

@@ -1,0 +1,1 @@
+ALTER TABLE "persons" ADD COLUMN "usher" boolean DEFAULT false NOT NULL;

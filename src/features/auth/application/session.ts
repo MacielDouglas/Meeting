@@ -39,3 +39,9 @@ export async function requirePrivilegedUser(): Promise<AuthUser> {
   if (user.role !== "owner" && user.role !== "admin") throw new Error("FORBIDDEN");
   return user;
 }
+
+export async function requireOwnerUser(): Promise<AuthUser> {
+  const user = await requireAuthenticatedUser();
+  if (user.role !== "owner") throw new Error("FORBIDDEN");
+  return user;
+}
