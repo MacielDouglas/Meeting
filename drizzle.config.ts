@@ -4,6 +4,7 @@ export default defineConfig({
   schema: [
     "./src/features/auth/infrastructure/user-schema.ts",
     "./src/features/people/infrastructure/person-schema.ts",
+    "./src/features/settings/infrastructure/settings-schema.ts",
   ],
   out: "./drizzle",
   dialect: "postgresql",

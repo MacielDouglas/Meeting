@@ -9,6 +9,7 @@
     "lint": "biome check src && eslint",
     "lint:fix": "biome check --write src && eslint --fix",
     "format": "biome format --write src",
+    "test": "biome check .",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

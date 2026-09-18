@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaHouse, FaUserGroup } from "react-icons/fa6";
+import { FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -14,17 +14,25 @@ const ITEMS = [
     icon: FaUserGroup,
     match: (path: string) => path.startsWith("/personas"),
   },
+  {
+    href: "/configuracion",
+    label: es.configuracion,
+    icon: FaGear,
+    match: (path: string) => path.startsWith("/configuracion"),
+    ownerOnly: true,
+  },
 ] as const;
 
-export function BottomNav() {
+export function BottomNav({ showSettings }: { showSettings: boolean }) {
   const pathname = usePathname();
+  const visibleItems = ITEMS.filter((item) => !("ownerOnly" in item) || showSettings);
   return (
     <nav
       aria-label="Navegación principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background"
     >
       <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {ITEMS.map((item) => {
+        {visibleItems.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;
           return (

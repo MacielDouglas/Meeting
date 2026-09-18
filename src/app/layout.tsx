@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { getCurrentUser } from "@/features/auth/application/session";
 import { OnlineStatus } from "@/features/offline/OnlineStatus";
 import { QueryProvider } from "@/features/offline/QueryProvider";
 import { BottomNav } from "@/shared/components/BottomNav";
@@ -46,7 +47,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const user = await getCurrentUser();
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
@@ -55,7 +57,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <OnlineStatus />
             {children}
           </div>
-          <BottomNav />
+          <BottomNav showSettings={user?.role === "owner"} />
         </QueryProvider>
       </body>
     </html>
