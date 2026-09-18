@@ -57,6 +57,13 @@
       "when": 1789750578476,
       "tag": "0007_optimal_wendigo",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789800000000,
+      "tag": "0008_cold_wallop",
+      "breakpoints": true
     }
   ]
 }

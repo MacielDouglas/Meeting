@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { listCleaningConfig } from "@/features/cleaning/application/queries";
+import { CleaningDesignationSection } from "@/features/cleaning/presentation/CleaningDesignationSection";
 import {
   getContentCounts,
   listOutlines,
@@ -9,6 +11,11 @@ import {
 import { listWatchtowerIssues } from "@/features/meeting-content/application/watchtower-queries";
 import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
 import { ContentSection } from "@/features/meeting-content/presentation/ContentSection";
+import {
+  getMeetingSchedule,
+  listScheduleExceptions,
+  listSpecialEvents,
+} from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { Card, CardTitle } from "@/shared/components/ui/card";
 
@@ -33,7 +40,18 @@ export default async function ReunioesPage({
     params.tab === "designacoes" || params.tab === "conteudo" ? params.tab : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
 
-  const [schedule, songs, outlines, counts, issues, workbooks] = await Promise.all([
+  const [
+    schedule,
+    songs,
+    outlines,
+    counts,
+    issues,
+    workbooks,
+    cleaningConfig,
+    specialEventsList,
+    exceptionsList,
+    meetingScheduleData,
+  ] = await Promise.all([
     getWeeklySchedule(),
     tab === "conteudo" ? listSongs() : Promise.resolve([]),
     tab === "conteudo" ? listOutlines() : Promise.resolve([]),
@@ -49,6 +67,17 @@ export default async function ReunioesPage({
         }),
     tab === "conteudo" ? listWatchtowerIssues() : Promise.resolve([]),
     tab === "conteudo" ? listWorkbookIssues() : Promise.resolve([]),
+    tab === "designacoes" ? listCleaningConfig() : Promise.resolve([]),
+    tab === "designacoes" ? listSpecialEvents() : Promise.resolve([]),
+    tab === "designacoes" ? listScheduleExceptions() : Promise.resolve([]),
+    tab === "designacoes"
+      ? getMeetingSchedule()
+      : Promise.resolve({
+          midweekDay: 2 as const,
+          midweekTime: "19:30",
+          weekendDay: 0 as const,
+          weekendTime: "10:00",
+        }),
   ]);
 
   const meeting = params.reuniao === "fim-de-semana" ? schedule.weekend : schedule.midweek;
@@ -113,12 +142,12 @@ export default async function ReunioesPage({
       )}
 
       {tab === "designacoes" && (
-        <Card className="flex flex-col gap-1">
-          <CardTitle>Designações</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Em breve: designações da reunião entre semana e de fim de semana.
-          </p>
-        </Card>
+        <CleaningDesignationSection
+          cleaningConfig={cleaningConfig}
+          specialEvents={specialEventsList}
+          scheduleExceptions={exceptionsList}
+          meetingSchedule={meetingScheduleData}
+        />
       )}
 
       {tab === "conteudo" && (

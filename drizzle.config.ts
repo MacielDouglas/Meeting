@@ -6,6 +6,7 @@ export default defineConfig({
     "./src/features/people/infrastructure/person-schema.ts",
     "./src/features/settings/infrastructure/settings-schema.ts",
     "./src/features/cleaning/infrastructure/cleaning-schema.ts",
+    "./src/features/cleaning/infrastructure/cleaning-program-schema.ts",
     "./src/features/designations/infrastructure/designation-schema.ts",
     "./src/features/meeting-content/infrastructure/meeting-content-schema.ts",
   ],
