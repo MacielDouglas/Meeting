@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { FaTrashAlt } from "react-icons/fa";
 import {
   type AnyInspectResult,
   createManualItem,
@@ -16,11 +17,16 @@ import type {
   SongItem,
 } from "@/features/meeting-content/application/queries";
 import type { WatchtowerIssueItem } from "@/features/meeting-content/application/watchtower-queries";
+import type { WorkbookIssueItem } from "@/features/meeting-content/application/workbook-queries";
 import type { ContentLanguage } from "@/features/meeting-content/infrastructure/meeting-content-schema";
 import {
   WatchtowerImportModal,
   WatchtowerSection,
 } from "@/features/meeting-content/presentation/WatchtowerSection";
+import {
+  WorkbookImportModal,
+  WorkbookSection,
+} from "@/features/meeting-content/presentation/WorkbookSection";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -514,8 +520,9 @@ function EntryModal({
               <Button
                 className="border-transparent bg-red-500 text-white"
                 onClick={() => setConfirmingDelete(true)}
+                aria-label={`Apagar ${singular.toLowerCase()} ${item.number}`}
               >
-                Apagar
+                <FaTrashAlt aria-hidden size={16} />
               </Button>
             </>
           )}
@@ -608,12 +615,14 @@ export function ContentSection({
   initialSongs,
   initialOutlines,
   initialIssues,
+  initialWorkbooks,
   counts,
   canManage,
 }: {
   initialSongs: SongItem[];
   initialOutlines: OutlineItem[];
   initialIssues: WatchtowerIssueItem[];
+  initialWorkbooks: WorkbookIssueItem[];
   counts: ContentCounts;
   canManage: boolean;
 }) {
@@ -625,13 +634,14 @@ export function ContentSection({
     setSmart(result);
     if (result.kind === "songs") setSubTab("canticos");
     else if (result.kind === "outlines") setSubTab("esbocos");
+    else if (result.kind === "workbook") setSubTab("apostila");
     else setSubTab("sentinela");
   }
 
   return (
     <div className="flex flex-col gap-4">
       <SmartImportCard canManage={canManage} status={status} onInspected={handleInspected} />
-      {smart && smart.kind !== "watchtower" && (
+      {smart && (smart.kind === "songs" || smart.kind === "outlines") && (
         <ImportModal
           inspected={smart}
           onClose={() => setSmart(null)}
@@ -640,6 +650,13 @@ export function ContentSection({
       )}
       {smart && smart.kind === "watchtower" && (
         <WatchtowerImportModal
+          inspected={smart}
+          onClose={() => setSmart(null)}
+          onSaved={(message) => setStatus(message)}
+        />
+      )}
+      {smart && smart.kind === "workbook" && (
+        <WorkbookImportModal
           inspected={smart}
           onClose={() => setSmart(null)}
           onSaved={(message) => setStatus(message)}
@@ -696,12 +713,7 @@ export function ContentSection({
       )}
 
       {subTab === "apostila" && (
-        <Card className="flex flex-col gap-1">
-          <CardTitle>Apostila</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Em breve: apostila da reunião entre semana importada do .jwpub.
-          </p>
-        </Card>
+        <WorkbookSection initial={initialWorkbooks} canManage={canManage} />
       )}
     </div>
   );

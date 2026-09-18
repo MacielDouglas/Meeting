@@ -57,3 +57,18 @@ export const watchtowerArticles = pgTable("watchtower_articles", {
 
 export type WatchtowerIssueRow = typeof watchtowerIssues.$inferSelect;
 export type WatchtowerArticleRow = typeof watchtowerArticles.$inferSelect;
+
+// Apostila da reunião Vida e Ministério (ex: símbolo mwb26.07-S).
+// O conteúdo é o JSON completo da edição (semanas, reuniões, partes).
+export const meetingWorkbooks = pgTable("meeting_workbooks", {
+  id: text("id").primaryKey(),
+  symbol: text("symbol").notNull().unique(),
+  name: text("name").notNull(),
+  language: contentLanguageEnum("language").notNull().default("es"),
+  content: text("content").notNull(),
+  source: text("source"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type MeetingWorkbookRow = typeof meetingWorkbooks.$inferSelect;

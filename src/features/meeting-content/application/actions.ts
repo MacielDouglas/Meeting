@@ -13,10 +13,12 @@ import {
 } from "@/features/meeting-content/infrastructure/jwpub-parser";
 import type { ContentLanguage } from "@/features/meeting-content/infrastructure/meeting-content-schema";
 import {
+  meetingWorkbooks,
   songs,
   talkOutlines,
   watchtowerIssues,
 } from "@/features/meeting-content/infrastructure/meeting-content-schema";
+import type { WorkbookContentWeek } from "@/features/meeting-content/infrastructure/workbook-parser";
 import { getDb } from "@/shared/lib/db";
 import { plainText } from "@/shared/lib/validation";
 
@@ -147,10 +149,20 @@ export type AnyInspectResult =
       name: string;
       articles: ParsedWatchtowerArticle[];
       hadExisting: boolean;
+    }
+  | {
+      ok: true;
+      kind: "workbook";
+      language: ContentLanguage;
+      source: string;
+      symbol: string;
+      name: string;
+      weeks: WorkbookContentWeek[];
+      hadExisting: boolean;
     };
 
 // Inspeção inteligente: aceita qualquer .jwpub, identifica o tipo
-// (cânticos, esboços ou Sentinela) e devolve o conteúdo sem salvar.
+// (cânticos, esboços, Sentinela ou apostila) e devolve o conteúdo sem salvar.
 export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectResult> {
   try {
     await requireOwnerUser();
@@ -168,6 +180,22 @@ export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectRes
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const parsed = await inspectJwpubFile(buffer, file.name);
+    if (parsed.kind === "workbook") {
+      const existing = await getDb()
+        .select({ id: meetingWorkbooks.id })
+        .from(meetingWorkbooks)
+        .where(eq(meetingWorkbooks.symbol, parsed.symbol));
+      return {
+        ok: true,
+        kind: "workbook",
+        language: parsed.language,
+        source: file.name,
+        symbol: parsed.symbol,
+        name: parsed.name,
+        weeks: parsed.content.weeks,
+        hadExisting: existing.length > 0,
+      };
+    }
     if (parsed.kind === "watchtower") {
       const existing = await getDb()
         .select({ id: watchtowerIssues.id })

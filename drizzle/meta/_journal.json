@@ -50,6 +50,13 @@
       "when": 1789741983830,
       "tag": "0006_shallow_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789750578476,
+      "tag": "0007_optimal_wendigo",
+      "breakpoints": true
     }
   ]
 }

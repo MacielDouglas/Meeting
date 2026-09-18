@@ -11,9 +11,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import AdmZip from "adm-zip";
 import initSqlJs, { type Database } from "sql.js";
+import type { ParsedWorkbook } from "@/features/meeting-content/infrastructure/workbook-parser";
 
 export type JwpubLanguage = "es" | "pt" | "en";
-export type JwpubKind = "songs" | "outlines" | "watchtower";
+export type JwpubKind = "songs" | "outlines" | "watchtower" | "workbook";
 
 export interface ParsedItem {
   number: number;
@@ -91,10 +92,12 @@ function detectKind(symbol: string, filename: string): JwpubKind | null {
   if (normalized === "sjj" || normalized.startsWith("sjj")) return "songs";
   if (normalized === "s-34" || normalized === "s-034") return "outlines";
   if (/^w\d*$/.test(normalized)) return "watchtower";
+  if (/^mwb\d*$/.test(normalized)) return "workbook";
   const base = filename.toLowerCase();
   if (base.startsWith("sjj")) return "songs";
   if (base.startsWith("s-34") || base.startsWith("s-034")) return "outlines";
   if (base.startsWith("w_") || base.startsWith("w-")) return "watchtower";
+  if (base.startsWith("mwb_") || base.startsWith("mwb-")) return "workbook";
   return null;
 }
 
@@ -183,7 +186,7 @@ const MONTH_NAMES: Record<JwpubLanguage, string[]> = {
   ],
 };
 
-const MONTH_NAMES_TITLE: Record<JwpubLanguage, string[]> = {
+export const MONTH_NAMES_TITLE: Record<JwpubLanguage, string[]> = {
   es: [
     "enero",
     "febrero",
@@ -260,7 +263,10 @@ interface OpenedPublication {
   symbol: string;
 }
 
-async function openPublicationDb(buffer: Buffer, filename: string): Promise<OpenedPublication> {
+export async function openPublicationDb(
+  buffer: Buffer,
+  filename: string,
+): Promise<OpenedPublication> {
   const language = detectLanguageFromFilename(filename);
   if (!language) {
     throw new Error(
@@ -304,8 +310,8 @@ export async function parseJwpub(
   languageOverride?: JwpubLanguage,
 ): Promise<ParsedJwpub> {
   const result = await inspectJwpubFile(buffer, filename);
-  if (result.kind === "watchtower") {
-    throw new Error("Este é um arquivo de A Sentinela. Importe pela aba Sentinela.");
+  if (result.kind !== "songs" && result.kind !== "outlines") {
+    throw new Error("Este arquivo não é de cânticos nem de esboços. Use a aba correspondente.");
   }
   if (languageOverride && languageOverride !== result.language) {
     return { ...result, language: languageOverride };
@@ -313,7 +319,7 @@ export async function parseJwpub(
   return result;
 }
 
-function languageSuffix(language: JwpubLanguage): string {
+export function languageSuffix(language: JwpubLanguage): string {
   if (language === "pt") return "T";
   if (language === "en") return "E";
   return "S";
@@ -415,20 +421,27 @@ function readWatchtowerIssue(
 }
 
 // Inspeção unificada: abre o .jwpub uma vez, identifica o tipo
-// (cânticos, esboços ou Sentinela) e devolve o conteúdo sem salvar.
+// (cânticos, esboços, Sentinela ou apostila) e devolve o conteúdo sem salvar.
 export async function inspectJwpubFile(
   buffer: Buffer,
   filename: string,
-): Promise<ParsedJwpub | ParsedWatchtower> {
+): Promise<ParsedJwpub | ParsedWatchtower | ParsedWorkbook> {
   const { db, manifest, language, symbol } = await openPublicationDb(buffer, filename);
   try {
     const kind = detectKind(symbol, filename);
+    if (kind === "workbook") {
+      // A apostila usa leitor próprio (precisa do nome original no temp).
+      const { parseWorkbookJwpub } = await import(
+        "@/features/meeting-content/infrastructure/workbook-parser"
+      );
+      return parseWorkbookJwpub(buffer, filename);
+    }
     if (kind === "watchtower") {
       return { kind, language, ...readWatchtowerIssue(db, manifest, language, symbol, filename) };
     }
     if (!kind) {
       throw new Error(
-        `Tipo de arquivo não identificado (símbolo "${symbol}"). Suportados: cânticos (sjj), esboços (S-34) e Sentinela (w).`,
+        `Tipo de arquivo não identificado (símbolo "${symbol}"). Suportados: cânticos (sjj), esboços (S-34), Sentinela (w) e apostila (mwb).`,
       );
     }
     const items = kind === "songs" ? parseSongs(db) : parseOutlines(db);

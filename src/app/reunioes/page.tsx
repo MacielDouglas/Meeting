@@ -7,6 +7,7 @@ import {
   listSongs,
 } from "@/features/meeting-content/application/queries";
 import { listWatchtowerIssues } from "@/features/meeting-content/application/watchtower-queries";
+import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
 import { ContentSection } from "@/features/meeting-content/presentation/ContentSection";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { Card, CardTitle } from "@/shared/components/ui/card";
@@ -32,7 +33,7 @@ export default async function ReunioesPage({
     params.tab === "designacoes" || params.tab === "conteudo" ? params.tab : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
 
-  const [schedule, songs, outlines, counts, issues] = await Promise.all([
+  const [schedule, songs, outlines, counts, issues, workbooks] = await Promise.all([
     getWeeklySchedule(),
     tab === "conteudo" ? listSongs() : Promise.resolve([]),
     tab === "conteudo" ? listOutlines() : Promise.resolve([]),
@@ -47,6 +48,7 @@ export default async function ReunioesPage({
           outlinesEn: 0,
         }),
     tab === "conteudo" ? listWatchtowerIssues() : Promise.resolve([]),
+    tab === "conteudo" ? listWorkbookIssues() : Promise.resolve([]),
   ]);
 
   const meeting = params.reuniao === "fim-de-semana" ? schedule.weekend : schedule.midweek;
@@ -124,6 +126,7 @@ export default async function ReunioesPage({
           initialSongs={songs}
           initialOutlines={outlines}
           initialIssues={issues}
+          initialWorkbooks={workbooks}
           counts={counts}
           canManage={canManage}
         />
