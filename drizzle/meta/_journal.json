@@ -43,6 +43,13 @@
       "when": 1789735029576,
       "tag": "0005_amazing_agent_zero",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789741983830,
+      "tag": "0006_shallow_polaris",
+      "breakpoints": true
     }
   ]
 }

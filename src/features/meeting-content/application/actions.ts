@@ -7,12 +7,15 @@ import { z } from "zod";
 import { requireOwnerUser } from "@/features/auth/application/session";
 import {
   detectLanguageFromFilename,
+  inspectJwpubFile,
+  type ParsedWatchtowerArticle,
   parseJwpub,
 } from "@/features/meeting-content/infrastructure/jwpub-parser";
 import type { ContentLanguage } from "@/features/meeting-content/infrastructure/meeting-content-schema";
 import {
   songs,
   talkOutlines,
+  watchtowerIssues,
 } from "@/features/meeting-content/infrastructure/meeting-content-schema";
 import { getDb } from "@/shared/lib/db";
 import { plainText } from "@/shared/lib/validation";
@@ -121,6 +124,80 @@ async function countExisting(
     .from(talkOutlines)
     .where(eq(talkOutlines.language, language));
   return rows.length;
+}
+
+export type AnyInspectResult =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      kind: "songs" | "outlines";
+      language: ContentLanguage;
+      source: string;
+      total: number;
+      items: InspectedItem[];
+      existingCount: number;
+      hadExisting: boolean;
+    }
+  | {
+      ok: true;
+      kind: "watchtower";
+      language: ContentLanguage;
+      source: string;
+      symbol: string;
+      name: string;
+      articles: ParsedWatchtowerArticle[];
+      hadExisting: boolean;
+    };
+
+// Inspeção inteligente: aceita qualquer .jwpub, identifica o tipo
+// (cânticos, esboços ou Sentinela) e devolve o conteúdo sem salvar.
+export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectResult> {
+  try {
+    await requireOwnerUser();
+  } catch (error) {
+    if (isPrivilegedError(error)) return { ok: false, error: "Somente owner/admin pode enviar." };
+    return { ok: false, error: "Não autenticado." };
+  }
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { ok: false, error: "Selecione um arquivo .jwpub." };
+  if (!file.name.toLowerCase().endsWith(".jwpub")) {
+    return { ok: false, error: "O arquivo precisa ter extensão .jwpub." };
+  }
+  if (file.size > 200 * 1024 * 1024)
+    return { ok: false, error: "Arquivo muito grande (máx. 200 MB)." };
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const parsed = await inspectJwpubFile(buffer, file.name);
+    if (parsed.kind === "watchtower") {
+      const existing = await getDb()
+        .select({ id: watchtowerIssues.id })
+        .from(watchtowerIssues)
+        .where(eq(watchtowerIssues.symbol, parsed.symbol));
+      return {
+        ok: true,
+        kind: "watchtower",
+        language: parsed.language,
+        source: file.name,
+        symbol: parsed.symbol,
+        name: parsed.name,
+        articles: parsed.articles,
+        hadExisting: existing.length > 0,
+      };
+    }
+    const existing = await countExisting(parsed.kind, parsed.language);
+    return {
+      ok: true,
+      kind: parsed.kind,
+      language: parsed.language,
+      source: file.name,
+      total: parsed.items.length,
+      items: parsed.items,
+      existingCount: existing,
+      hadExisting: existing > 0,
+    };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : "Falha ao ler o arquivo." };
+  }
 }
 
 // Lê o arquivo .jwpub via FormData, identifica tipo (cânticos/esboços) e

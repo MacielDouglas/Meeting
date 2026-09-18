@@ -2,11 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
+  type AnyInspectResult,
   createManualItem,
   deleteAllByLanguage,
   deleteItem,
-  type InspectResult,
-  inspectJwpub,
+  inspectAnyJwpub,
   saveInspectedJwpub,
   updateManualItem,
 } from "@/features/meeting-content/application/actions";
@@ -15,7 +15,12 @@ import type {
   OutlineItem,
   SongItem,
 } from "@/features/meeting-content/application/queries";
+import type { WatchtowerIssueItem } from "@/features/meeting-content/application/watchtower-queries";
 import type { ContentLanguage } from "@/features/meeting-content/infrastructure/meeting-content-schema";
+import {
+  WatchtowerImportModal,
+  WatchtowerSection,
+} from "@/features/meeting-content/presentation/WatchtowerSection";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -53,12 +58,14 @@ function languageLabel(language: ContentLanguage): string {
   return "Inglês";
 }
 
+type SmartInspected = Extract<AnyInspectResult, { ok: true }>;
+
 function ImportModal({
   inspected,
   onClose,
   onSaved,
 }: {
-  inspected: InspectResult & { kind: "songs" | "outlines"; language: ContentLanguage };
+  inspected: Extract<SmartInspected, { kind: "songs" | "outlines" }>;
   onClose: () => void;
   onSaved: (message: string) => void;
 }) {
@@ -179,31 +186,32 @@ function ImportModal({
   );
 }
 
-function UploadCard({ canManage }: { canManage: boolean }) {
+function SmartImportCard({
+  canManage,
+  status,
+  onInspected,
+}: {
+  canManage: boolean;
+  status: string | null;
+  onInspected: (result: SmartInspected) => void;
+}) {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
-  const [inspected, setInspected] = useState<
-    (InspectResult & { kind: "songs" | "outlines"; language: ContentLanguage }) | null
-  >(null);
 
   async function handleFileSelected(file: File | undefined) {
     if (!file) return;
     setError(null);
-    setStatus(null);
     setReading(true);
     try {
       const formData = new FormData();
       formData.set("file", file);
-      const result = await inspectJwpub(formData);
-      if (!result.ok || !result.kind || !result.language) {
-        setError(result.error ?? "Falha ao ler o arquivo.");
+      const result = await inspectAnyJwpub(formData);
+      if (!result.ok) {
+        setError(result.error);
         return;
       }
-      setInspected(
-        result as InspectResult & { kind: "songs" | "outlines"; language: ContentLanguage },
-      );
+      onInspected(result);
     } finally {
       setReading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -216,7 +224,8 @@ function UploadCard({ canManage }: { canManage: boolean }) {
     <Card className="flex flex-col gap-3">
       <CardTitle>Conteúdo das reuniões</CardTitle>
       <p className="text-sm text-muted-foreground">
-        Importe cânticos ou esboços de um arquivo .jwpub do seu aparelho.
+        Envie qualquer arquivo .jwpub do seu aparelho: cânticos, esboços ou Sentinela. O app
+        identifica o tipo e abre a revisão na aba correta.
       </p>
       {error && <p className="text-sm text-red-500">{error}</p>}
       {status && <p className="text-sm text-emerald-500">{status}</p>}
@@ -233,13 +242,6 @@ function UploadCard({ canManage }: { canManage: boolean }) {
           {reading ? "Lendo arquivo…" : "Importar .jwpub"}
         </Button>
       </div>
-      {inspected && (
-        <ImportModal
-          inspected={inspected}
-          onClose={() => setInspected(null)}
-          onSaved={(message) => setStatus(message)}
-        />
-      )}
     </Card>
   );
 }
@@ -605,19 +607,44 @@ const SUBTABS: { value: ContentSubTab; label: string }[] = [
 export function ContentSection({
   initialSongs,
   initialOutlines,
+  initialIssues,
   counts,
   canManage,
 }: {
   initialSongs: SongItem[];
   initialOutlines: OutlineItem[];
+  initialIssues: WatchtowerIssueItem[];
   counts: ContentCounts;
   canManage: boolean;
 }) {
-  const [subTab, setSubTab] = useState<ContentSubTab>("canticos");
+  const [subTab, setSubTab] = useState<ContentSubTab>("sentinela");
+  const [status, setStatus] = useState<string | null>(null);
+  const [smart, setSmart] = useState<SmartInspected | null>(null);
+
+  function handleInspected(result: SmartInspected) {
+    setSmart(result);
+    if (result.kind === "songs") setSubTab("canticos");
+    else if (result.kind === "outlines") setSubTab("esbocos");
+    else setSubTab("sentinela");
+  }
 
   return (
     <div className="flex flex-col gap-4">
-      <UploadCard canManage={canManage} />
+      <SmartImportCard canManage={canManage} status={status} onInspected={handleInspected} />
+      {smart && smart.kind !== "watchtower" && (
+        <ImportModal
+          inspected={smart}
+          onClose={() => setSmart(null)}
+          onSaved={(message) => setStatus(message)}
+        />
+      )}
+      {smart && smart.kind === "watchtower" && (
+        <WatchtowerImportModal
+          inspected={smart}
+          onClose={() => setSmart(null)}
+          onSaved={(message) => setStatus(message)}
+        />
+      )}
 
       <nav className="flex gap-2" aria-label="Tipos de conteúdo">
         {SUBTABS.map((item) => (
@@ -665,12 +692,7 @@ export function ContentSection({
       )}
 
       {subTab === "sentinela" && (
-        <Card className="flex flex-col gap-1">
-          <CardTitle>Sentinela</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Em breve: artigos de estudo de A Sentinela importados do .jwpub.
-          </p>
-        </Card>
+        <WatchtowerSection initial={initialIssues} canManage={canManage} />
       )}
 
       {subTab === "apostila" && (
