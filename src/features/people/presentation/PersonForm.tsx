@@ -19,6 +19,7 @@ interface PersonFormProps {
   initial?: PersonFormValues;
   familyOptions: { id: string; label: string }[];
   userOptions: { id: string; label: string }[];
+  enabledDesignationFlags?: string[];
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -57,6 +58,7 @@ export function PersonForm({
   initial,
   familyOptions,
   userOptions,
+  enabledDesignationFlags = ["usher", "sound", "video", "microphone", "platform"],
 }: PersonFormProps) {
   const [values, setValues] = useState<PersonFormValues>(initial ?? DEFAULT_PERSON_FORM);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +66,7 @@ export function PersonForm({
   const isFemale = values.sex === "female";
   const showService = values.baptized;
   const showMeetings = values.elder || values.ministerialServant;
+  const can = (flag: string) => enabledDesignationFlags.includes(flag);
 
   function setField<K extends keyof PersonFormValues>(field: K, value: PersonFormValues[K]) {
     setValues((previous) => {
@@ -236,30 +239,38 @@ export function PersonForm({
             onToggle={toggle("baptized")}
             disabled={isFemale}
           />
-          <Toggle
-            label={es.sound}
-            checked={values.sound}
-            onToggle={toggle("sound")}
-            disabled={isFemale}
-          />
-          <Toggle
-            label={es.video}
-            checked={values.video}
-            onToggle={toggle("video")}
-            disabled={isFemale}
-          />
-          <Toggle
-            label={es.platform}
-            checked={values.platform}
-            onToggle={toggle("platform")}
-            disabled={isFemale}
-          />
-          <Toggle
-            label={es.microphone}
-            checked={values.microphone}
-            onToggle={toggle("microphone")}
-            disabled={isFemale}
-          />
+          {can("sound") && (
+            <Toggle
+              label={es.sound}
+              checked={values.sound}
+              onToggle={toggle("sound")}
+              disabled={isFemale}
+            />
+          )}
+          {can("video") && (
+            <Toggle
+              label={es.video}
+              checked={values.video}
+              onToggle={toggle("video")}
+              disabled={isFemale}
+            />
+          )}
+          {can("platform") && (
+            <Toggle
+              label={es.platform}
+              checked={values.platform}
+              onToggle={toggle("platform")}
+              disabled={isFemale}
+            />
+          )}
+          {can("microphone") && (
+            <Toggle
+              label={es.microphone}
+              checked={values.microphone}
+              onToggle={toggle("microphone")}
+              disabled={isFemale}
+            />
+          )}
         </Section>
       )}
 
@@ -283,12 +294,14 @@ export function PersonForm({
             onToggle={toggle("watchtowerReader")}
             disabled={isFemale}
           />
-          <Toggle
-            label={es.usher}
-            checked={values.usher}
-            onToggle={toggle("usher")}
-            disabled={isFemale}
-          />
+          {can("usher") && (
+            <Toggle
+              label={es.usher}
+              checked={values.usher}
+              onToggle={toggle("usher")}
+              disabled={isFemale}
+            />
+          )}
           <Toggle
             label={es.ministerialServant}
             checked={values.ministerialServant}

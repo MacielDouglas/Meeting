@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { FaArrowLeft, FaCheck } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { listEnabledDesignationFlags } from "@/features/cleaning/application/queries";
 import type { PersonFormValues } from "@/features/people/application/person-validation";
 import {
   getPerson,
@@ -26,9 +27,10 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
   const person = await getPerson(id);
   if (!person) notFound();
 
-  const [familyOptions, userOptions] = await Promise.all([
+  const [familyOptions, userOptions, enabledFlags] = await Promise.all([
     listPersonOptions(person.id),
     listUserOptions(person.id),
+    listEnabledDesignationFlags(),
   ]);
 
   const initial: PersonFormValues = {
@@ -90,6 +92,7 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
         initial={initial}
         familyOptions={familyOptions}
         userOptions={userOptions}
+        enabledDesignationFlags={enabledFlags}
       />
     </main>
   );

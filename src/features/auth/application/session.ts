@@ -6,26 +6,31 @@ import { users } from "@/features/auth/infrastructure/user-schema";
 import { getDb } from "@/shared/lib/db";
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user) return null;
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return null;
 
-  const rows = await getDb()
-    .select({
-      id: users.id,
-      email: users.email,
-      name: users.name,
-      image: users.image,
-      role: users.role,
-    })
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
+    const rows = await getDb()
+      .select({
+        id: users.id,
+        email: users.email,
+        name: users.name,
+        image: users.image,
+        role: users.role,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
 
-  const row = rows[0];
-  if (!row) return null;
+    const row = rows[0];
+    if (!row) return null;
 
-  const role: UserRole = parseUserRole(row.role);
-  return { id: row.id, email: row.email, name: row.name, image: row.image, role };
+    const role: UserRole = parseUserRole(row.role);
+    return { id: row.id, email: row.email, name: row.name, image: row.image, role };
+  } catch {
+    // Banco inacessível ou sessão inválida: trata como deslogado em vez de quebrar a página.
+    return null;
+  }
 }
 
 export async function requireAuthenticatedUser(): Promise<AuthUser> {

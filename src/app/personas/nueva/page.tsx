@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { FaArrowLeft, FaCheck } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { listEnabledDesignationFlags } from "@/features/cleaning/application/queries";
 import { listPersonOptions, listUserOptions } from "@/features/people/application/queries";
 import { PersonForm } from "@/features/people/presentation/PersonForm";
 import { es } from "@/shared/i18n/es";
@@ -11,7 +12,11 @@ export default async function NewPersonPage() {
   if (!user) redirect("/sign-in");
   if (user.role !== "owner" && user.role !== "admin") redirect("/personas");
 
-  const [familyOptions, userOptions] = await Promise.all([listPersonOptions(), listUserOptions()]);
+  const [familyOptions, userOptions, enabledFlags] = await Promise.all([
+    listPersonOptions(),
+    listUserOptions(),
+    listEnabledDesignationFlags(),
+  ]);
 
   return (
     <main className="flex flex-col gap-4">
@@ -24,7 +29,12 @@ export default async function NewPersonPage() {
           <FaCheck aria-hidden size={20} />
         </button>
       </header>
-      <PersonForm mode="create" familyOptions={familyOptions} userOptions={userOptions} />
+      <PersonForm
+        mode="create"
+        familyOptions={familyOptions}
+        userOptions={userOptions}
+        enabledDesignationFlags={enabledFlags}
+      />
     </main>
   );
 }
