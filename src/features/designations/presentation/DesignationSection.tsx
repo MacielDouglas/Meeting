@@ -44,7 +44,7 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
           className="h-10 flex-1 rounded-lg bg-background px-3 text-sm outline-none"
         />
         <Button variant="outline" disabled={pending} onClick={() => void handleSave()}>
-          Salvar vagas
+          Salvar
         </Button>
       </div>
     </div>

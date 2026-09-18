@@ -16,6 +16,15 @@ import type {
   SongItem,
 } from "@/features/meeting-content/application/queries";
 import type { ContentLanguage } from "@/features/meeting-content/infrastructure/meeting-content-schema";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
 
@@ -249,6 +258,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
   const [theme, setTheme] = useState("");
   const [formLanguage, setFormLanguage] = useState<ContentLanguage>("es");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
@@ -289,6 +299,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
   }
 
   const title = kind === "songs" ? "Cânticos" : "Esboços de discursos públicos";
+  const selected = items.find((item) => item.id === selectedId) ?? null;
 
   return (
     <Card className="flex flex-col gap-3">
@@ -321,49 +332,46 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
 
       <ul className="flex max-h-96 flex-col gap-1 overflow-y-auto">
         {filtered.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-sm"
-          >
-            <span className="w-12 shrink-0 font-semibold">{item.number}</span>
-            {editingId === item.id ? (
-              <EditRow
-                item={item}
-                onCancel={() => setEditingId(null)}
-                onSave={(numberValue, themeValue) =>
-                  void handleUpdate({ ...item, number: numberValue, theme: themeValue })
-                }
-              />
-            ) : (
-              <>
-                <span className="flex-1">{item.theme}</span>
-                <LanguageBadge language={item.language} />
-                {canManage && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setEditingId(item.id)}
-                      className="text-xs font-medium text-sky-500"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void deleteItem({ kind, id: item.id })}
-                      className="text-xs font-medium text-red-500"
-                    >
-                      Apagar
-                    </button>
-                  </>
-                )}
-              </>
-            )}
+          <li key={item.id}>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedId(item.id);
+                setEditingId(null);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg bg-secondary px-3 py-2 text-left text-sm"
+            >
+              <span className="w-12 shrink-0 font-semibold">{item.number}</span>
+              <span className="flex-1">{item.theme}</span>
+              <LanguageBadge language={item.language} />
+            </button>
           </li>
         ))}
         {filtered.length === 0 && (
           <li className="text-sm text-muted-foreground">Nenhum registro encontrado.</li>
         )}
       </ul>
+      {selected && (
+        <EntryModal
+          kind={kind}
+          item={selected}
+          canManage={canManage}
+          editing={editingId === selected.id}
+          onStartEdit={() => setEditingId(selected.id)}
+          onCancelEdit={() => setEditingId(null)}
+          onSaveEdit={(numberValue, themeValue) =>
+            void handleUpdate({ ...selected, number: numberValue, theme: themeValue })
+          }
+          onDeleted={() => {
+            setSelectedId(null);
+            setEditingId(null);
+          }}
+          onClose={() => {
+            setSelectedId(null);
+            setEditingId(null);
+          }}
+        />
+      )}
 
       {canManage &&
         (showForm ? (
@@ -440,6 +448,96 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
   );
 }
 
+function EntryModal({
+  kind,
+  item,
+  canManage,
+  editing,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDeleted,
+  onClose,
+}: {
+  kind: "songs" | "outlines";
+  item: SongItem | OutlineItem;
+  canManage: boolean;
+  editing: boolean;
+  onStartEdit: () => void;
+  onCancelEdit: () => void;
+  onSaveEdit: (number: number, theme: string) => void;
+  onDeleted: () => void;
+  onClose: () => void;
+}) {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const singular = kind === "songs" ? "Cântico" : "Esboço";
+
+  async function handleDelete() {
+    const result = await deleteItem({ kind, id: item.id });
+    if (result.ok) onDeleted();
+  }
+
+  return (
+    <AlertDialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {singular} {item.number}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {item.language === "es" ? "Espanhol" : item.language === "pt" ? "Português" : "Inglês"}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        {editing ? (
+          <EditRow item={item} onCancel={onCancelEdit} onSave={onSaveEdit} />
+        ) : confirmingDelete ? (
+          <p className="text-sm">
+            Apagar {singular.toLowerCase()} {item.number} (“{item.theme}”)? Esta ação não pode ser
+            desfeita.
+          </p>
+        ) : (
+          <p className="text-base">{item.theme}</p>
+        )}
+        <AlertDialogFooter className="flex-col sm:flex-row">
+          {canManage && !editing && !confirmingDelete && (
+            <>
+              <Button variant="outline" onClick={onStartEdit}>
+                Editar
+              </Button>
+              <Button
+                className="border-transparent bg-red-500 text-white"
+                onClick={() => setConfirmingDelete(true)}
+              >
+                Apagar
+              </Button>
+            </>
+          )}
+          {confirmingDelete && (
+            <Button
+              className="border-transparent bg-red-500 text-white"
+              onClick={() => void handleDelete()}
+            >
+              Confirmar exclusão
+            </Button>
+          )}
+          {confirmingDelete ? (
+            <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
+              Voltar
+            </Button>
+          ) : (
+            !editing && <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          )}
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 function EditRow({
   item,
   onCancel,
@@ -453,34 +551,44 @@ function EditRow({
   const [theme, setTheme] = useState(item.theme);
   return (
     <form
-      className="flex flex-1 items-center gap-2"
+      className="flex flex-col gap-2"
       onSubmit={(event) => {
         event.preventDefault();
         onSave(Number(number), theme.trim());
       }}
     >
-      <input
-        type="number"
-        min={1}
-        max={1000}
-        required
-        value={number}
-        onChange={(event) => setNumber(event.target.value)}
-        className="h-8 w-16 rounded bg-background px-2 text-sm outline-none"
-      />
-      <input
-        value={theme}
-        onChange={(event) => setTheme(event.target.value)}
-        required
-        maxLength={200}
-        className="h-8 flex-1 rounded bg-background px-2 text-sm outline-none"
-      />
-      <button type="submit" className="text-xs font-medium text-emerald-500">
-        Salvar
-      </button>
-      <button type="button" onClick={onCancel} className="text-xs text-muted-foreground">
-        Cancelar
-      </button>
+      <div className="flex flex-col gap-2">
+        <label className="flex w-1/4 flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">Número</span>
+          <input
+            type="number"
+            min={1}
+            max={1000}
+            required
+            value={number}
+            onChange={(event) => setNumber(event.target.value)}
+            className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">Tema</span>
+          <input
+            value={theme}
+            onChange={(event) => setTheme(event.target.value)}
+            required
+            maxLength={200}
+            className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+          />
+        </label>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button type="submit" size="sm">
+          Salvar
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+      </div>
     </form>
   );
 }
