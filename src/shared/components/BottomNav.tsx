@@ -2,12 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
+import { FaBookOpen, FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
 const ITEMS = [
   { href: "/", label: es.home, icon: FaHouse, match: (path: string) => path === "/" },
+  {
+    href: "/reunioes",
+    label: "Reuniões",
+    icon: FaBookOpen,
+    match: (path: string) => path.startsWith("/reunioes"),
+  },
   {
     href: "/personas",
     label: es.people,

@@ -36,6 +36,13 @@
       "when": 1789732175670,
       "tag": "0004_thankful_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789735029576,
+      "tag": "0005_amazing_agent_zero",
+      "breakpoints": true
     }
   ]
 }

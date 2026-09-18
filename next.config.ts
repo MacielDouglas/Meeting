@@ -13,6 +13,12 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  // .jwpub tem vários MB (a action valida o máximo de 200 MB).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "200MB",
+    },
+  },
 };
 
 // Serwist exige webpack, que só usamos no build de produção (`next build --webpack`).
