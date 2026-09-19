@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { updateCleaningAssignment } from "@/features/cleaning/application/cleaning-program-actions";
 import {
   type EligiblePerson,
-  getPersonCleaningHistory,
+  getManyPersonCleaningHistories,
   listEligiblePersons,
   type PersonCleaningHistory,
 } from "@/features/cleaning/application/cleaning-program-queries";
@@ -58,13 +58,11 @@ export function PersonSelectModal({
       const eligible = await listEligiblePersons(requiredSex);
       if (cancelled) return;
 
-      const historyMap = new Map<string, PersonCleaningHistory[]>();
-      await Promise.all(
-        eligible.map(async (p) => {
-          const history = await getPersonCleaningHistory(p.id, 10);
-          if (!cancelled) historyMap.set(p.id, history);
-        }),
+      const historyMap = await getManyPersonCleaningHistories(
+        eligible.map((p) => p.id),
+        10,
       );
+      if (cancelled) return;
 
       if (!cancelled) {
         // Ordena pelos menos recentes primeiro (espelha AssignmentHub): sem histórico,

@@ -10,6 +10,7 @@
     "lint:fix": "biome check --write src && eslint --fix",
     "format": "biome format --write src",
     "test": "biome check .",
+    "test:unit": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -62,6 +63,7 @@
     "lint-staged": "^17.5.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

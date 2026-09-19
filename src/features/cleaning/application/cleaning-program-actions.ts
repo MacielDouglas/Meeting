@@ -11,6 +11,12 @@ import {
   validateWeeklyConstraint,
 } from "@/features/cleaning/domain/assign-cleaning";
 import {
+  CLEANING_HISTORY_DATES_PER_PERSON,
+  CLEANING_HISTORY_DAYS,
+  CLEANING_HISTORY_ROW_LIMIT,
+  CLEANING_MAX_RANGE_DAYS,
+} from "@/features/cleaning/domain/cleaning-constants";
+import {
   cleaningAssignments,
   cleaningPrograms,
 } from "@/features/cleaning/infrastructure/cleaning-program-schema";
@@ -25,6 +31,13 @@ import { getDb } from "@/shared/lib/db";
 
 const idSchema = z.string().trim().min(1).max(64);
 
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (use AAAA-MM-DD).");
+
+const createProgramSchema = z.object({
+  typeKey: z.enum(["per_meeting", "weekly", "general"]),
+  selectedDates: z.array(isoDateSchema).min(1, "Selecione ao menos um dia.").max(400),
+});
+
 interface CreateProgramResult {
   ok: boolean;
   programId?: string;
@@ -37,28 +50,42 @@ export async function createCleaningProgram(
   typeKey: string,
   selectedDates: string[],
 ): Promise<CreateProgramResult> {
-  const user = await requireOwnerUser();
-  if (selectedDates.length === 0) {
-    return { ok: false, error: "Selecione ao menos um dia." };
+  const parsed = createProgramSchema.safeParse({ typeKey, selectedDates });
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
+  const validTypeKey = parsed.data.typeKey;
+  const validDates = parsed.data.selectedDates;
 
-  if (typeKey === "weekly") {
-    const validation = validateWeeklyConstraint(selectedDates);
+  const user = await requireOwnerUser();
+
+  if (validTypeKey === "weekly") {
+    const validation = validateWeeklyConstraint(validDates);
     if (!validation.valid) {
       return { ok: false, error: validation.error };
     }
   }
 
-  const sortedDates = [...selectedDates].sort();
+  const sortedDates = [...validDates].sort();
   const startDate = sortedDates[0];
   const endDate = sortedDates[sortedDates.length - 1];
+  const rangeDays = Math.round(
+    (new Date(`${endDate}T00:00:00Z`).getTime() - new Date(`${startDate}T00:00:00Z`).getTime()) /
+      86400000,
+  );
+  if (rangeDays > CLEANING_MAX_RANGE_DAYS) {
+    return {
+      ok: false,
+      error: `Período máximo de ${CLEANING_MAX_RANGE_DAYS} dias por programa.`,
+    };
+  }
 
   const db = getDb();
 
   const [typeRow] = await db
     .select()
     .from(cleaningTypes)
-    .where(eq(cleaningTypes.key, typeKey as "per_meeting" | "weekly" | "general"))
+    .where(eq(cleaningTypes.key, validTypeKey))
     .limit(1);
 
   if (!typeRow?.enabled) {
@@ -68,7 +95,7 @@ export async function createCleaningProgram(
   const sectors = await db
     .select()
     .from(cleaningSectors)
-    .where(eq(cleaningSectors.cleaningTypeKey, typeKey as "per_meeting" | "weekly" | "general"));
+    .where(eq(cleaningSectors.cleaningTypeKey, validTypeKey));
 
   const enabledSectors = sectors.filter((s) => s.enabled);
 
@@ -79,12 +106,14 @@ export async function createCleaningProgram(
   const allPersons = await db.select().from(persons).where(eq(persons.cleaning, true));
 
   // Anti-overlap (espelha AssignmentHub): mesmo tipo não pode sobrepor período (exceto arquivados).
+  // NOTA: sem transação no driver neon-http; dois owners simultâneos têm janela
+  // de corrida teórica — risco baixo e aceito (a checagem se repete abaixo antes de gravar).
   const overlapping = await db
     .select({ id: cleaningPrograms.id })
     .from(cleaningPrograms)
     .where(
       and(
-        eq(cleaningPrograms.typeKey, typeKey as "per_meeting" | "weekly" | "general"),
+        eq(cleaningPrograms.typeKey, validTypeKey),
         lte(cleaningPrograms.startDate, endDate),
         gte(cleaningPrograms.endDate, startDate),
         ne(cleaningPrograms.status, "archived"),
@@ -99,11 +128,12 @@ export async function createCleaningProgram(
   const events = await db.select().from(specialEvents);
   const exceptions = await db.select().from(scheduleExceptions);
 
-  // Fairness global 90 dias (espelha AssignmentHub): conta designações anteriores.
+  // Fairness global (espelha AssignmentHub): conta designações anteriores.
   // Sem limite superior: drafts futuros (ainda não realizados) também contam, e a
   // geração é sequencial — cada dia designado atualiza os contadores dos próximos.
+  // Lê LIMITE+1 linhas para detectar truncamento e avisar em vez de silencioso.
   const sinceDate = new Date();
-  sinceDate.setDate(sinceDate.getDate() - 90);
+  sinceDate.setDate(sinceDate.getDate() - CLEANING_HISTORY_DAYS);
   const sinceStr = sinceDate.toISOString().slice(0, 10);
   const recentRows = await db
     .select({
@@ -113,12 +143,16 @@ export async function createCleaningProgram(
     })
     .from(cleaningAssignments)
     .where(gte(cleaningAssignments.assignmentDate, sinceStr))
-    .limit(5000);
+    .limit(CLEANING_HISTORY_ROW_LIMIT + 1);
+  const historyTruncated = recentRows.length > CLEANING_HISTORY_ROW_LIMIT;
+  const historyRows = historyTruncated
+    ? recentRows.slice(0, CLEANING_HISTORY_ROW_LIMIT)
+    : recentRows;
   const totalByPerson: Record<string, number> = {};
   const sectorByPerson: Record<string, Record<string, number>> = {};
   const lastDateByPerson: Record<string, string> = {};
   const datesByPerson: Record<string, string[]> = {};
-  for (const row of recentRows) {
+  for (const row of historyRows) {
     if (!row.personId) continue;
     totalByPerson[row.personId] = (totalByPerson[row.personId] ?? 0) + 1;
     if (!sectorByPerson[row.personId]) sectorByPerson[row.personId] = {};
@@ -128,12 +162,12 @@ export async function createCleaningProgram(
       lastDateByPerson[row.personId] = row.assignmentDate;
     }
     if (!datesByPerson[row.personId]) datesByPerson[row.personId] = [];
-    if (datesByPerson[row.personId].length < 200)
+    if (datesByPerson[row.personId].length < CLEANING_HISTORY_DATES_PER_PERSON)
       datesByPerson[row.personId].push(row.assignmentDate);
   }
 
   const input: AssignmentInput = {
-    typeKey: typeKey as "per_meeting" | "weekly" | "general",
+    typeKey: validTypeKey,
     startDate,
     endDate,
     sectors: enabledSectors.map((s) => ({
@@ -160,35 +194,70 @@ export async function createCleaningProgram(
     history: { totalByPerson, sectorByPerson, lastDateByPerson, datesByPerson },
   };
 
-  const { assignments, messages } = generateCleaningAssignments(input);
+  const { assignments, generatedMessages } = (() => {
+    const { assignments, messages } = generateCleaningAssignments(input);
+    if (historyTruncated) {
+      messages.unshift({
+        date: startDate,
+        message: `Histórico parcial: mais de ${CLEANING_HISTORY_ROW_LIMIT} designações em ${CLEANING_HISTORY_DAYS} dias; o rodízio pode estar aproximado.`,
+      });
+    }
+    return { assignments, generatedMessages: messages };
+  })();
 
-  const filteredAssignments = assignments.filter((a) => selectedDates.includes(a.assignmentDate));
+  const filteredAssignments = assignments.filter((a) => validDates.includes(a.assignmentDate));
 
   const programId = randomUUID();
 
-  await db.insert(cleaningPrograms).values({
-    id: programId,
-    typeKey: typeKey as "per_meeting" | "weekly" | "general",
-    startDate,
-    endDate,
-    status: "draft",
-    createdBy: user.id,
-  });
+  // Sem transação no driver neon-http: grava programa + designações e, em caso de
+  // falha no segundo passo, remove o programa órfão (deleção compensatória).
+  try {
+    // Re-checa overlap imediatamente antes de gravar (reduz a janela de corrida).
+    const lateOverlap = await db
+      .select({ id: cleaningPrograms.id })
+      .from(cleaningPrograms)
+      .where(
+        and(
+          eq(cleaningPrograms.typeKey, validTypeKey),
+          lte(cleaningPrograms.startDate, endDate),
+          gte(cleaningPrograms.endDate, startDate),
+          ne(cleaningPrograms.status, "archived"),
+        ),
+      )
+      .limit(1);
+    if (lateOverlap[0]) {
+      return { ok: false, error: "Já existe um programa deste tipo neste período." };
+    }
 
-  if (filteredAssignments.length > 0) {
-    await db.insert(cleaningAssignments).values(
-      filteredAssignments.map((a) => ({
-        id: randomUUID(),
-        programId,
-        assignmentDate: a.assignmentDate,
-        sectorKey: a.sectorKey,
-        sectorName: a.sectorName,
-        personId: a.personId,
-        personName: a.personName,
-        isFamily: a.isFamily,
-        sortOrder: a.sortOrder,
-      })),
-    );
+    await db.insert(cleaningPrograms).values({
+      id: programId,
+      typeKey: validTypeKey,
+      startDate,
+      endDate,
+      status: "draft",
+      createdBy: user.id,
+    });
+
+    if (filteredAssignments.length > 0) {
+      await db.insert(cleaningAssignments).values(
+        filteredAssignments.map((a) => ({
+          id: randomUUID(),
+          programId,
+          assignmentDate: a.assignmentDate,
+          sectorKey: a.sectorKey,
+          sectorName: a.sectorName,
+          personId: a.personId,
+          personName: a.personName,
+          isFamily: a.isFamily,
+          sortOrder: a.sortOrder,
+        })),
+      );
+    }
+  } catch (error) {
+    console.error("[cleaning] falha ao criar programa, revertendo", { programId, error });
+    await db.delete(cleaningAssignments).where(eq(cleaningAssignments.programId, programId));
+    await db.delete(cleaningPrograms).where(eq(cleaningPrograms.id, programId));
+    return { ok: false, error: "Não foi possível salvar o programa. Tente novamente." };
   }
 
   revalidatePath("/reunioes");
@@ -196,7 +265,7 @@ export async function createCleaningProgram(
     ok: true,
     programId,
     assignmentCount: filteredAssignments.length,
-    messages,
+    messages: generatedMessages,
   };
 }
 
@@ -212,72 +281,79 @@ export async function updateCleaningAssignment(
   await requireOwnerUser();
   const validatedId = idSchema.safeParse(assignmentId);
   if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  const validatedPerson = idSchema.safeParse(personId);
+  if (!validatedPerson.success) return { ok: false, error: "Pessoa inválida." };
 
   const db = getDb();
 
-  const [existing] = await db
-    .select()
-    .from(cleaningAssignments)
-    .where(eq(cleaningAssignments.id, assignmentId))
-    .limit(1);
-
-  if (!existing) return { ok: false, error: "Designação não encontrada." };
-
-  const [person] = await db.select().from(persons).where(eq(persons.id, personId)).limit(1);
-
-  if (!person) return { ok: false, error: "Pessoa não encontrada." };
-  if (!person.cleaning) return { ok: false, error: "Pessoa não está habilitada para limpeza." };
-
-  // Valida sexo + jovem contra a regra do setor (troca manual é estrita, sem fallback).
-  const [program] = await db
-    .select()
-    .from(cleaningPrograms)
-    .where(eq(cleaningPrograms.id, existing.programId))
-    .limit(1);
-  if (program) {
-    const typeSectors = await db
+  try {
+    const [existing] = await db
       .select()
-      .from(cleaningSectors)
-      .where(eq(cleaningSectors.cleaningTypeKey, program.typeKey));
-    const sectorRule = typeSectors.find(
-      (s) => (s.key ?? s.id) === existing.sectorKey || s.id === existing.sectorKey,
-    );
-    if (sectorRule) {
-      if (sectorRule.requiredSex === "male" && person.sex !== "male") {
-        return { ok: false, error: "Este setor exige irmão (masculino)." };
-      }
-      if (sectorRule.requiredSex === "female" && person.sex !== "female") {
-        return { ok: false, error: "Este setor exige irmã (feminino)." };
-      }
-      if (!(sectorRule.allowYoung ?? true) && (person.young ?? false)) {
-        return { ok: false, error: "Este setor exige adulto (jovem não permitido)." };
+      .from(cleaningAssignments)
+      .where(eq(cleaningAssignments.id, assignmentId))
+      .limit(1);
+
+    if (!existing) return { ok: false, error: "Designação não encontrada." };
+
+    const [person] = await db.select().from(persons).where(eq(persons.id, personId)).limit(1);
+
+    if (!person) return { ok: false, error: "Pessoa não encontrada." };
+    if (!person.cleaning) return { ok: false, error: "Pessoa não está habilitada para limpeza." };
+
+    // Valida sexo + jovem contra a regra do setor (troca manual é estrita, sem fallback).
+    const [program] = await db
+      .select()
+      .from(cleaningPrograms)
+      .where(eq(cleaningPrograms.id, existing.programId))
+      .limit(1);
+    if (program) {
+      const typeSectors = await db
+        .select()
+        .from(cleaningSectors)
+        .where(eq(cleaningSectors.cleaningTypeKey, program.typeKey));
+      const sectorRule = typeSectors.find(
+        (s) => (s.key ?? s.id) === existing.sectorKey || s.id === existing.sectorKey,
+      );
+      if (sectorRule) {
+        if (sectorRule.requiredSex === "male" && person.sex !== "male") {
+          return { ok: false, error: "Este setor exige irmão (masculino)." };
+        }
+        if (sectorRule.requiredSex === "female" && person.sex !== "female") {
+          return { ok: false, error: "Este setor exige irmã (feminino)." };
+        }
+        if (!(sectorRule.allowYoung ?? true) && (person.young ?? false)) {
+          return { ok: false, error: "Este setor exige adulto (jovem não permitido)." };
+        }
       }
     }
+
+    const sameDayOtherSector = await db
+      .select()
+      .from(cleaningAssignments)
+      .where(eq(cleaningAssignments.assignmentDate, existing.assignmentDate));
+
+    const conflict = sameDayOtherSector.find(
+      (a) => a.personId === personId && a.sectorKey !== existing.sectorKey && a.id !== assignmentId,
+    );
+    if (conflict) {
+      return {
+        ok: false,
+        error: `${person.firstName} ${person.lastName} já está designado(a) para o setor "${conflict.sectorName}" neste dia.`,
+      };
+    }
+
+    await db
+      .update(cleaningAssignments)
+      .set({
+        personId: person.id,
+        personName: `${person.firstName} ${person.lastName}`,
+        isFamily: false,
+      })
+      .where(eq(cleaningAssignments.id, assignmentId));
+  } catch (error) {
+    console.error("[cleaning] falha ao trocar designação", { assignmentId, personId, error });
+    return { ok: false, error: "Não foi possível atualizar. Tente novamente." };
   }
-
-  const sameDayOtherSector = await db
-    .select()
-    .from(cleaningAssignments)
-    .where(eq(cleaningAssignments.assignmentDate, existing.assignmentDate));
-
-  const conflict = sameDayOtherSector.find(
-    (a) => a.personId === personId && a.sectorKey !== existing.sectorKey && a.id !== assignmentId,
-  );
-  if (conflict) {
-    return {
-      ok: false,
-      error: `${person.firstName} ${person.lastName} já está designado(a) para o setor "${conflict.sectorName}" neste dia.`,
-    };
-  }
-
-  await db
-    .update(cleaningAssignments)
-    .set({
-      personId: person.id,
-      personName: `${person.firstName} ${person.lastName}`,
-      isFamily: false,
-    })
-    .where(eq(cleaningAssignments.id, assignmentId));
 
   revalidatePath("/reunioes");
   return { ok: true };

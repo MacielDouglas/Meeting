@@ -71,6 +71,13 @@
       "when": 1789900000000,
       "tag": "0009_young_cleaning_rule",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789900000001,
+      "tag": "0010_cleaning_indexes",
+      "breakpoints": true
     }
   ]
 }

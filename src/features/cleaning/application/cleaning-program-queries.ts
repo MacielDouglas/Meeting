@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
 import {
   cleaningAssignments,
@@ -114,19 +114,47 @@ export async function getPersonCleaningHistory(
   personId: string,
   limit = 10,
 ): Promise<PersonCleaningHistory[]> {
+  const map = await getManyPersonCleaningHistories([personId], limit);
+  return map.get(personId) ?? [];
+}
+
+/**
+ * Histórico de várias pessoas em 1 query (evita N+1 no modal de troca).
+ * Retorna no máximo `limit` designações por pessoa, das mais recentes.
+ */
+export async function getManyPersonCleaningHistories(
+  personIds: string[],
+  limit = 10,
+): Promise<Map<string, PersonCleaningHistory[]>> {
   await requireAuthenticatedUser();
+  const result = new Map<string, PersonCleaningHistory[]>();
+  if (personIds.length === 0) return result;
   const db = getDb();
+  // Busca folgada e fatia por pessoa no JS (neon-http não suporta lateral join).
   const rows = await db
     .select({
+      personId: cleaningAssignments.personId,
       sectorKey: cleaningAssignments.sectorKey,
       sectorName: cleaningAssignments.sectorName,
       assignmentDate: cleaningAssignments.assignmentDate,
     })
     .from(cleaningAssignments)
-    .where(eq(cleaningAssignments.personId, personId))
+    .where(inArray(cleaningAssignments.personId, personIds))
     .orderBy(desc(cleaningAssignments.assignmentDate))
-    .limit(limit);
-  return rows;
+    .limit(Math.max(personIds.length * limit, limit));
+  for (const row of rows) {
+    if (!row.personId) continue;
+    const list = result.get(row.personId) ?? [];
+    if (list.length < limit) {
+      list.push({
+        sectorKey: row.sectorKey,
+        sectorName: row.sectorName,
+        assignmentDate: row.assignmentDate,
+      });
+      result.set(row.personId, list);
+    }
+  }
+  return result;
 }
 
 export interface EligiblePerson {

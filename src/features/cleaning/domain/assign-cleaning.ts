@@ -1,3 +1,9 @@
+import {
+  CLEANING_DEFAULT_PEOPLE_PER_SECTOR,
+  CLEANING_SCORE_RECENCY_DAYS,
+  CLEANING_SCORE_SECTOR_WEIGHT,
+  CLEANING_SCORE_TOTAL_WEIGHT,
+} from "@/features/cleaning/domain/cleaning-constants";
 import type { CleaningTypeKey } from "@/features/cleaning/domain/cleaning-defaults";
 import type {
   ScheduleExceptionItem,
@@ -284,8 +290,7 @@ export function generateCleaningAssignments(input: AssignmentInput): {
   }
 
   /**
-   * Score ponderado (espelha AssignmentHub): carga total pesa 12, repetição no
-   * mesmo setor pesa 30 (força rodízio entre setores) + recência de até 40 pts.
+   * Score ponderado (espelha AssignmentHub): ver pesos em `cleaning-constants.ts`.
    * Cada dia gerado atualiza os contadores, então a decisão do dia N considera
    * os dias 1..N-1 da mesma geração, além dos 90 dias + futuros do histórico.
    */
@@ -295,9 +300,9 @@ export function generateCleaningAssignments(input: AssignmentInput): {
     const last = getLastDate(pid);
     let recency = 0;
     if (last) {
-      recency = Math.max(0, 40 - daysBetween(last, today));
+      recency = Math.max(0, CLEANING_SCORE_RECENCY_DAYS - daysBetween(last, today));
     }
-    return total * 12 + onSector * 30 + recency;
+    return total * CLEANING_SCORE_TOTAL_WEIGHT + onSector * CLEANING_SCORE_SECTOR_WEIGHT + recency;
   }
 
   // Setores restritivos primeiro (espelha AssignmentHub): sexo específico, depois só-adulto.
@@ -308,7 +313,10 @@ export function generateCleaningAssignments(input: AssignmentInput): {
     const aYoung = a.allowYoung ? 1 : 0;
     const bYoung = b.allowYoung ? 1 : 0;
     if (aYoung !== bYoung) return aYoung - bYoung;
-    return (b.peopleCount ?? 2) - (a.peopleCount ?? 2);
+    return (
+      (b.peopleCount ?? CLEANING_DEFAULT_PEOPLE_PER_SECTOR) -
+      (a.peopleCount ?? CLEANING_DEFAULT_PEOPLE_PER_SECTOR)
+    );
   });
   let prevSessionDate: string | null = null;
   const byId = new Map(persons.map((p) => [p.id, p]));
@@ -340,7 +348,7 @@ export function generateCleaningAssignments(input: AssignmentInput): {
     const dayUsed = new Set<string>();
 
     for (const sector of orderedSectors) {
-      const neededCount = sector.peopleCount ?? 2;
+      const neededCount = sector.peopleCount ?? CLEANING_DEFAULT_PEOPLE_PER_SECTOR;
       let assigned = 0;
       let usedYoungFallback = false;
       let usedWeeklyDouble = false;
