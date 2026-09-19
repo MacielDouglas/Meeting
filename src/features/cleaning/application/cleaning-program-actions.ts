@@ -105,11 +105,15 @@ export async function createCleaningProgram(
 
   const allPersons = await db.select().from(persons).where(eq(persons.cleaning, true));
 
-  // Anti-overlap (espelha AssignmentHub): mesmo tipo não pode sobrepor período (exceto arquivados).
+  // Anti-duplicidade por semana/período: mesmo tipo não pode sobrepor período (exceto arquivados).
   // NOTA: sem transação no driver neon-http; dois owners simultâneos têm janela
   // de corrida teórica — risco baixo e aceito (a checagem se repete abaixo antes de gravar).
   const overlapping = await db
-    .select({ id: cleaningPrograms.id })
+    .select({
+      id: cleaningPrograms.id,
+      startDate: cleaningPrograms.startDate,
+      endDate: cleaningPrograms.endDate,
+    })
     .from(cleaningPrograms)
     .where(
       and(
@@ -121,7 +125,10 @@ export async function createCleaningProgram(
     )
     .limit(1);
   if (overlapping[0]) {
-    return { ok: false, error: "Já existe um programa deste tipo neste período." };
+    return {
+      ok: false,
+      error: `Já foi criada tabela para aquela semana (${overlapping[0].startDate} — ${overlapping[0].endDate}). Escolha outro período ou edite a tabela existente.`,
+    };
   }
 
   const [settings] = await db.select().from(meetingSettings).limit(1);
@@ -212,9 +219,13 @@ export async function createCleaningProgram(
   // Sem transação no driver neon-http: grava programa + designações e, em caso de
   // falha no segundo passo, remove o programa órfão (deleção compensatória).
   try {
-    // Re-checa overlap imediatamente antes de gravar (reduz a janela de corrida).
+    // Re-checa duplicidade imediatamente antes de gravar (reduz a janela de corrida).
     const lateOverlap = await db
-      .select({ id: cleaningPrograms.id })
+      .select({
+        id: cleaningPrograms.id,
+        startDate: cleaningPrograms.startDate,
+        endDate: cleaningPrograms.endDate,
+      })
       .from(cleaningPrograms)
       .where(
         and(
@@ -226,7 +237,10 @@ export async function createCleaningProgram(
       )
       .limit(1);
     if (lateOverlap[0]) {
-      return { ok: false, error: "Já existe um programa deste tipo neste período." };
+      return {
+        ok: false,
+        error: `Já foi criada tabela para aquela semana (${lateOverlap[0].startDate} — ${lateOverlap[0].endDate}). Escolha outro período ou edite a tabela existente.`,
+      };
     }
 
     await db.insert(cleaningPrograms).values({
@@ -301,6 +315,8 @@ export async function updateCleaningAssignment(
     if (!person.cleaning) return { ok: false, error: "Pessoa não está habilitada para limpeza." };
 
     // Valida sexo + jovem contra a regra do setor (troca manual é estrita, sem fallback).
+    // Edição manual é permitida em qualquer status, inclusive arquivado.
+    // Dupla designação manual no mesmo dia é permitida (só a geração automática evita).
     const [program] = await db
       .select()
       .from(cleaningPrograms)
@@ -327,21 +343,6 @@ export async function updateCleaningAssignment(
       }
     }
 
-    const sameDayOtherSector = await db
-      .select()
-      .from(cleaningAssignments)
-      .where(eq(cleaningAssignments.assignmentDate, existing.assignmentDate));
-
-    const conflict = sameDayOtherSector.find(
-      (a) => a.personId === personId && a.sectorKey !== existing.sectorKey && a.id !== assignmentId,
-    );
-    if (conflict) {
-      return {
-        ok: false,
-        error: `${person.firstName} ${person.lastName} já está designado(a) para o setor "${conflict.sectorName}" neste dia.`,
-      };
-    }
-
     await db
       .update(cleaningAssignments)
       .set({
@@ -353,6 +354,39 @@ export async function updateCleaningAssignment(
   } catch (error) {
     console.error("[cleaning] falha ao trocar designação", { assignmentId, personId, error });
     return { ok: false, error: "Não foi possível atualizar. Tente novamente." };
+  }
+
+  revalidatePath("/reunioes");
+  return { ok: true };
+}
+
+export async function deleteCleaningDay(programId: string, date: string): Promise<UpdateResult> {
+  await requireOwnerUser();
+  const validatedId = idSchema.safeParse(programId);
+  if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  const validatedDate = isoDateSchema.safeParse(date);
+  if (!validatedDate.success) return { ok: false, error: "Data inválida." };
+
+  const db = getDb();
+  try {
+    const [program] = await db
+      .select()
+      .from(cleaningPrograms)
+      .where(eq(cleaningPrograms.id, programId))
+      .limit(1);
+    if (!program) return { ok: false, error: "Programa não encontrado." };
+
+    await db
+      .delete(cleaningAssignments)
+      .where(
+        and(
+          eq(cleaningAssignments.programId, programId),
+          eq(cleaningAssignments.assignmentDate, date),
+        ),
+      );
+  } catch (error) {
+    console.error("[cleaning] falha ao excluir dia", { programId, date, error });
+    return { ok: false, error: "Não foi possível excluir o dia. Tente novamente." };
   }
 
   revalidatePath("/reunioes");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { updateCleaningAssignment } from "@/features/cleaning/application/cleaning-program-actions";
 import {
   type EligiblePerson,
@@ -32,6 +32,30 @@ interface PersonSelectModalProps {
   onUpdated: () => void;
 }
 
+const PAGE_SIZE = 60;
+const HISTORY_PER_PERSON = 5;
+
+function sortPersons(
+  eligible: EligiblePerson[],
+  historyMap: Map<string, PersonCleaningHistory[]>,
+  allowYoung: boolean,
+): EligiblePerson[] {
+  return [...eligible].sort((a, b) => {
+    const aBlocked = !allowYoung && a.young;
+    const bBlocked = !allowYoung && b.young;
+    if (aBlocked !== bBlocked) return aBlocked ? 1 : -1;
+    const ha = historyMap.get(a.id) ?? [];
+    const hb = historyMap.get(b.id) ?? [];
+    if (ha.length === 0 && hb.length !== 0) return -1;
+    if (hb.length === 0 && ha.length !== 0) return 1;
+    const aLast = ha[0]?.assignmentDate ?? "";
+    const bLast = hb[0]?.assignmentDate ?? "";
+    const cmp = aLast.localeCompare(bLast);
+    if (cmp !== 0) return cmp;
+    return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+  });
+}
+
 export function PersonSelectModal({
   assignmentId,
   sectorKey,
@@ -50,47 +74,52 @@ export function PersonSelectModal({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(search.trim());
+      setLimit(PAGE_SIZE);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search]);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const eligible = await listEligiblePersons(requiredSex);
-      if (cancelled) return;
-
-      const historyMap = await getManyPersonCleaningHistories(
-        eligible.map((p) => p.id),
-        10,
-      );
-      if (cancelled) return;
-
-      if (!cancelled) {
-        // Ordena pelos menos recentes primeiro (espelha AssignmentHub): sem histórico,
-        // depois data mais antiga, com jovem bloqueado por último quando setor é só-adulto.
-        const sorted = [...eligible].sort((a, b) => {
-          const ha = historyMap.get(a.id) ?? [];
-          const hb = historyMap.get(b.id) ?? [];
-          const aBlocked = !allowYoung && a.young;
-          const bBlocked = !allowYoung && b.young;
-          if (aBlocked !== bBlocked) return aBlocked ? 1 : -1;
-          if (ha.length === 0 && hb.length !== 0) return -1;
-          if (hb.length === 0 && ha.length !== 0) return 1;
-          const aLast = ha[0]?.assignmentDate ?? "";
-          const bLast = hb[0]?.assignmentDate ?? "";
-          const cmp = aLast.localeCompare(bLast);
-          if (cmp !== 0) return cmp;
-          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+      setError(null);
+      try {
+        const eligible = await listEligiblePersons(requiredSex, {
+          search: debouncedSearch || undefined,
+          limit,
         });
-        setPersons(sorted);
+        if (cancelled) return;
+        setHasMore(eligible.length >= limit);
+
+        const historyMap = await getManyPersonCleaningHistories(
+          eligible.map((p) => p.id),
+          HISTORY_PER_PERSON,
+        );
+        if (cancelled) return;
+
+        setPersons(sortPersons(eligible, historyMap, allowYoung));
         setHistories(historyMap);
-        setLoading(false);
+      } catch {
+        if (!cancelled) setError("Não foi possível carregar a lista. Tente novamente.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     }
     void load();
     return () => {
       cancelled = true;
     };
-  }, [requiredSex, allowYoung]);
+  }, [requiredSex, allowYoung, debouncedSearch, limit]);
+
   async function handleSelect(personId: string) {
     setSaving(true);
     setError(null);
@@ -104,7 +133,7 @@ export function PersonSelectModal({
     }
   }
 
-  const dayUsedSet = new Set(dayUsedPersonIds);
+  const dayUsedSet = useMemo(() => new Set(dayUsedPersonIds), [dayUsedPersonIds]);
 
   return (
     <AlertDialog
@@ -124,7 +153,22 @@ export function PersonSelectModal({
           </p>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-xs text-muted-foreground">Buscar pessoa</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Digite o nome…"
+            maxLength={60}
+            className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+          />
+        </label>
+
+        {error && (
+          <p role="alert" className="text-sm text-red-500">
+            {error}
+          </p>
+        )}
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Carregando pessoas...</p>
@@ -139,13 +183,19 @@ export function PersonSelectModal({
                 <li key={person.id}>
                   <button
                     type="button"
-                    disabled={isUsed || isYoungBlocked || saving}
+                    disabled={isYoungBlocked || saving}
                     onClick={() => void handleSelect(person.id)}
-                    title={isYoungBlocked ? "Jovem não permitido neste setor" : undefined}
+                    title={
+                      isYoungBlocked
+                        ? "Jovem não permitido neste setor"
+                        : isUsed
+                          ? "Já designado em outro setor hoje — toque para designar mesmo assim"
+                          : undefined
+                    }
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       person.id === currentPersonId
                         ? "bg-sky-500/10 ring-1 ring-sky-500"
-                        : isUsed || isYoungBlocked
+                        : isYoungBlocked
                           ? "opacity-40"
                           : "hover:bg-secondary"
                     }`}
@@ -161,7 +211,9 @@ export function PersonSelectModal({
                         <span className="ml-1 text-xs text-sky-500">(atual)</span>
                       )}
                       {isUsed && (
-                        <span className="ml-1 text-xs text-red-500">(já designado hoje)</span>
+                        <span className="ml-1 text-xs text-amber-600">
+                          (já designado hoje — manual permitido)
+                        </span>
                       )}
                       {isYoungBlocked && (
                         <span className="ml-1 text-xs text-amber-600">(só adulto)</span>
@@ -180,6 +232,17 @@ export function PersonSelectModal({
               <li className="text-sm text-muted-foreground">Nenhuma pessoa elegível encontrada.</li>
             )}
           </ul>
+        )}
+
+        {!loading && hasMore && (
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, 200))}
+            className="mt-1 text-sm text-sky-600 hover:underline disabled:opacity-50"
+          >
+            Mostrar mais
+          </button>
         )}
 
         <AlertDialogFooter>

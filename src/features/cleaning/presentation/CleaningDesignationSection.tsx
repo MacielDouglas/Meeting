@@ -105,15 +105,21 @@ export function CleaningDesignationSection({
     void loadPrograms();
   }, [loadPrograms]);
 
-  const programDates = new Set<string>();
-  for (const p of programs) {
-    const current = new Date(`${p.startDate}T00:00:00Z`);
-    const end = new Date(`${p.endDate}T00:00:00Z`);
-    while (current <= end) {
-      programDates.add(current.toISOString().slice(0, 10));
-      current.setUTCDate(current.getUTCDate() + 1);
+  // Só programas ativos bloqueiam novas tabelas (arquivados liberam o período).
+  const activePrograms = useMemo(() => programs.filter((p) => p.status !== "archived"), [programs]);
+
+  const programDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of activePrograms) {
+      const current = new Date(`${p.startDate}T00:00:00Z`);
+      const end = new Date(`${p.endDate}T00:00:00Z`);
+      while (current <= end) {
+        set.add(current.toISOString().slice(0, 10));
+        current.setUTCDate(current.getUTCDate() + 1);
+      }
     }
-  }
+    return set;
+  }, [activePrograms]);
 
   const days = analyzeDays({
     typeKey: selectedType as "per_meeting" | "weekly" | "general",
@@ -146,7 +152,40 @@ export function CleaningDesignationSection({
     );
   }, [selectedType, rangeStart, rangeEnd, meetingSchedule, specialEvents, scheduleExceptions]);
 
+  // Datas selecionadas que já têm tabela (duplicidade) — bloqueadas no calendário.
+  const duplicateSelectedDates = useMemo(
+    () => [...selectedDates].filter((d) => programDates.has(d)),
+    [selectedDates, programDates],
+  );
+
+  // Programas que colidem com o período de "limpeza a cada reunião".
+  const rangeOverlapDates = useMemo(() => {
+    if (selectedType !== "per_meeting") return [];
+    return rangeMeetingDays.map((d) => d.date).filter((d) => programDates.has(d));
+  }, [selectedType, rangeMeetingDays, programDates]);
+
+  const rangeOverlapPrograms = useMemo(() => {
+    if (rangeOverlapDates.length === 0) return [];
+    const dup = new Set(rangeOverlapDates);
+    return activePrograms.filter((p) => {
+      const current = new Date(`${p.startDate}T00:00:00Z`);
+      const end = new Date(`${p.endDate}T00:00:00Z`);
+      while (current <= end) {
+        if (dup.has(current.toISOString().slice(0, 10))) return true;
+        current.setUTCDate(current.getUTCDate() + 1);
+      }
+      return false;
+    });
+  }, [rangeOverlapDates, activePrograms]);
+
   function handleDateClick(date: string) {
+    if (programDates.has(date)) {
+      setErrorMsg(
+        `Já foi criada tabela para aquela semana (${date}). Edite a tabela existente em vez de criar outra.`,
+      );
+      return;
+    }
+    setErrorMsg(null);
     setSelectedDates((prev) => {
       const next = new Set(prev);
       if (next.has(date)) next.delete(date);
@@ -197,9 +236,28 @@ export function CleaningDesignationSection({
         setCreating(false);
         return;
       }
+      const overlap = dates.filter((d) => programDates.has(d));
+      if (overlap.length > 0) {
+        const conflict = rangeOverlapPrograms[0];
+        setErrorMsg(
+          conflict
+            ? `Já foi criada tabela para aquela semana (${conflict.startDate} — ${conflict.endDate}). Edite a tabela existente em vez de criar outra.`
+            : `Já foi criada tabela para ${overlap.length} dia(s) do período escolhido. Ajuste o período ou edite a tabela existente.`,
+        );
+        setCreating(false);
+        return;
+      }
     } else {
       if (selectedDates.size === 0) {
         setErrorMsg("Selecione ao menos um dia no calendário.");
+        setCreating(false);
+        return;
+      }
+      const overlap = [...selectedDates].filter((d) => programDates.has(d));
+      if (overlap.length > 0) {
+        setErrorMsg(
+          `Já foi criada tabela para aquela semana (${overlap.sort()[0]}). Edite a tabela existente em vez de criar outra.`,
+        );
         setCreating(false);
         return;
       }
@@ -290,6 +348,18 @@ export function CleaningDesignationSection({
                   {rangeMeetingDays.length} dia(s) de reunião no período
                 </p>
               )}
+              {rangeOverlapDates.length > 0 && (
+                <div
+                  role="alert"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+                >
+                  Já foi criada tabela para aquela semana
+                  {rangeOverlapPrograms[0]
+                    ? ` (${rangeOverlapPrograms[0].startDate} — ${rangeOverlapPrograms[0].endDate})`
+                    : ""}
+                  . Edite a tabela existente em vez de criar outra.
+                </div>
+              )}
             </Card>
           )}
 
@@ -311,8 +381,21 @@ export function CleaningDesignationSection({
           {selectedType !== "per_meeting" && selectedCount > 0 && (
             <p className="text-sm text-muted-foreground">{selectedCount} dia(s) selecionado(s)</p>
           )}
+          {selectedType !== "per_meeting" && duplicateSelectedDates.length > 0 && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+            >
+              Já foi criada tabela para aquela semana ({duplicateSelectedDates.sort()[0]}). Edite a
+              tabela existente em vez de criar outra.
+            </div>
+          )}
 
-          {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
+          {errorMsg && (
+            <p role="alert" className="text-sm text-red-500">
+              {errorMsg}
+            </p>
+          )}
           {statusMsg && <p className="text-sm text-emerald-500">{statusMsg}</p>}
           {resultMessages.length > 0 && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
@@ -327,7 +410,15 @@ export function CleaningDesignationSection({
             </div>
           )}
 
-          <Button disabled={creating || selectedCount === 0} onClick={() => void handleCreate()}>
+          <Button
+            disabled={
+              creating ||
+              selectedCount === 0 ||
+              duplicateSelectedDates.length > 0 ||
+              rangeOverlapDates.length > 0
+            }
+            onClick={() => void handleCreate()}
+          >
             {creating ? "Criando..." : "Criar Programa de Limpeza"}
           </Button>
         </>

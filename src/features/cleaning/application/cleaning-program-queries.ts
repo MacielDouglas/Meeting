@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
 import {
   cleaningAssignments,
@@ -170,7 +170,7 @@ export interface EligiblePerson {
 
 export async function listEligiblePersons(
   requiredSex?: "any" | "male" | "female",
-  options?: { allowYoung?: boolean },
+  options?: { allowYoung?: boolean; search?: string; limit?: number },
 ): Promise<EligiblePerson[]> {
   await requireAuthenticatedUser();
   const db = getDb();
@@ -178,6 +178,13 @@ export async function listEligiblePersons(
   if (requiredSex === "male") conditions.push(eq(persons.sex, "male"));
   else if (requiredSex === "female") conditions.push(eq(persons.sex, "female"));
   if (options?.allowYoung === false) conditions.push(eq(persons.young, false));
+  const search = options?.search?.trim();
+  if (search) {
+    const pattern = `%${search.replace(/[%_\\]/g, "")}%`;
+    const searchCondition = or(ilike(persons.firstName, pattern), ilike(persons.lastName, pattern));
+    if (searchCondition) conditions.push(searchCondition);
+  }
+  const limit = Math.min(Math.max(options?.limit ?? 60, 1), 200);
 
   const rows = await db
     .select({
@@ -192,7 +199,8 @@ export async function listEligiblePersons(
     })
     .from(persons)
     .where(and(...conditions))
-    .orderBy(asc(persons.firstName), asc(persons.lastName));
+    .orderBy(asc(persons.firstName), asc(persons.lastName))
+    .limit(limit);
 
   return rows.map((row) => ({
     ...row,

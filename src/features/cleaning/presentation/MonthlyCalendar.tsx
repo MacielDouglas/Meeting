@@ -125,14 +125,21 @@ export function MonthlyCalendar({
           else if (hasProgram) bgClass = "bg-emerald-100 text-emerald-700";
           else if (isMeeting) bgClass = "bg-sky-50 text-sky-700";
 
+          const isBlocked = hasProgram;
           return (
             <button
               key={dateStr}
               type="button"
+              disabled={isBlocked}
               onClick={() => onDateClick(dateStr)}
-              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors hover:opacity-80 ${bgClass}`}
+              aria-disabled={isBlocked}
+              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass}`}
               title={
-                isAssembly ? (info?.assemblyType ?? "") : hasProgram ? "Programa existente" : ""
+                isAssembly
+                  ? (info?.assemblyType ?? "")
+                  : hasProgram
+                    ? "Já foi criada tabela para aquela semana — edite a tabela existente"
+                    : ""
               }
             >
               {day}

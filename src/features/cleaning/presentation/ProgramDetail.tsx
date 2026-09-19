@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FaArchive, FaCheck, FaPen, FaTrash } from "react-icons/fa";
 import {
+  deleteCleaningDay,
   deleteCleaningProgram,
   updateProgramStatus,
 } from "@/features/cleaning/application/cleaning-program-actions";
@@ -50,6 +51,11 @@ export function ProgramDetail({
   const [editingAssignment, setEditingAssignment] = useState<CleaningAssignmentItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deletingDay, setDeletingDay] = useState<string | null>(null);
+  const [dayError, setDayError] = useState<string | null>(null);
+
+  // Edição liberada em qualquer status, inclusive arquivado.
+  const canEdit = true;
 
   const grouped = new Map<string, CleaningAssignmentItem[]>();
   for (const a of assignments) {
@@ -90,6 +96,18 @@ export function ProgramDetail({
   async function handleStatusChange(status: "confirmed" | "archived") {
     await updateProgramStatus(program.id, status);
     onRefresh();
+  }
+
+  async function handleDeleteDay(date: string) {
+    setDeletingDay(date);
+    setDayError(null);
+    const result = await deleteCleaningDay(program.id, date);
+    if (result.ok) {
+      onRefresh();
+    } else {
+      setDayError(result.error ?? "Não foi possível excluir o dia.");
+    }
+    setDeletingDay(null);
   }
 
   const dayUsedPersonIds = editingAssignment
@@ -146,7 +164,7 @@ export function ProgramDetail({
               <FaCheck size={12} />
             </Button>
           )}
-          {program.status !== "archived" && (
+          {program.status !== "archived" ? (
             <Button
               size="sm"
               variant="outline"
@@ -154,6 +172,15 @@ export function ProgramDetail({
               title="Arquivar programa"
             >
               <FaArchive size={12} />
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleStatusChange("confirmed")}
+              title="Reabrir programa arquivado"
+            >
+              <FaCheck size={12} />
             </Button>
           )}
           <Button
@@ -168,11 +195,29 @@ export function ProgramDetail({
         </div>
       </div>
 
+      {dayError && (
+        <p role="alert" className="text-sm text-red-500">
+          {dayError}
+        </p>
+      )}
       {sortedDates.map((date) => {
         const dayAssignments = grouped.get(date) ?? [];
         return (
           <div key={date} className="rounded-lg border p-3">
-            <p className="mb-2 text-xs font-semibold text-muted-foreground">{date}</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold text-muted-foreground">{date}</p>
+              {canEdit && (
+                <button
+                  type="button"
+                  disabled={deletingDay === date}
+                  onClick={() => void handleDeleteDay(date)}
+                  className="text-xs text-red-500 hover:underline disabled:opacity-50"
+                  title={`Excluir dia ${date}`}
+                >
+                  {deletingDay === date ? "Excluindo…" : "Excluir dia"}
+                </button>
+              )}
+            </div>
             <div className="flex flex-col gap-1">
               {dayAssignments.map((assignment) => {
                 const Icon = getSectorIcon(typeKey, assignment.sectorKey);
@@ -193,7 +238,7 @@ export function ProgramDetail({
                         <span className="ml-1 text-xs text-amber-500">(família)</span>
                       )}
                     </span>
-                    {program.status === "draft" && (
+                    {canEdit && (
                       <button
                         type="button"
                         onClick={() => setEditingAssignment(assignment)}
