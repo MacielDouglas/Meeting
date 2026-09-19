@@ -76,6 +76,7 @@ export function CleaningDesignationSection({
   const [creating, setCreating] = useState(false);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [resultMessages, setResultMessages] = useState<{ date: string; message: string }[]>([]);
 
   const rangeStartDefault = toISODateInput(
     getFirstMidweek(calendarYear, calendarMonth, meetingSchedule.midweekDay),
@@ -176,6 +177,7 @@ export function CleaningDesignationSection({
     setCreating(true);
     setErrorMsg(null);
     setStatusMsg(null);
+    setResultMessages([]);
 
     let dates: string[];
     if (selectedType === "per_meeting") {
@@ -208,6 +210,7 @@ export function CleaningDesignationSection({
 
     if (result.ok) {
       setStatusMsg(`Programa criado com ${result.assignmentCount ?? 0} designações.`);
+      setResultMessages(result.messages ?? []);
       setSelectedDates(new Set());
       await loadPrograms();
     } else {
@@ -311,6 +314,18 @@ export function CleaningDesignationSection({
 
           {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
           {statusMsg && <p className="text-sm text-emerald-500">{statusMsg}</p>}
+          {resultMessages.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <p className="mb-1 text-xs font-semibold text-amber-700">
+                Avisos do sorteio (revise antes de confirmar)
+              </p>
+              {resultMessages.map((msg) => (
+                <p key={`${msg.date}-${msg.message}`} className="text-xs text-amber-600">
+                  {msg.date}: {msg.message}
+                </p>
+              ))}
+            </div>
+          )}
 
           <Button disabled={creating || selectedCount === 0} onClick={() => void handleCreate()}>
             {creating ? "Criando..." : "Criar Programa de Limpeza"}
@@ -327,6 +342,16 @@ export function CleaningDesignationSection({
             program={viewingProgram.program}
             assignments={viewingProgram.assignments}
             typeKey={selectedType}
+            sectors={
+              cleaningConfig
+                .find((t) => t.key === selectedType)
+                ?.sectors.map((s) => ({
+                  key: s.key,
+                  id: s.id,
+                  requiredSex: s.requiredSex,
+                  allowYoung: s.allowYoung,
+                })) ?? []
+            }
             onClose={() => setViewingProgram(null)}
             onDeleted={() => {
               setViewingProgram(null);

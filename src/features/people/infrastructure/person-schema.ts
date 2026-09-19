@@ -14,6 +14,7 @@ export const persons = pgTable("persons", {
     .references(() => users.id, { onDelete: "set null" })
     .unique(),
   cleaning: boolean("cleaning").notNull().default(true),
+  young: boolean("young").notNull().default(false),
   helper: boolean("helper").notNull().default(true),
   startConversations: boolean("start_conversations").notNull().default(true),
   returnVisits: boolean("return_visits").notNull().default(true),

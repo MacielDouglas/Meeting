@@ -23,17 +23,12 @@ import {
   createCleaningSector,
   deleteCleaningSector,
   restoreDefaultCleaningSectors,
-  setCleaningAssignmentMode,
   toggleCleaningSector,
   toggleCleaningType,
   updateCleaningSector,
 } from "@/features/cleaning/application/actions";
 import type { CleaningSectorItem, CleaningTypeItem } from "@/features/cleaning/application/queries";
-import type {
-  CleaningAssignmentMode,
-  CleaningTypeKey,
-  RequiredSex,
-} from "@/features/cleaning/domain/cleaning-defaults";
+import type { CleaningTypeKey, RequiredSex } from "@/features/cleaning/domain/cleaning-defaults";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -46,12 +41,6 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
 import { Switch } from "@/shared/components/ui/switch";
-
-const MODE_OPTIONS: { value: CleaningAssignmentMode; label: string }[] = [
-  { value: "person", label: "Por pessoa" },
-  { value: "family", label: "Por família" },
-  { value: "group", label: "Por grupo" },
-];
 
 const SEX_OPTIONS: { value: RequiredSex; label: string }[] = [
   { value: "any", label: "Qualquer" },
@@ -71,6 +60,7 @@ function SectorForm({
     task: string;
     peopleCount: number | null;
     requiredSex: RequiredSex;
+    allowYoung: boolean;
   };
   onDone: () => void;
 }) {
@@ -80,6 +70,7 @@ function SectorForm({
     initial?.peopleCount != null ? String(initial.peopleCount) : "",
   );
   const [requiredSex, setRequiredSex] = useState<RequiredSex>(initial?.requiredSex ?? "any");
+  const [allowYoung, setAllowYoung] = useState(initial?.allowYoung ?? true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -94,6 +85,7 @@ function SectorForm({
         task: task.trim(),
         peopleCount: peopleCount === "" ? null : Number(peopleCount),
         requiredSex,
+        allowYoung,
       };
       const result = initial
         ? await updateCleaningSector({ id: initial.id, ...payload })
@@ -161,6 +153,10 @@ function SectorForm({
           </select>
         </label>
       </div>
+      <div className="flex items-center justify-between py-1.5 text-sm">
+        <span className="text-muted-foreground">Permite jovem</span>
+        <Switch label="Permite jovem" checked={allowYoung} onCheckedChange={setAllowYoung} />
+      </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
           {initial ? "Salvar" : "Adicionar setor"}
@@ -177,6 +173,10 @@ function sexLabel(sex: RequiredSex): string {
   if (sex === "male") return "Sexo: masculino";
   if (sex === "female") return "Sexo: feminino";
   return "Sexo: qualquer";
+}
+
+function youngLabel(allowYoung: boolean): string {
+  return allowYoung ? "Jovem: sim" : "Só adulto";
 }
 
 const SECTOR_ICONS: Record<string, ComponentType<{ size?: number; className?: string }>> = {
@@ -256,6 +256,8 @@ function SectorModal({
             {sector.peopleCount != null ? `${sector.peopleCount} pessoa(s)` : "Qtd. livre"}
             {" · "}
             {sexLabel(sector.requiredSex)}
+            {" · "}
+            {youngLabel(sector.allowYoung)}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {editing ? (
@@ -267,6 +269,7 @@ function SectorModal({
               task: sector.task,
               peopleCount: sector.peopleCount,
               requiredSex: sector.requiredSex,
+              allowYoung: sector.allowYoung,
             }}
             onDone={() => setEditing(false)}
           />
@@ -338,29 +341,6 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
             />
           </div>
 
-          {/* Modo de escala: pessoa / família / grupo (exclusivo, padrão pessoa) */}
-          <div className="flex flex-col gap-1">
-            <span className="text-sm text-muted-foreground">Escalar limpeza por:</span>
-            <div className="flex gap-2">
-              {MODE_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() =>
-                    void setCleaningAssignmentMode({ key: cleaning.key, mode: opt.value })
-                  }
-                  className={`h-9 flex-1 rounded-full px-3 text-sm font-medium transition-colors ${
-                    cleaning.assignmentMode === opt.value
-                      ? "bg-sky-500 text-white"
-                      : "bg-secondary text-muted-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="flex flex-col gap-2">
             {cleaning.sectors.length === 0 && (
               <p className="text-sm text-muted-foreground">
@@ -399,6 +379,8 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                     {sector.peopleCount != null ? `${sector.peopleCount} pessoa(s)` : "Qtd. livre"}
                     {" · "}
                     {sexLabel(sector.requiredSex)}
+                    {" · "}
+                    {youngLabel(sector.allowYoung)}
                   </span>
                 </button>
               </div>

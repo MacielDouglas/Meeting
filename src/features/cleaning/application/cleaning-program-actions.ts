@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOwnerUser } from "@/features/auth/application/session";
@@ -78,9 +78,59 @@ export async function createCleaningProgram(
 
   const allPersons = await db.select().from(persons).where(eq(persons.cleaning, true));
 
+  // Anti-overlap (espelha AssignmentHub): mesmo tipo não pode sobrepor período (exceto arquivados).
+  const overlapping = await db
+    .select({ id: cleaningPrograms.id })
+    .from(cleaningPrograms)
+    .where(
+      and(
+        eq(cleaningPrograms.typeKey, typeKey as "per_meeting" | "weekly" | "general"),
+        lte(cleaningPrograms.startDate, endDate),
+        gte(cleaningPrograms.endDate, startDate),
+        ne(cleaningPrograms.status, "archived"),
+      ),
+    )
+    .limit(1);
+  if (overlapping[0]) {
+    return { ok: false, error: "Já existe um programa deste tipo neste período." };
+  }
+
   const [settings] = await db.select().from(meetingSettings).limit(1);
   const events = await db.select().from(specialEvents);
   const exceptions = await db.select().from(scheduleExceptions);
+
+  // Fairness global 90 dias (espelha AssignmentHub): conta designações anteriores.
+  // Sem limite superior: drafts futuros (ainda não realizados) também contam, e a
+  // geração é sequencial — cada dia designado atualiza os contadores dos próximos.
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - 90);
+  const sinceStr = sinceDate.toISOString().slice(0, 10);
+  const recentRows = await db
+    .select({
+      personId: cleaningAssignments.personId,
+      sectorKey: cleaningAssignments.sectorKey,
+      assignmentDate: cleaningAssignments.assignmentDate,
+    })
+    .from(cleaningAssignments)
+    .where(gte(cleaningAssignments.assignmentDate, sinceStr))
+    .limit(5000);
+  const totalByPerson: Record<string, number> = {};
+  const sectorByPerson: Record<string, Record<string, number>> = {};
+  const lastDateByPerson: Record<string, string> = {};
+  const datesByPerson: Record<string, string[]> = {};
+  for (const row of recentRows) {
+    if (!row.personId) continue;
+    totalByPerson[row.personId] = (totalByPerson[row.personId] ?? 0) + 1;
+    if (!sectorByPerson[row.personId]) sectorByPerson[row.personId] = {};
+    sectorByPerson[row.personId][row.sectorKey] =
+      (sectorByPerson[row.personId][row.sectorKey] ?? 0) + 1;
+    if (!lastDateByPerson[row.personId] || row.assignmentDate > lastDateByPerson[row.personId]) {
+      lastDateByPerson[row.personId] = row.assignmentDate;
+    }
+    if (!datesByPerson[row.personId]) datesByPerson[row.personId] = [];
+    if (datesByPerson[row.personId].length < 200)
+      datesByPerson[row.personId].push(row.assignmentDate);
+  }
 
   const input: AssignmentInput = {
     typeKey: typeKey as "per_meeting" | "weekly" | "general",
@@ -91,6 +141,7 @@ export async function createCleaningProgram(
       name: s.name,
       peopleCount: s.peopleCount,
       requiredSex: s.requiredSex,
+      allowYoung: s.allowYoung ?? true,
     })),
     persons: allPersons.map((p) => ({
       id: p.id,
@@ -98,6 +149,7 @@ export async function createCleaningProgram(
       lastName: p.lastName,
       sex: p.sex as "male" | "female",
       cleaning: p.cleaning,
+      young: p.young ?? false,
       familyHead: p.familyHead,
       familyMemberId: p.familyMemberId,
     })),
@@ -105,6 +157,7 @@ export async function createCleaningProgram(
     weekendDay: settings?.weekendDay ?? 0,
     specialEvents: events,
     scheduleExceptions: exceptions,
+    history: { totalByPerson, sectorByPerson, lastDateByPerson, datesByPerson },
   };
 
   const { assignments, messages } = generateCleaningAssignments(input);
@@ -174,6 +227,33 @@ export async function updateCleaningAssignment(
 
   if (!person) return { ok: false, error: "Pessoa não encontrada." };
   if (!person.cleaning) return { ok: false, error: "Pessoa não está habilitada para limpeza." };
+
+  // Valida sexo + jovem contra a regra do setor (troca manual é estrita, sem fallback).
+  const [program] = await db
+    .select()
+    .from(cleaningPrograms)
+    .where(eq(cleaningPrograms.id, existing.programId))
+    .limit(1);
+  if (program) {
+    const typeSectors = await db
+      .select()
+      .from(cleaningSectors)
+      .where(eq(cleaningSectors.cleaningTypeKey, program.typeKey));
+    const sectorRule = typeSectors.find(
+      (s) => (s.key ?? s.id) === existing.sectorKey || s.id === existing.sectorKey,
+    );
+    if (sectorRule) {
+      if (sectorRule.requiredSex === "male" && person.sex !== "male") {
+        return { ok: false, error: "Este setor exige irmão (masculino)." };
+      }
+      if (sectorRule.requiredSex === "female" && person.sex !== "female") {
+        return { ok: false, error: "Este setor exige irmã (feminino)." };
+      }
+      if (!(sectorRule.allowYoung ?? true) && (person.young ?? false)) {
+        return { ok: false, error: "Este setor exige adulto (jovem não permitido)." };
+      }
+    }
+  }
 
   const sameDayOtherSector = await db
     .select()

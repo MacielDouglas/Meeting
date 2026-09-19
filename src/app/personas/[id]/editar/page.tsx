@@ -41,6 +41,7 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
     familyMemberId: person.familyMemberId,
     userId: person.userId,
     cleaning: person.cleaning,
+    young: person.young ?? false,
     helper: person.helper,
     startConversations: person.startConversations,
     returnVisits: person.returnVisits,

@@ -18,6 +18,7 @@ export interface CleaningSectorItem {
   enabled: boolean;
   peopleCount: number | null;
   requiredSex: RequiredSex;
+  allowYoung: boolean;
   isDefault: boolean;
   sortOrder: number;
 }
@@ -62,6 +63,7 @@ export async function listCleaningConfig(): Promise<CleaningTypeItem[]> {
             enabled: sector.enabled,
             peopleCount: sector.peopleCount,
             requiredSex: sector.requiredSex as RequiredSex,
+            allowYoung: sector.allowYoung ?? true,
             isDefault: sector.isDefault,
             sortOrder: sector.sortOrder,
           })),
@@ -89,6 +91,7 @@ function buildDefaultCleaningConfig(): CleaningTypeItem[] {
         enabled: true,
         peopleCount: null,
         requiredSex: "any" as RequiredSex,
+        allowYoung: !["banheiro_masculino", "banheiro_feminino", "banheiros"].includes(sector.key),
         isDefault: true,
         sortOrder: index,
       }),
@@ -118,33 +121,42 @@ export async function listEnabledDesignationFlags(): Promise<string[]> {
 export interface CleaningEligibility {
   peopleCount: number | null;
   requiredSex: RequiredSex;
+  allowYoung: boolean;
 }
 
 export function isPersonEligibleForCleaning(
-  person: { sex: "male" | "female"; cleaning: boolean },
+  person: { sex: "male" | "female"; cleaning: boolean; young?: boolean | null },
   rule: CleaningEligibility,
+  relaxYoung = false,
 ): boolean {
   if (!person.cleaning) return false;
   if (rule.requiredSex === "male" && person.sex !== "male") return false;
   if (rule.requiredSex === "female" && person.sex !== "female") return false;
+  if (!rule.allowYoung && person.young && !relaxYoung) return false;
   return true;
 }
 
 export async function getCleaningSectorRule(sectorId: string): Promise<CleaningEligibility | null> {
   await requireAuthenticatedUser();
-  if (sectorId.startsWith("default-")) return { peopleCount: null, requiredSex: "any" };
+  if (sectorId.startsWith("default-"))
+    return { peopleCount: null, requiredSex: "any", allowYoung: true };
   try {
     const rows = await getDb()
       .select({
         peopleCount: cleaningSectors.peopleCount,
         requiredSex: cleaningSectors.requiredSex,
+        allowYoung: cleaningSectors.allowYoung,
       })
       .from(cleaningSectors)
       .where(eq(cleaningSectors.id, sectorId))
       .limit(1);
     const row = rows[0];
     if (!row) return null;
-    return { peopleCount: row.peopleCount, requiredSex: row.requiredSex as RequiredSex };
+    return {
+      peopleCount: row.peopleCount,
+      requiredSex: row.requiredSex as RequiredSex,
+      allowYoung: row.allowYoung ?? true,
+    };
   } catch {
     return null;
   }

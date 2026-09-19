@@ -35,6 +35,7 @@ export const es = {
   sex: "Sexo",
   brother: "Hermano",
   sister: "Hermana",
+  young: "É jovem",
   family: "Familia",
   familyHead: "Cabeza de familia",
   familyMember: "Miembro de la familia",

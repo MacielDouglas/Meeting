@@ -135,18 +135,21 @@ export interface EligiblePerson {
   lastName: string;
   sex: "male" | "female";
   cleaning: boolean;
+  young: boolean;
   familyHead: boolean;
   familyMemberId: string | null;
 }
 
 export async function listEligiblePersons(
   requiredSex?: "any" | "male" | "female",
+  options?: { allowYoung?: boolean },
 ): Promise<EligiblePerson[]> {
   await requireAuthenticatedUser();
   const db = getDb();
   const conditions = [eq(persons.cleaning, true)];
   if (requiredSex === "male") conditions.push(eq(persons.sex, "male"));
   else if (requiredSex === "female") conditions.push(eq(persons.sex, "female"));
+  if (options?.allowYoung === false) conditions.push(eq(persons.young, false));
 
   const rows = await db
     .select({
@@ -155,6 +158,7 @@ export async function listEligiblePersons(
       lastName: persons.lastName,
       sex: persons.sex,
       cleaning: persons.cleaning,
+      young: persons.young,
       familyHead: persons.familyHead,
       familyMemberId: persons.familyMemberId,
     })
@@ -165,6 +169,7 @@ export async function listEligiblePersons(
   return rows.map((row) => ({
     ...row,
     sex: row.sex as "male" | "female",
+    young: row.young ?? false,
   }));
 }
 
@@ -178,6 +183,7 @@ export async function listFamilyMembers(familyMemberId: string): Promise<Eligibl
       lastName: persons.lastName,
       sex: persons.sex,
       cleaning: persons.cleaning,
+      young: persons.young,
       familyHead: persons.familyHead,
       familyMemberId: persons.familyMemberId,
     })
@@ -188,6 +194,7 @@ export async function listFamilyMembers(familyMemberId: string): Promise<Eligibl
   return rows.map((row) => ({
     ...row,
     sex: row.sex as "male" | "female",
+    young: row.young ?? false,
     cleaning: row.cleaning,
     familyHead: row.familyHead,
   }));

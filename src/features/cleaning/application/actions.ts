@@ -91,6 +91,7 @@ const sectorSchema = z.object({
   task: z.string().trim().max(2000),
   peopleCount: z.number().int().min(1).max(50).optional().nullable(),
   requiredSex: sexSchema,
+  allowYoung: z.boolean().optional().default(true),
 });
 
 export async function createCleaningSector(input: unknown) {
@@ -113,6 +114,7 @@ export async function createCleaningSector(input: unknown) {
       enabled: true,
       peopleCount: parsed.data.peopleCount ?? null,
       requiredSex: parsed.data.requiredSex,
+      allowYoung: parsed.data.allowYoung ?? true,
       isDefault: false,
       sortOrder: await nextSortOrder(parsed.data.typeKey),
     });
@@ -126,6 +128,7 @@ const updateSectorSchema = z.object({
   task: z.string().trim().max(2000),
   peopleCount: z.number().int().min(1).max(50).optional().nullable(),
   requiredSex: sexSchema,
+  allowYoung: z.boolean().optional().default(true),
 });
 
 export async function updateCleaningSector(input: unknown) {
@@ -143,6 +146,7 @@ export async function updateCleaningSector(input: unknown) {
       task: parsed.data.task,
       peopleCount: parsed.data.peopleCount ?? null,
       requiredSex: parsed.data.requiredSex,
+      allowYoung: parsed.data.allowYoung ?? true,
       updatedAt: new Date(),
     })
     .where(eq(cleaningSectors.id, parsed.data.id));
@@ -179,7 +183,12 @@ export async function deleteCleaningSector(input: unknown) {
   return { ok: true };
 }
 
-// Restaura apenas os setores padrão que estão faltando (não apaga personalizados).
+// Setores que exigem adulto por padrão (espelha AssignmentHub: banheiros = allowYoung false).
+const ADULT_ONLY_SECTOR_KEYS = new Set(["banheiro_masculino", "banheiro_feminino", "banheiros"]);
+const SECTOR_SEX_DEFAULTS: Record<string, "any" | "male" | "female"> = {
+  banheiro_masculino: "male",
+  banheiro_feminino: "female",
+};
 export async function restoreDefaultCleaningSectors(input: { key: CleaningTypeKey }) {
   const parsed = z.object({ key: typeKeySchema }).safeParse(input);
   if (!parsed.success) return { ok: false, error: "Tipo inválido." };
@@ -208,7 +217,8 @@ export async function restoreDefaultCleaningSectors(input: { key: CleaningTypeKe
       task: def.task,
       enabled: true,
       peopleCount: null,
-      requiredSex: "any",
+      requiredSex: SECTOR_SEX_DEFAULTS[def.key] ?? "any",
+      allowYoung: !ADULT_ONLY_SECTOR_KEYS.has(def.key),
       isDefault: true,
       sortOrder: order++,
     });
@@ -225,7 +235,8 @@ export async function restoreDefaultCleaningSectors(input: { key: CleaningTypeKe
         task: def.task,
         enabled: true,
         peopleCount: null,
-        requiredSex: "any",
+        requiredSex: SECTOR_SEX_DEFAULTS[def.key] ?? "any",
+        allowYoung: !ADULT_ONLY_SECTOR_KEYS.has(def.key),
         isDefault: true,
         sortOrder: order++,
       });

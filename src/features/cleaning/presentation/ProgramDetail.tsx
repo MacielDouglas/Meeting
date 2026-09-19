@@ -27,6 +27,7 @@ interface ProgramDetailProps {
   program: CleaningProgramItem;
   assignments: CleaningAssignmentItem[];
   typeKey: string;
+  sectors?: { key: string | null; id: string; requiredSex: string; allowYoung: boolean }[];
   onClose: () => void;
   onDeleted: () => void;
   onRefresh: () => void;
@@ -41,6 +42,7 @@ export function ProgramDetail({
   program,
   assignments,
   typeKey,
+  sectors = [],
   onClose,
   onDeleted,
   onRefresh,
@@ -99,6 +101,13 @@ export function ProgramDetail({
         .map((a) => a.personId)
         .filter((id): id is string => id !== null)
     : [];
+
+  const editingSectorRule = editingAssignment
+    ? sectors.find(
+        (s) =>
+          (s.key ?? s.id) === editingAssignment.sectorKey || s.id === editingAssignment.sectorKey,
+      )
+    : null;
 
   return (
     <div className="flex flex-col gap-3">
@@ -221,7 +230,8 @@ export function ProgramDetail({
           typeKey={typeKey}
           currentPersonId={editingAssignment.personId}
           currentPersonName={editingAssignment.personName}
-          requiredSex="any"
+          requiredSex={(editingSectorRule?.requiredSex ?? "any") as "any" | "male" | "female"}
+          allowYoung={editingSectorRule?.allowYoung ?? true}
           dayUsedPersonIds={dayUsedPersonIds}
           onClose={() => setEditingAssignment(null)}
           onUpdated={onRefresh}
