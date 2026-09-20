@@ -103,6 +103,22 @@ export function buildMidweekParts(
     durationMinutes: 1,
     capability: "president",
   });
+  // Conselheiros auxiliares (TheocBase: COUNSELOR_A1/A2). Duração zero: não
+  // consomem o relógio, apenas registram a designação.
+  parts.push({
+    key: "counselor-1",
+    section: "",
+    title: "Conselheiro auxiliar 1",
+    durationMinutes: 0,
+    capability: "president",
+  });
+  parts.push({
+    key: "counselor-2",
+    section: "",
+    title: "Conselheiro auxiliar 2",
+    durationMinutes: 0,
+    capability: "president",
+  });
 
   const treasures = week.meeting["TREASURES FROM GODS WORD"] ?? [];
   const talk = treasures[0];
@@ -266,6 +282,15 @@ export function buildWeekendParts(
     songTheme:
       openingSongNumber != null ? (songThemeByNumber.get(openingSongNumber) ?? null) : null,
     capability: "prayer",
+  });
+  // Presidência da reunião pública (TheocBase: PM_CHAIRMAN). Duração zero:
+  // conduz a reunião sem consumir o relógio.
+  parts.push({
+    key: "weekend-chairman",
+    section: "",
+    title: "Presidencia",
+    durationMinutes: 0,
+    capability: "weekendPresident",
   });
   parts.push({
     key: "public-talk",

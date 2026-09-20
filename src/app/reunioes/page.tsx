@@ -11,7 +11,9 @@ import {
 import { listWatchtowerIssues } from "@/features/meeting-content/application/watchtower-queries";
 import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
 import { ContentSection } from "@/features/meeting-content/presentation/ContentSection";
+import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
+import { OutsideSpeakersClient } from "@/features/meetings/presentation/OutsideSpeakers-client";
 import {
   getMeetingSchedule,
   listScheduleExceptions,
@@ -21,12 +23,13 @@ import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-we
 import { CalendarSkeleton, CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 
-type ReunioesTab = "reunioes" | "designacoes" | "conteudo";
+type ReunioesTab = "reunioes" | "designacoes" | "conteudo" | "oradores";
 
 const TABS: { value: ReunioesTab; label: string }[] = [
   { value: "reunioes", label: "Reuniões" },
   { value: "designacoes", label: "Designações" },
   { value: "conteudo", label: "Conteúdo" },
+  { value: "oradores", label: "Oradores" },
 ];
 
 export default async function ReunioesPage({
@@ -39,7 +42,9 @@ export default async function ReunioesPage({
 
   const params = (await searchParams) ?? {};
   const tab: ReunioesTab =
-    params.tab === "designacoes" || params.tab === "conteudo" ? params.tab : "reunioes";
+    params.tab === "designacoes" || params.tab === "conteudo" || params.tab === "oradores"
+      ? params.tab
+      : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
 
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
@@ -54,6 +59,7 @@ export default async function ReunioesPage({
     specialEventsList,
     exceptionsList,
     meetingScheduleData,
+    speakers,
   ] = await Promise.all([
     getWeeklySchedule(),
     needsMeetings ? listSongs() : Promise.resolve([]),
@@ -81,6 +87,7 @@ export default async function ReunioesPage({
           weekendDay: 0 as const,
           weekendTime: "10:00",
         }),
+    tab === "oradores" ? listOutsideSpeakers() : Promise.resolve([]),
   ]);
 
   return (
@@ -156,6 +163,12 @@ export default async function ReunioesPage({
             scheduleExceptions={exceptionsList}
             meetingSchedule={meetingScheduleData}
           />
+        </Suspense>
+      )}
+
+      {tab === "oradores" && (
+        <Suspense fallback={<CardSkeleton />}>
+          <OutsideSpeakersClient initialSpeakers={speakers} canManage={canManage} />
         </Suspense>
       )}
 

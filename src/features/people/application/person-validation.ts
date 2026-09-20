@@ -46,6 +46,8 @@ export const personFormSchema = z.object({
   watchtowerConductor: booleanField,
   watchtowerReader: booleanField,
   usher: booleanField,
+  unavailable: booleanField,
+  unavailableNotes: z.string().trim().max(300).default(""),
 });
 
 export const updatePersonSchema = personFormSchema.extend({ id: personId });
@@ -95,6 +97,8 @@ export const DEFAULT_PERSON_FORM: PersonFormValues = {
   watchtowerConductor: false,
   watchtowerReader: false,
   usher: false,
+  unavailable: false,
+  unavailableNotes: "",
 };
 
 export function normalizePersonValues(values: PersonFormValues): PersonFormValues {

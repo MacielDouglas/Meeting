@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   updateMeetingAssignment,
+  updateMeetingAssignmentDetails,
   updateMeetingSong,
 } from "@/features/meetings/application/meeting-actions";
 import {
@@ -30,11 +31,21 @@ interface MeetingAssignModalProps {
   capability?: string;
   needsHelper?: boolean;
   isSong?: boolean;
+  partKey?: string;
+  classroom?: string;
+  speakerCongregation?: string;
   songs: SongOption[];
   currentPersonName: string;
   currentHelperName: string;
   onClose: () => void;
   onUpdated: () => void;
+}
+
+function formatLastAssignment(iso: string | null): string {
+  if (!iso) return "sem histórico";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "sem histórico";
+  return `última: ${date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit" })}`;
 }
 
 export function MeetingAssignModal({
@@ -43,6 +54,9 @@ export function MeetingAssignModal({
   capability,
   needsHelper,
   isSong,
+  partKey,
+  classroom,
+  speakerCongregation,
   songs,
   currentPersonName,
   currentHelperName,
@@ -53,10 +67,14 @@ export function MeetingAssignModal({
   const [helpers, setHelpers] = useState<MeetingPerson[]>([]);
   const [search, setSearch] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [orderBy, setOrderBy] = useState<"name" | "rotation">("name");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [songNumber, setSongNumber] = useState("");
+  const [congregation, setCongregation] = useState(speakerCongregation ?? "");
+  const isMinistry = capability === "ministry" || partKey?.startsWith("ministry-") === true;
+  const isPublicTalk = capability === "publicTalk";
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search.trim()), 300);
@@ -72,11 +90,13 @@ export function MeetingAssignModal({
           listMeetingPersons(capabilityField(capability), {
             search: debounced || undefined,
             limit: 60,
+            orderBy,
           }),
           needsHelper
             ? listMeetingPersons(helperCapabilityField(capability), {
                 search: debounced || undefined,
                 limit: 60,
+                orderBy,
               })
             : Promise.resolve([] as MeetingPerson[]),
         ]);
@@ -94,7 +114,7 @@ export function MeetingAssignModal({
     return () => {
       cancelled = true;
     };
-  }, [capability, needsHelper, debounced]);
+  }, [capability, needsHelper, debounced, orderBy]);
 
   async function handleSelect(personId: string, helperId?: string | null) {
     setSaving(true);
@@ -125,6 +145,33 @@ export function MeetingAssignModal({
       setError(result.error ?? "Erro ao salvar.");
       setSaving(false);
     }
+  }
+
+  async function handleClassroomSave(value: "A" | "B" | "C") {
+    setSaving(true);
+    setError(null);
+    const result = await updateMeetingAssignmentDetails({ assignmentId, classroom: value });
+    if (result.ok) {
+      onUpdated();
+    } else {
+      setError(result.error ?? "Erro ao salvar.");
+    }
+    setSaving(false);
+  }
+
+  async function handleCongregationSave() {
+    setSaving(true);
+    setError(null);
+    const result = await updateMeetingAssignmentDetails({
+      assignmentId,
+      speakerCongregation: congregation.trim().slice(0, 160),
+    });
+    if (result.ok) {
+      onUpdated();
+    } else {
+      setError(result.error ?? "Erro ao salvar.");
+    }
+    setSaving(false);
   }
 
   return (
@@ -170,6 +217,57 @@ export function MeetingAssignModal({
           maxLength={60}
           className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
         />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setOrderBy("name")}
+            className={`h-8 flex-1 rounded-full text-xs font-medium ${orderBy === "name" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+          >
+            Ordem alfabética
+          </button>
+          <button
+            type="button"
+            onClick={() => setOrderBy("rotation")}
+            className={`h-8 flex-1 rounded-full text-xs font-medium ${orderBy === "rotation" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+          >
+            Rodízio (menos recentes)
+          </button>
+        </div>
+        {isMinistry && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Sala:</span>
+            {(["A", "B", "C"] as const).map((room) => (
+              <button
+                key={room}
+                type="button"
+                disabled={saving}
+                onClick={() => void handleClassroomSave(room)}
+                className={`h-8 w-10 rounded-lg text-xs font-semibold ${classroom === room ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+              >
+                {room}
+              </button>
+            ))}
+          </div>
+        )}
+        {isPublicTalk && (
+          <div className="flex gap-2">
+            <input
+              value={congregation}
+              onChange={(e) => setCongregation(e.target.value)}
+              placeholder="Congregação do orador"
+              maxLength={160}
+              className="h-9 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none"
+            />
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void handleCongregationSave()}
+              className="h-9 rounded-lg bg-sky-500 px-3 text-sm text-white disabled:opacity-50"
+            >
+              Salvar
+            </button>
+          </div>
+        )}
         {error && (
           <p role="alert" className="text-sm text-red-500">
             {error}
@@ -189,6 +287,9 @@ export function MeetingAssignModal({
                 >
                   <span className="flex-1">
                     {p.firstName} {p.lastName}
+                    <span className="block text-xs text-muted-foreground">
+                      {formatLastAssignment(p.lastAssignmentAt)}
+                    </span>
                   </span>
                   {!needsHelper && <span className="text-xs text-sky-600">Designar</span>}
                 </button>

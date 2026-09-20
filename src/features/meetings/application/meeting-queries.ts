@@ -24,6 +24,11 @@ export interface MeetingAssignmentItem {
   helperPersonName: string;
   songNumber: number | null;
   songTheme: string;
+  classroom: string;
+  study: string;
+  source: string;
+  notes: string;
+  speakerCongregation: string;
   sortOrder: number;
 }
 
@@ -34,6 +39,8 @@ export interface MeetingProgramItem {
   date: string;
   outlineId: string | null;
   status: "draft" | "confirmed";
+  exceptionType: string;
+  exceptionLabel: string;
   assignmentCount: number;
 }
 
@@ -84,6 +91,8 @@ export async function getMeetingProgram(
       date: program.date,
       outlineId: program.outlineId,
       status: program.status as "draft" | "confirmed",
+      exceptionType: program.exceptionType ?? "",
+      exceptionLabel: program.exceptionLabel ?? "",
       assignmentCount: assignmentRows.length,
     },
     assignments: assignmentRows.map((row) => ({
@@ -101,6 +110,11 @@ export async function getMeetingProgram(
       helperPersonName: row.helperPersonName,
       songNumber: row.songNumber,
       songTheme: row.songTheme,
+      classroom: row.classroom ?? "A",
+      study: row.study ?? "",
+      source: row.source ?? "",
+      notes: row.notes ?? "",
+      speakerCongregation: row.speakerCongregation ?? "",
       sortOrder: row.sortOrder,
     })),
   };

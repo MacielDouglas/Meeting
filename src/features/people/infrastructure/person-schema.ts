@@ -42,6 +42,9 @@ export const persons = pgTable("persons", {
   watchtowerConductor: boolean("watchtower_conductor").notNull().default(false),
   watchtowerReader: boolean("watchtower_reader").notNull().default(false),
   usher: boolean("usher").notNull().default(false),
+  unavailable: boolean("unavailable").notNull().default(false),
+  unavailableNotes: text("unavailable_notes").notNull().default(""),
+  lastAssignmentAt: timestamp("last_assignment_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

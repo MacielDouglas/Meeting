@@ -71,6 +71,8 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
     watchtowerConductor: person.watchtowerConductor,
     watchtowerReader: person.watchtowerReader,
     usher: person.usher,
+    unavailable: person.unavailable ?? false,
+    unavailableNotes: person.unavailableNotes ?? "",
   };
 
   return (

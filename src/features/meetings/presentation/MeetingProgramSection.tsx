@@ -79,6 +79,8 @@ interface DisplayPart extends BuiltPart {
   personName: string;
   helperName: string;
   helperPersonName?: string;
+  classroom: string;
+  speakerCongregation: string;
 }
 
 export function MeetingProgramSection({
@@ -158,6 +160,8 @@ export function MeetingProgramSection({
         id: `tpl-${index}`,
         personName: "",
         helperName: "",
+        classroom: "A",
+        speakerCongregation: "",
       }));
     const byKey = new Map(saved.map((a) => [a.partKey, a]));
     return template.map((t, index) => {
@@ -168,6 +172,8 @@ export function MeetingProgramSection({
         personName: s?.personName ?? "",
         helperName: s?.helperPersonName ?? "",
         helperPersonName: s?.helperPersonName ?? "",
+        classroom: s?.classroom ?? "A",
+        speakerCongregation: s?.speakerCongregation ?? "",
         title: s?.title ?? t.title,
         subtitle: s?.subtitle ?? t.subtitle,
         songNumber: s?.songNumber ?? t.songNumber,
@@ -193,8 +199,14 @@ export function MeetingProgramSection({
         durationMinutes: t.durationMinutes,
         songNumber: t.songNumber ?? null,
         songTheme: t.songTheme ?? "",
+        classroom: "A" as const,
+        study: "",
+        source: "",
+        notes: "",
+        speakerCongregation: "",
       })),
       kind === "weekend" ? (outline?.id ?? null) : null,
+      { exceptionType: "", exceptionLabel: "" },
     );
     if (!result.ok) {
       setError(result.error ?? "Erro ao gerar programa.");
@@ -348,9 +360,25 @@ export function MeetingProgramSection({
           {saving
             ? "Gerando…"
             : saved && saved.length > 0
-              ? "Regenerar programa (mantém designações?)"
+              ? "Atualizar programa (mantém designações)"
               : "Gerar programa da semana"}
         </Button>
+      )}
+      {programId && (
+        <div className="flex gap-2 text-xs">
+          <a
+            href={`/reunioes/imprimir?kind=${kind}&week=${weekStart}`}
+            className="flex-1 rounded-full bg-secondary px-3 py-2 text-center font-medium text-muted-foreground"
+          >
+            Imprimir programa
+          </a>
+          <a
+            href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
+            className="flex-1 rounded-full bg-secondary px-3 py-2 text-center font-medium text-muted-foreground"
+          >
+            Baixar iCal
+          </a>
+        </div>
       )}
       {!canManage && (
         <p className="text-xs text-muted-foreground">
@@ -392,6 +420,7 @@ export function MeetingProgramSection({
                     <span className="block truncate text-sm">
                       {part.songNumber ? `Canción ${part.songNumber}` : part.title}
                       {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
+                      {part.classroom && part.classroom !== "A" ? ` · Sala ${part.classroom}` : ""}
                     </span>
                     {(part.subtitle || part.songTheme) && (
                       <span className="block truncate text-xs text-white/60">
@@ -423,6 +452,9 @@ export function MeetingProgramSection({
           capability={editing.capability}
           needsHelper={editing.needsHelper}
           isSong={Boolean(editing.songNumber || editing.key.includes("song"))}
+          partKey={editing.key}
+          classroom={editing.classroom}
+          speakerCongregation={editing.speakerCongregation}
           songs={songs}
           currentPersonName={editing.personName ?? ""}
           currentHelperName={editing.helperPersonName ?? editing.helperName ?? ""}

@@ -382,6 +382,23 @@ export function PersonForm({
         </Section>
       )}
 
+      <Section title={es.unavailable}>
+        <Toggle
+          label={es.unavailable}
+          checked={values.unavailable}
+          onToggle={toggle("unavailable")}
+        />
+        {values.unavailable && (
+          <TextField
+            id="unavailableNotes"
+            label={es.unavailableNotes}
+            value={values.unavailableNotes}
+            placeholder={es.unavailableNotesPlaceholder}
+            onChange={(value) => setField("unavailableNotes", value)}
+          />
+        )}
+      </Section>
+
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "…" : es.save}
       </Button>

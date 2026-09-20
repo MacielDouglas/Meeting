@@ -25,6 +25,18 @@ const partSchema = z.object({
   durationMinutes: z.number().int().min(0).max(180),
   songNumber: z.number().int().min(1).max(1000).nullable().optional(),
   songTheme: z.string().max(300).default(""),
+  classroom: z.enum(["A", "B", "C"]).default("A"),
+  study: z.string().max(300).default(""),
+  source: z.string().max(300).default(""),
+  notes: z.string().max(500).default(""),
+  speakerCongregation: z.string().max(160).default(""),
+});
+
+const exceptionSchema = z.object({
+  exceptionType: z
+    .enum(["", "no_meeting", "circuit_visit", "convention", "virtual_convention", "special"])
+    .default(""),
+  exceptionLabel: z.string().max(300).default(""),
 });
 
 const MEETING_TABLES_MISSING_ERROR =
@@ -45,6 +57,7 @@ export async function saveMeetingProgram(
   date: string,
   parts: z.infer<typeof partSchema>[],
   outlineId?: string | null,
+  exception?: z.infer<typeof exceptionSchema> | null,
 ): Promise<{ ok: boolean; programId?: string; error?: string }> {
   const parsedKind = kindSchema.safeParse(kind);
   const parsedWeek = weekSchema.safeParse(weekStart);
@@ -54,6 +67,8 @@ export async function saveMeetingProgram(
   }
   const parsedParts = z.array(partSchema).max(60).safeParse(parts);
   if (!parsedParts.success) return { ok: false, error: "Partes inválidas." };
+  const parsedException = exceptionSchema.safeParse(exception ?? {});
+  if (!parsedException.success) return { ok: false, error: "Exceção inválida." };
 
   const user = await requirePrivilegedUser();
   const db = getDb();
@@ -76,9 +91,14 @@ export async function saveMeetingProgram(
     if (existing[0]) {
       await db
         .update(meetingPrograms)
-        .set({ date, outlineId: outlineId ?? null, updatedAt: new Date() })
+        .set({
+          date,
+          outlineId: outlineId ?? null,
+          exceptionType: parsedException.data.exceptionType,
+          exceptionLabel: parsedException.data.exceptionLabel,
+          updatedAt: new Date(),
+        })
         .where(eq(meetingPrograms.id, programId));
-      await db.delete(meetingAssignments).where(eq(meetingAssignments.programId, programId));
     } else {
       await db.insert(meetingPrograms).values({
         id: programId,
@@ -86,26 +106,64 @@ export async function saveMeetingProgram(
         weekStart,
         date,
         outlineId: outlineId ?? null,
+        exceptionType: parsedException.data.exceptionType,
+        exceptionLabel: parsedException.data.exceptionLabel,
         status: "draft",
         createdBy: user.id,
       });
     }
-    if (parsedParts.data.length > 0) {
-      await db.insert(meetingAssignments).values(
-        parsedParts.data.map((p, index) => ({
+    // Upsert não-destrutivo por part_key: preserva designações (pessoa,
+    // ajudante, cântico) quando a parte continua existindo; remove apenas as
+    // partes que saíram do modelo e insere as novas.
+    const current = await db
+      .select()
+      .from(meetingAssignments)
+      .where(eq(meetingAssignments.programId, programId));
+    const currentByKey = new Map(current.map((row) => [row.partKey, row]));
+    const incomingKeys = new Set(parsedParts.data.map((p) => p.partKey));
+
+    for (const stale of current) {
+      if (!incomingKeys.has(stale.partKey)) {
+        await db.delete(meetingAssignments).where(eq(meetingAssignments.id, stale.id));
+      }
+    }
+    let sortOrder = 0;
+    for (const p of parsedParts.data) {
+      const kept = currentByKey.get(p.partKey);
+      const values = {
+        section: p.section,
+        title: p.title,
+        subtitle: p.subtitle,
+        startTime: p.startTime,
+        durationMinutes: p.durationMinutes,
+        classroom: p.classroom,
+        study: p.study,
+        source: p.source,
+        notes: p.notes,
+        speakerCongregation: p.speakerCongregation,
+        sortOrder,
+      };
+      sortOrder += 1;
+      if (kept) {
+        await db
+          .update(meetingAssignments)
+          .set({
+            ...values,
+            // Preserva cântico salvo se a reimportação vier sem número.
+            songNumber: p.songNumber ?? kept.songNumber,
+            songTheme: p.songTheme || kept.songTheme,
+          })
+          .where(eq(meetingAssignments.id, kept.id));
+      } else {
+        await db.insert(meetingAssignments).values({
           id: randomUUID(),
           programId,
           partKey: p.partKey,
-          section: p.section,
-          title: p.title,
-          subtitle: p.subtitle,
-          startTime: p.startTime,
-          durationMinutes: p.durationMinutes,
+          ...values,
           songNumber: p.songNumber ?? null,
           songTheme: p.songTheme,
-          sortOrder: index,
-        })),
-      );
+        });
+      }
     }
   } catch (error) {
     console.error("[meetings] falha ao salvar programa", { programId, error });
@@ -120,6 +178,15 @@ const assignSchema = z.object({
   assignmentId: z.string().min(1).max(64),
   personId: z.string().min(1).max(64).nullable(),
   helperPersonId: z.string().min(1).max(64).nullable().optional(),
+});
+
+const assignmentDetailsSchema = z.object({
+  assignmentId: z.string().min(1).max(64),
+  classroom: z.enum(["A", "B", "C"]).optional(),
+  speakerCongregation: z.string().max(160).optional(),
+  study: z.string().max(300).optional(),
+  source: z.string().max(300).optional(),
+  notes: z.string().max(500).optional(),
 });
 
 export async function updateMeetingAssignment(
@@ -164,10 +231,66 @@ export async function updateMeetingAssignment(
       .update(meetingAssignments)
       .set({ personId, personName, helperPersonId: helperId, helperPersonName: helperName })
       .where(eq(meetingAssignments.id, assignmentId));
+    // Histórico para rodízio (Fase 3): registra a data da última designação.
+    const now = new Date();
+    const touchedIds = [personId, helperPersonId ?? helperId].filter(
+      (value): value is string => typeof value === "string" && value.length > 0,
+    );
+    for (const id of new Set(touchedIds)) {
+      await db.update(persons).set({ lastAssignmentAt: now }).where(eq(persons.id, id));
+    }
   } catch (error) {
     console.error("[meetings] falha ao designar", { assignmentId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
     return { ok: false, error: "Não foi possível salvar a designação." };
+  }
+  revalidatePath("/reunioes");
+  return { ok: true };
+}
+
+export async function updateMeetingAssignmentDetails(
+  input: z.infer<typeof assignmentDetailsSchema>,
+): Promise<{ ok: boolean; error?: string }> {
+  await requirePrivilegedUser();
+  const parsed = assignmentDetailsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Dados inválidos." };
+  const { assignmentId, ...fields } = parsed.data;
+  if (Object.keys(fields).length === 0) return { ok: true };
+  try {
+    await getDb()
+      .update(meetingAssignments)
+      .set(fields)
+      .where(eq(meetingAssignments.id, assignmentId));
+  } catch (error) {
+    console.error("[meetings] falha ao salvar detalhes da parte", { assignmentId, error });
+    if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
+    return { ok: false, error: "Não foi possível salvar os detalhes." };
+  }
+  revalidatePath("/reunioes");
+  return { ok: true };
+}
+
+export async function updateMeetingException(
+  programId: string,
+  exception: z.infer<typeof exceptionSchema>,
+): Promise<{ ok: boolean; error?: string }> {
+  await requirePrivilegedUser();
+  const parsedId = z.string().min(1).max(64).safeParse(programId);
+  const parsed = exceptionSchema.safeParse(exception);
+  if (!parsedId.success || !parsed.success) return { ok: false, error: "Dados inválidos." };
+  try {
+    await getDb()
+      .update(meetingPrograms)
+      .set({
+        exceptionType: parsed.data.exceptionType,
+        exceptionLabel: parsed.data.exceptionLabel,
+        updatedAt: new Date(),
+      })
+      .where(eq(meetingPrograms.id, parsedId.data));
+  } catch (error) {
+    console.error("[meetings] falha ao salvar exceção", { programId, error });
+    if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
+    return { ok: false, error: "Não foi possível salvar a exceção." };
   }
   revalidatePath("/reunioes");
   return { ok: true };

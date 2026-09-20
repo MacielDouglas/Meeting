@@ -12,6 +12,8 @@ export const meetingPrograms = pgTable("meeting_programs", {
   outlineId: text("outline_id"),
   createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }),
   status: meetingProgramStatusEnum("status").notNull().default("draft"),
+  exceptionType: text("exception_type").notNull().default(""),
+  exceptionLabel: text("exception_label").notNull().default(""),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -33,6 +35,11 @@ export const meetingAssignments = pgTable("meeting_assignments", {
   helperPersonName: text("helper_person_name").notNull().default(""),
   songNumber: integer("song_number"),
   songTheme: text("song_theme").notNull().default(""),
+  classroom: text("classroom").notNull().default("A"),
+  study: text("study").notNull().default(""),
+  source: text("source").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  speakerCongregation: text("speaker_congregation").notNull().default(""),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

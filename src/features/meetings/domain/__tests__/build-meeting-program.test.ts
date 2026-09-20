@@ -82,9 +82,17 @@ describe("build-meeting-program", () => {
       { title: "Cómo seguir siendo amigos", openingSong: 90, closingSong: 124 },
       songs,
     );
-    expect(parts.map((p) => p.startTime)).toEqual(["09:00", "09:05", "09:35", "09:40", "10:40"]);
-    expect(parts[2].songTheme).toBe("Animémonos unos a otros");
-    expect(parts[4].songTheme).toBe("Siempre fieles");
-    expect(addMinutes(parts[4].startTime, parts[4].durationMinutes)).toBe("10:45");
+    expect(parts.map((p) => p.startTime)).toEqual([
+      "09:00",
+      "09:05",
+      "09:05",
+      "09:35",
+      "09:40",
+      "10:40",
+    ]);
+    expect(parts.find((p) => p.key === "weekend-chairman")?.capability).toBe("weekendPresident");
+    expect(parts[3].songTheme).toBe("Animémonos unos a otros");
+    expect(parts[5].songTheme).toBe("Siempre fieles");
+    expect(addMinutes(parts[5].startTime, parts[5].durationMinutes)).toBe("10:45");
   });
 });

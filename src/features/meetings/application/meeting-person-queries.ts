@@ -2,6 +2,7 @@
 
 import { and, asc, eq, ilike, or } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { FEMALE_RESTRICTED_KEYS } from "@/features/people/domain/person";
 import { persons } from "@/features/people/infrastructure/person-schema";
 import { getDb } from "@/shared/lib/db";
 
@@ -11,6 +12,8 @@ export interface MeetingPerson {
   lastName: string;
   sex: "male" | "female";
   helper: boolean;
+  unavailable: boolean;
+  lastAssignmentAt: string | null;
 }
 
 const CAPABILITY_COLUMNS = {
@@ -30,7 +33,13 @@ const CAPABILITY_COLUMNS = {
 
 export async function listMeetingPersons(
   capabilityField?: string | null,
-  options?: { search?: string; limit?: number; helperOnly?: boolean },
+  options?: {
+    search?: string;
+    limit?: number;
+    helperOnly?: boolean;
+    includeUnavailable?: boolean;
+    orderBy?: "name" | "rotation";
+  },
 ): Promise<MeetingPerson[]> {
   await requireAuthenticatedUser();
   const db = getDb();
@@ -40,6 +49,13 @@ export async function listMeetingPersons(
       ? CAPABILITY_COLUMNS[capabilityField as keyof typeof CAPABILITY_COLUMNS]
       : null;
   if (field) conditions.push(eq(field, true));
+  // Defesa em profundidade: partes restritas a homens nunca listam mulheres,
+  // mesmo se o cadastro estiver inconsistente (o formulário já normaliza).
+  if (capabilityField && (FEMALE_RESTRICTED_KEYS as readonly string[]).includes(capabilityField)) {
+    conditions.push(eq(persons.sex, "male"));
+  }
+  // Indisponíveis ficam de fora por padrão (TheocBase: unavailability).
+  if (!options?.includeUnavailable) conditions.push(eq(persons.unavailable, false));
   if (options?.helperOnly) conditions.push(eq(persons.helper, true));
   const search = options?.search?.trim();
   if (search) {
@@ -55,14 +71,24 @@ export async function listMeetingPersons(
       lastName: persons.lastName,
       sex: persons.sex,
       helper: persons.helper,
+      unavailable: persons.unavailable,
+      lastAssignmentAt: persons.lastAssignmentAt,
     })
     .from(persons)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(asc(persons.firstName), asc(persons.lastName))
+    .orderBy(
+      ...(options?.orderBy === "rotation"
+        ? [asc(persons.lastAssignmentAt), asc(persons.firstName), asc(persons.lastName)]
+        : [asc(persons.firstName), asc(persons.lastName)]),
+    )
     .limit(limit);
   return rows.map((row) => ({
-    ...row,
+    id: row.id,
+    firstName: row.firstName,
+    lastName: row.lastName,
     sex: row.sex as "male" | "female",
     helper: row.helper ?? false,
+    unavailable: row.unavailable ?? false,
+    lastAssignmentAt: row.lastAssignmentAt ? row.lastAssignmentAt.toISOString() : null,
   }));
 }
