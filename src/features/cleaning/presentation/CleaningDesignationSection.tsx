@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
 import { createCleaningProgram } from "@/features/cleaning/application/cleaning-program-actions";
 import {
   type CleaningAssignmentItem,
@@ -68,7 +69,6 @@ export function CleaningDesignationSection({
   const [calendarMonth, setCalendarMonth] = useState(now.getUTCMonth());
 
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
-  const [programs, setPrograms] = useState<CleaningProgramItem[]>([]);
   const [viewingProgram, setViewingProgram] = useState<{
     program: CleaningProgramItem;
     assignments: CleaningAssignmentItem[];
@@ -87,23 +87,48 @@ export function CleaningDesignationSection({
   const [rangeStart, setRangeStart] = useState(rangeStartDefault);
   const [rangeEnd, setRangeEnd] = useState(rangeEndDefault);
 
-  useEffect(() => {
+  // Reajusta o período quando mês/ano ou horários das reuniões mudam.
+  // Ajuste de estado durante o render (sem useEffect) — o usuário continua
+  // livre para editar as datas, que só são recalculadas quando as deps mudam.
+  const [prevRangeDeps, setPrevRangeDeps] = useState({
+    year: calendarYear,
+    month: calendarMonth,
+    midweekDay: meetingSchedule.midweekDay,
+    weekendDay: meetingSchedule.weekendDay,
+  });
+  if (
+    prevRangeDeps.year !== calendarYear ||
+    prevRangeDeps.month !== calendarMonth ||
+    prevRangeDeps.midweekDay !== meetingSchedule.midweekDay ||
+    prevRangeDeps.weekendDay !== meetingSchedule.weekendDay
+  ) {
+    setPrevRangeDeps({
+      year: calendarYear,
+      month: calendarMonth,
+      midweekDay: meetingSchedule.midweekDay,
+      weekendDay: meetingSchedule.weekendDay,
+    });
     setRangeStart(
       toISODateInput(getFirstMidweek(calendarYear, calendarMonth, meetingSchedule.midweekDay)),
     );
     setRangeEnd(
       toISODateInput(getLastWeekend(calendarYear, calendarMonth, meetingSchedule.weekendDay)),
     );
-  }, [calendarYear, calendarMonth, meetingSchedule.midweekDay, meetingSchedule.weekendDay]);
+  }
+
+  // Programas via TanStack Query (sem fetch em useEffect): busca fresca a cada
+  // montagem/troca de tipo (`staleTime: 0`) e mantém a lista anterior durante
+  // refetch, como antes.
+  const { data: programs = [], refetch: refetchPrograms } = useQuery({
+    queryKey: ["cleaning-programs", selectedType],
+    queryFn: () => listCleaningPrograms(selectedType),
+    staleTime: 0,
+    placeholderData: (previousData) => previousData,
+  });
 
   const loadPrograms = useCallback(async () => {
-    const items = await listCleaningPrograms(selectedType);
-    setPrograms(items);
-  }, [selectedType]);
-
-  useEffect(() => {
-    void loadPrograms();
-  }, [loadPrograms]);
+    await refetchPrograms();
+  }, [refetchPrograms]);
 
   // Só programas ativos bloqueiam novas tabelas (arquivados liberam o período).
   const activePrograms = useMemo(() => programs.filter((p) => p.status !== "archived"), [programs]);
@@ -373,8 +398,6 @@ export function CleaningDesignationSection({
               selectedDates={selectedDates}
               programDates={programDates}
               onDateClick={handleDateClick}
-              midweekDay={meetingSchedule.midweekDay}
-              weekendDay={meetingSchedule.weekendDay}
             />
           )}
 

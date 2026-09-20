@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listCleaningConfig } from "@/features/cleaning/application/queries";
 import { CleaningSection } from "@/features/cleaning/presentation/CleaningSection";
@@ -13,6 +13,8 @@ import {
 import { MeetingScheduleForm } from "@/features/settings/presentation/MeetingScheduleForm";
 import { ScheduleExceptionSection } from "@/features/settings/presentation/ScheduleExceptionSection";
 import { SpecialEventSection } from "@/features/settings/presentation/SpecialEventSection";
+import { CardSkeleton, FormSkeleton } from "@/shared/components/skeletons";
+import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
 type ConfigTab = "reunioes" | "limpeza" | "designacoes";
@@ -35,12 +37,21 @@ export default async function ConfiguracionPage({
   const tab: ConfigTab =
     params.tab === "limpeza" || params.tab === "designacoes" ? params.tab : "reunioes";
 
+  // Shell server busca só o que a aba ativa precisa (evita 5 queries em toda navegação).
+  const needsReunioes = tab === "reunioes";
   const [schedule, events, exceptions, cleaning, designations] = await Promise.all([
-    getMeetingSchedule(),
-    listSpecialEvents(),
-    listScheduleExceptions(),
-    listCleaningConfig(),
-    listDesignationConfig(),
+    needsReunioes
+      ? getMeetingSchedule()
+      : Promise.resolve({
+          midweekDay: 2 as const,
+          midweekTime: "19:30",
+          weekendDay: 0 as const,
+          weekendTime: "10:00",
+        }),
+    needsReunioes ? listSpecialEvents() : Promise.resolve([]),
+    needsReunioes ? listScheduleExceptions() : Promise.resolve([]),
+    tab === "limpeza" ? listCleaningConfig() : Promise.resolve([]),
+    tab === "designacoes" ? listDesignationConfig() : Promise.resolve([]),
   ]);
 
   return (
@@ -49,29 +60,44 @@ export default async function ConfiguracionPage({
         <h1 className="text-2xl font-bold tracking-tight">{es.configuracion}</h1>
       </header>
 
-      <nav className="flex gap-2" aria-label="Seções de configurações">
-        {TABS.map((item) => (
-          <Link
-            key={item.value}
-            href={`/configuracion?tab=${item.value}`}
-            className={`h-9 flex-1 rounded-full px-3 text-sm font-medium transition-colors text-center leading-9 ${
-              tab === item.value ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <Suspense
+        fallback={
+          <div className="flex gap-2" aria-hidden>
+            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
+            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
+            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
+          </div>
+        }
+      >
+        <TabNav
+          param="tab"
+          defaultValue="reunioes"
+          ariaLabel="Seções de configurações"
+          items={TABS.map((item) => ({
+            value: item.value,
+            label: item.label,
+            href: `/configuracion?tab=${item.value}`,
+          }))}
+        />
+      </Suspense>
 
       {tab === "reunioes" && (
-        <>
+        <Suspense fallback={<FormSkeleton fields={4} />}>
           <MeetingScheduleForm initial={schedule} />
           <SpecialEventSection events={events} />
           <ScheduleExceptionSection exceptions={exceptions} />
-        </>
+        </Suspense>
       )}
-      {tab === "limpeza" && <CleaningSection initial={cleaning} />}
-      {tab === "designacoes" && <DesignationSection initial={designations} />}
+      {tab === "limpeza" && (
+        <Suspense fallback={<CardSkeleton />}>
+          <CleaningSection initial={cleaning} />
+        </Suspense>
+      )}
+      {tab === "designacoes" && (
+        <Suspense fallback={<CardSkeleton />}>
+          <DesignationSection initial={designations} />
+        </Suspense>
+      )}
     </main>
   );
 }

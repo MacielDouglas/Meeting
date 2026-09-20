@@ -92,14 +92,6 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
-function _getDayOfWeek(dateStr: string): number {
-  return parseISODate(dateStr).getUTCDay();
-}
-
-function _isDateInRange(dateStr: string, start: string, end: string): boolean {
-  return dateStr >= start && dateStr <= end;
-}
-
 function findAssemblyForWeek(
   weekStart: string,
   weekEnd: string,

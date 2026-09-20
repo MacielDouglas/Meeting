@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { FaArrowLeft, FaCheck } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listEnabledDesignationFlags } from "@/features/cleaning/application/queries";
 import { listPersonOptions, listUserOptions } from "@/features/people/application/queries";
 import { PersonForm } from "@/features/people/presentation/PersonForm";
+import { FormSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
 
 export default async function NewPersonPage() {
@@ -29,12 +31,14 @@ export default async function NewPersonPage() {
           <FaCheck aria-hidden size={20} />
         </button>
       </header>
-      <PersonForm
-        mode="create"
-        familyOptions={familyOptions}
-        userOptions={userOptions}
-        enabledDesignationFlags={enabledFlags}
-      />
+      <Suspense fallback={<FormSkeleton fields={6} />}>
+        <PersonForm
+          mode="create"
+          familyOptions={familyOptions}
+          userOptions={userOptions}
+          enabledDesignationFlags={enabledFlags}
+        />
+      </Suspense>
     </main>
   );
 }

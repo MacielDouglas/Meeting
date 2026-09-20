@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import { getCurrentUser } from "@/features/auth/application/session";
+import { Suspense } from "react";
 import { OnlineStatus } from "@/features/offline/OnlineStatus";
 import { QueryProvider } from "@/features/offline/QueryProvider";
-import { BottomNav } from "@/shared/components/BottomNav";
+import { BottomNavShell } from "@/shared/components/BottomNavShell";
 import { es } from "@/shared/i18n/es";
 import "./globals.css";
 
@@ -47,17 +47,18 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({ children }: { children: ReactNode }) {
-  const user = await getCurrentUser();
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
         <QueryProvider>
           <div className="app-shell flex flex-col gap-3 pb-20">
-            <OnlineStatus />
+            <Suspense fallback={null}>
+              <OnlineStatus />
+            </Suspense>
             {children}
           </div>
-          <BottomNav showSettings={user?.role === "owner"} />
+          <BottomNavShell />
         </QueryProvider>
       </body>
     </html>

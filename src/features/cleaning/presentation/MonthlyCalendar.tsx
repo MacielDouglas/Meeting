@@ -49,8 +49,12 @@ interface MonthlyCalendarProps {
   selectedDates: Set<string>;
   programDates: Set<string>;
   onDateClick: (date: string) => void;
-  midweekDay: number;
-  weekendDay: number;
+}
+
+interface CalendarCell {
+  /** Id estável da célula: data ISO para dias, posição da grade para vazios. */
+  key: string;
+  day: number | null;
 }
 
 export function MonthlyCalendar({
@@ -62,18 +66,15 @@ export function MonthlyCalendar({
   selectedDates,
   programDates,
   onDateClick,
-  midweekDay: _midweekDay,
-  weekendDay: _weekendDay,
 }: MonthlyCalendarProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);
   const dayMap = new Map(days.map((d) => [d.date, d]));
 
-  const cells: (number | null)[] = [];
-  for (let i = 0; i < firstDay; i++) cells.push(null);
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-
-  while (cells.length % 7 !== 0) cells.push(null);
+  const cells: CalendarCell[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push({ day: null, key: `pad-start-${i}` });
+  for (let d = 1; d <= daysInMonth; d++) cells.push({ day: d, key: toISODate(year, month, d) });
+  while (cells.length % 7 !== 0) cells.push({ day: null, key: `pad-end-${cells.length}` });
 
   return (
     <div className="rounded-xl border bg-background p-3">
@@ -108,11 +109,10 @@ export function MonthlyCalendar({
       </div>
 
       <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          // biome-ignore lint/suspicious/noArrayIndexKey: grid estatica 42 celulas, ordem fixa
-          if (day === null) return <div key={`empty-${i}`} />;
+        {cells.map((cell) => {
+          if (cell.day === null) return <div key={cell.key} />;
 
-          const dateStr = toISODate(year, month, day);
+          const dateStr = cell.key;
           const info = dayMap.get(dateStr);
           const isMeeting = info?.isMidweek || info?.isWeekend;
           const isAssembly = info?.assemblyType && !info?.celebrationReplacement;
@@ -126,9 +126,10 @@ export function MonthlyCalendar({
           else if (isMeeting) bgClass = "bg-sky-50 text-sky-700";
 
           const isBlocked = hasProgram;
+          const day = cell.day;
           return (
             <button
-              key={dateStr}
+              key={cell.key}
               type="button"
               disabled={isBlocked}
               onClick={() => onDateClick(dateStr)}

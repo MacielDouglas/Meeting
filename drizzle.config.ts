@@ -9,6 +9,7 @@ export default defineConfig({
     "./src/features/cleaning/infrastructure/cleaning-program-schema.ts",
     "./src/features/designations/infrastructure/designation-schema.ts",
     "./src/features/meeting-content/infrastructure/meeting-content-schema.ts",
+    "./src/features/meetings/infrastructure/meeting-schema.ts",
   ],
   out: "./drizzle",
   dialect: "postgresql",

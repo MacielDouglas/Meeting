@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { FaArrowLeft, FaCheck } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listEnabledDesignationFlags } from "@/features/cleaning/application/queries";
@@ -12,6 +13,7 @@ import {
 import { getFullName } from "@/features/people/domain/person";
 import { DeletePersonButton } from "@/features/people/presentation/DeletePersonButton";
 import { PersonForm } from "@/features/people/presentation/PersonForm";
+import { FormSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
 
 interface EditPersonPageProps {
@@ -87,14 +89,16 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
           </button>
         </div>
       </header>
-      <PersonForm
-        mode="edit"
-        personId={person.id}
-        initial={initial}
-        familyOptions={familyOptions}
-        userOptions={userOptions}
-        enabledDesignationFlags={enabledFlags}
-      />
+      <Suspense fallback={<FormSkeleton fields={6} />}>
+        <PersonForm
+          mode="edit"
+          personId={person.id}
+          initial={initial}
+          familyOptions={familyOptions}
+          userOptions={userOptions}
+          enabledDesignationFlags={enabledFlags}
+        />
+      </Suspense>
     </main>
   );
 }
