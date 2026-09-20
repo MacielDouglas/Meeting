@@ -20,8 +20,10 @@ import {
   listSpecialEvents,
 } from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
+import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { CalendarSkeleton, CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
+import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
 
 type ReunioesTab = "reunioes" | "designacoes" | "conteudo" | "oradores";
 
@@ -46,7 +48,6 @@ export default async function ReunioesPage({
       ? params.tab
       : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
-
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
   const [
     schedule,
@@ -95,7 +96,7 @@ export default async function ReunioesPage({
       <header>
         <h1 className="text-2xl font-bold tracking-tight">Reuniões</h1>
         <p className="text-sm text-muted-foreground">
-          {schedule.weekStart} — {schedule.weekEnd}
+          {formatDateBR(schedule.weekStart)} — {formatDateBR(schedule.weekEnd)}
         </p>
       </header>
 
@@ -134,6 +135,7 @@ export default async function ReunioesPage({
                     w.weeks.map((week) => ({
                       label: `${w.name} — ${week.week}`,
                       meeting: week.meeting,
+                      weekStart: week.weekStart ?? null,
                     })),
                   )
                 : []
@@ -145,12 +147,15 @@ export default async function ReunioesPage({
                 title: a.title,
                 openingSong: a.openingSong,
                 closingSong: a.closingSong,
+                weekStart: a.weekStart,
+                weekEnd: a.weekEnd,
               })),
             )}
             midweekTime={meetingScheduleData.midweekTime}
             weekendTime={meetingScheduleData.weekendTime}
             canManage={canManage}
             initialWeekStart={schedule.weekStart}
+            initialKind={selectInitialKind(todayLocalISO(), schedule.midweek.date)}
           />
         </Suspense>
       )}

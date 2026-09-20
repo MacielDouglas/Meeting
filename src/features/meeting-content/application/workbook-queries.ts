@@ -5,6 +5,7 @@ import {
   songs,
 } from "@/features/meeting-content/infrastructure/meeting-content-schema";
 import type { WorkbookContentWeek } from "@/features/meeting-content/infrastructure/workbook-parser";
+import { resolveWorkbookWeekStart } from "@/features/meeting-content/infrastructure/workbook-parser";
 import { getDb } from "@/shared/lib/db";
 
 export interface WorkbookIssueItem {
@@ -36,6 +37,8 @@ export async function listWorkbookIssues(): Promise<WorkbookIssueItem[]> {
       const content = JSON.parse(row.content) as { name?: string; weeks?: WorkbookContentWeek[] };
       const weeks: WorkbookContentWeek[] = (content.weeks ?? []).map((week) => ({
         week: week.week,
+        // Importações antigas não guardavam weekStart: resolve do rótulo.
+        weekStart: week.weekStart ?? resolveWorkbookWeekStart(week.week, row.name) ?? undefined,
         meeting: {
           ...week.meeting,
           song: week.meeting.song?.map((s) => ({

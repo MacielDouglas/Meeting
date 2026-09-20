@@ -9,6 +9,7 @@ import {
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
+import { formatDateBR } from "@/shared/lib/format-date";
 
 const SECTION_COLORS: Record<string, string> = {
   "TESOROS DE LA BIBLIA": "#656164",
@@ -121,7 +122,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
           <h1 className="text-2xl font-bold tracking-tight">Impressão do programa</h1>
           <p className="text-sm text-muted-foreground">
             {kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"} · semana de{" "}
-            {weekStart}
+            {formatDateBR(weekStart)}
           </p>
         </div>
         <div className="flex gap-2">
@@ -154,7 +155,9 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
             {result.program.exceptionLabel && (
               <p className="mt-1 text-sm text-muted-foreground">{result.program.exceptionLabel}</p>
             )}
-            <p className="mt-1 text-sm text-muted-foreground">{result.program.date}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {formatDateBR(result.program.date)}
+            </p>
           </section>
         ) : (
           <article className="overflow-hidden rounded-xl border bg-white text-black">
@@ -163,7 +166,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                 {kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"}
               </h2>
               <p className="text-sm text-neutral-600">
-                {result.program.date}
+                {formatDateBR(result.program.date)}
                 {result.program.exceptionLabel
                   ? ` — ${EXCEPTION_LABELS[result.program.exceptionType] ?? result.program.exceptionType}: ${result.program.exceptionLabel}`
                   : ""}

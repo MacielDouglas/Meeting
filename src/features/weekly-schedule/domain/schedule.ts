@@ -41,3 +41,15 @@ export function getWeekRange(reference: Date = new Date()): { weekStart: string;
   sunday.setDate(monday.getDate() + 6);
   return { weekStart: toISODate(monday), weekEnd: toISODate(sunday) };
 }
+
+/**
+ * Escolhe qual reunião mostrar primeiro ao abrir a página: se hoje é anterior
+ * ou igual ao dia da reunião entre semana, mostra ela; se já passou, mostra a
+ * de fim de semana. Comparação lexicográfica vale porque é "AAAA-MM-DD".
+ */
+export function selectInitialKind(
+  todayISODate: string,
+  midweekISODate: string,
+): "midweek" | "weekend" {
+  return todayISODate <= midweekISODate ? "midweek" : "weekend";
+}

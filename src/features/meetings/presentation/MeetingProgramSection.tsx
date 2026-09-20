@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { JwpubImportButton } from "@/features/meeting-content/presentation/JwpubImportButton-client";
 import { saveMeetingProgram } from "@/features/meetings/application/meeting-actions";
 import {
   getMeetingProgram,
@@ -13,8 +14,13 @@ import {
   buildWeekendParts,
   type WorkbookWeekLike,
 } from "@/features/meetings/domain/build-meeting-program";
+import {
+  findWatchtowerArticleIndex,
+  findWorkbookWeekIndex,
+} from "@/features/meetings/domain/match-meeting-content";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import { formatDateBR } from "@/shared/lib/format-date";
 import { MeetingAssignModal } from "./MeetingAssignModal";
 
 interface SongOption {
@@ -29,6 +35,7 @@ interface OutlineOption {
 interface WorkbookOption {
   label: string;
   meeting: WorkbookWeekLike["meeting"];
+  weekStart: string | null;
 }
 interface ArticleOption {
   id: string;
@@ -36,6 +43,8 @@ interface ArticleOption {
   title: string;
   openingSong: number | null;
   closingSong: number | null;
+  weekStart: string | null;
+  weekEnd: string | null;
 }
 
 interface MeetingProgramSectionProps {
@@ -47,6 +56,7 @@ interface MeetingProgramSectionProps {
   weekendTime: string;
   canManage: boolean;
   initialWeekStart: string;
+  initialKind: "midweek" | "weekend";
 }
 
 function mondayOf(offsetWeeks: number): string {
@@ -92,15 +102,16 @@ export function MeetingProgramSection({
   weekendTime,
   canManage,
   initialWeekStart,
+  initialKind,
 }: MeetingProgramSectionProps) {
-  const [kind, setKind] = useState<"midweek" | "weekend">("midweek");
+  const [kind, setKind] = useState<"midweek" | "weekend">(initialKind);
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(
     () => (weekOffset === 0 ? initialWeekStart : mondayOf(weekOffset)),
     [weekOffset, initialWeekStart],
   );
-  const [workbookIndex, setWorkbookIndex] = useState(0);
-  const [articleIndex, setArticleIndex] = useState(0);
+  const [workbookPick, setWorkbookPick] = useState<{ week: string; index: number } | null>(null);
+  const [articlePick, setArticlePick] = useState<{ week: string; index: number } | null>(null);
   const [outlineId, setOutlineId] = useState<string>("");
   const [openingSong, setOpeningSong] = useState<string>("");
   const [saved, setSaved] = useState<MeetingAssignmentItem[] | null>(null);
@@ -111,15 +122,35 @@ export function MeetingProgramSection({
   const [editing, setEditing] = useState<DisplayPart | null>(null);
 
   const songMap = useMemo(() => new Map(songs.map((s) => [s.number, s.theme])), [songs]);
-  const workbook = workbooks[workbookIndex] ?? null;
-  const article = articles[articleIndex] ?? null;
-  const outline = outlines.find((o) => o.id === outlineId) ?? outlines[0] ?? null;
+
+  // Seleção inteligente: encontra exatamente a semana da apostila e o estudo
+  // da Sentinela da semana do programa. Sem correspondência exata não há
+  // default — a escolha manual ("Automático" volta ao modo exato) vale só para
+  // a semana atual, sem vazar para outras semanas.
+  const autoWorkbookIndex = useMemo(
+    () => findWorkbookWeekIndex(workbooks, weekStart),
+    [workbooks, weekStart],
+  );
+  const workbookIndex = workbookPick?.week === weekStart ? workbookPick.index : autoWorkbookIndex;
+  const workbook = workbookIndex != null ? (workbooks[workbookIndex] ?? null) : null;
+
+  const autoArticleIndex = useMemo(
+    () => findWatchtowerArticleIndex(articles, weekStart),
+    [articles, weekStart],
+  );
+  const articleIndex = articlePick?.week === weekStart ? articlePick.index : autoArticleIndex;
+  const article = articleIndex != null ? (articles[articleIndex] ?? null) : null;
+
+  // Discurso sem default: começa vazio ("Nenhum") e só assume valor por
+  // escolha do usuário ou pelo programa salvo da semana.
+  const outline = outlines.find((o) => o.id === outlineId) ?? null;
 
   const template: BuiltPart[] = useMemo(() => {
     if (kind === "midweek") {
       if (!workbook) return [];
       return buildMidweekParts({ meeting: workbook.meeting }, midweekTime, songMap);
     }
+    if (!article) return [];
     return buildWeekendParts(
       weekendTime,
       openingSong ? Number(openingSong) : null,
@@ -140,7 +171,9 @@ export function MeetingProgramSection({
         if (cancelled) return;
         setSaved(result?.assignments ?? null);
         setProgramId(result?.program.id ?? null);
-        if (result?.program.outlineId) setOutlineId(result.program.outlineId);
+        // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
+        // semana sem programa, sem carregar escolha de outra semana).
+        setOutlineId(result?.program.outlineId ?? "");
       } catch {
         if (!cancelled) setSaved(null);
       } finally {
@@ -154,6 +187,27 @@ export function MeetingProgramSection({
   }, [kind, weekStart]);
 
   const displayParts: DisplayPart[] = useMemo(() => {
+    if (template.length === 0) {
+      // Sem conteúdo importado (apostila/Sentinela apagada ou ausente): mostra o
+      // programa salvo exatamente como está, mesmo sem modelo para mesclar.
+      if (!saved || saved.length === 0) return [];
+      return saved.map((s) => ({
+        key: s.partKey,
+        section: s.section,
+        title: s.title,
+        subtitle: s.subtitle,
+        startTime: s.startTime,
+        durationMinutes: s.durationMinutes,
+        songNumber: s.songNumber,
+        songTheme: s.songTheme,
+        id: s.id,
+        personName: s.personName ?? "",
+        helperName: s.helperPersonName ?? "",
+        helperPersonName: s.helperPersonName ?? "",
+        classroom: s.classroom ?? "A",
+        speakerCongregation: s.speakerCongregation ?? "",
+      }));
+    }
     if (!saved || saved.length === 0)
       return template.map((t, index) => ({
         ...t,
@@ -272,7 +326,7 @@ export function MeetingProgramSection({
         >
           <FaChevronLeft size={14} />
         </button>
-        <p className="text-sm font-semibold">Semana começando {weekStart}</p>
+        <p className="text-sm font-semibold">Semana começando {formatDateBR(weekStart)}</p>
         <button
           type="button"
           onClick={() => setWeekOffset((o) => o + 1)}
@@ -287,10 +341,21 @@ export function MeetingProgramSection({
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-xs text-muted-foreground">Semana da apostila</span>
           <select
-            value={workbookIndex}
-            onChange={(e) => setWorkbookIndex(Number(e.target.value))}
+            value={workbookPick?.week === weekStart ? String(workbookPick.index) : "auto"}
+            onChange={(e) =>
+              setWorkbookPick(
+                e.target.value === "auto"
+                  ? null
+                  : { week: weekStart, index: Number(e.target.value) },
+              )
+            }
             className="h-9 rounded-lg bg-secondary px-2 text-sm"
           >
+            <option value="auto">
+              {autoWorkbookIndex != null
+                ? "Automático (semana exata)"
+                : "Automático (não encontrada)"}
+            </option>
             {workbooks.map((w, i) => (
               <option key={w.label} value={i}>
                 {w.label}
@@ -304,10 +369,21 @@ export function MeetingProgramSection({
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-xs text-muted-foreground">Estudo da Atalaya da semana</span>
             <select
-              value={articleIndex}
-              onChange={(e) => setArticleIndex(Number(e.target.value))}
+              value={articlePick?.week === weekStart ? String(articlePick.index) : "auto"}
+              onChange={(e) =>
+                setArticlePick(
+                  e.target.value === "auto"
+                    ? null
+                    : { week: weekStart, index: Number(e.target.value) },
+                )
+              }
               className="h-9 rounded-lg bg-secondary px-2 text-sm"
             >
+              <option value="auto">
+                {autoArticleIndex != null
+                  ? "Automático (estudo exato)"
+                  : "Automático (não encontrado)"}
+              </option>
               {articles.map((a, i) => (
                 <option key={a.id} value={i}>
                   {a.label} — {a.title}
@@ -329,10 +405,11 @@ export function MeetingProgramSection({
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-xs text-muted-foreground">Discurso (esboço)</span>
               <select
-                value={outline?.id ?? ""}
+                value={outlineId}
                 onChange={(e) => setOutlineId(e.target.value)}
                 className="h-9 rounded-lg bg-secondary px-2 text-sm"
               >
+                <option value="">Nenhum</option>
                 {outlines.map((o) => (
                   <option key={o.id} value={o.id}>
                     {o.number} — {o.theme}
@@ -392,7 +469,7 @@ export function MeetingProgramSection({
         <Card className="flex flex-col gap-1 bg-black p-2 text-white">
           <p className="px-1 text-sm font-semibold">
             {kind === "midweek" ? "REUNIÓN DE ENTRE SEMANA" : "REUNIÓN DEL FIN DE SEMANA"} ·{" "}
-            {weekStart}
+            {formatDateBR(weekStart)}
           </p>
           {displayPartsWithSections.map((part) => {
             const style = SECTION_STYLES[part.section];
@@ -438,9 +515,10 @@ export function MeetingProgramSection({
             );
           })}
           {displayParts.length === 0 && (
-            <p className="p-2 text-sm text-white/60">
-              Importe a apostila / Sentinela na aba Conteúdo para gerar o programa.
-            </p>
+            <div className="flex flex-col gap-2 p-2">
+              <p className="text-sm text-white/60">Programação de reunião não encontrada.</p>
+              {canManage && <JwpubImportButton />}
+            </div>
           )}
         </Card>
       )}

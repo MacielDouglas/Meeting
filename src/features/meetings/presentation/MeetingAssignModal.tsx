@@ -19,6 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { formatDateBR } from "@/shared/lib/format-date";
 
 interface SongOption {
   number: number;
@@ -45,7 +46,7 @@ function formatLastAssignment(iso: string | null): string {
   if (!iso) return "sem histórico";
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "sem histórico";
-  return `última: ${date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit", year: "2-digit" })}`;
+  return `última: ${formatDateBR(date.toISOString().slice(0, 10))}`;
 }
 
 export function MeetingAssignModal({

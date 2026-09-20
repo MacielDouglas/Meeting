@@ -47,6 +47,8 @@ export interface WorkbookContentMeeting {
 
 export interface WorkbookContentWeek {
   week: string;
+  /** Segunda-feira da semana em AAAA-MM-DD (presente em importações novas). */
+  weekStart?: string;
   meeting: WorkbookContentMeeting;
 }
 
@@ -259,6 +261,61 @@ function stripDuplicationSuffix(name: string): string {
   return name.replace(/\s*\(\d+\)(?=\.\w+$)/i, "");
 }
 
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Resolve a segunda-feira (AAAA-MM-DD) de uma semana da apostila salva sem
+ * `weekStart` (importações antigas). O rótulo vem de `mwb_week_date_locale`,
+ * ex. "6-12 de julio" — sem ano — então o ano é extraído do nome da edição,
+ * ex. "Apostila ... (julio de 2026)". Devolve null se não conseguir.
+ */
+export function resolveWorkbookWeekStart(weekLabel: string, issueName: string): string | null {
+  const normalized = weekLabel.trim().toLowerCase();
+  const yearMatch = issueName.match(/(\d{4})\s*\)?\s*$/);
+  if (!yearMatch) return null;
+  const year = Number(yearMatch[1]);
+
+  const allMonths: { names: string[]; language: JwpubLanguage }[] = (
+    Object.keys(MONTH_NAMES_TITLE) as JwpubLanguage[]
+  ).map((language) => ({ names: MONTH_NAMES_TITLE[language], language }));
+  const monthIndexOf = (name: string): number => {
+    const lowered = name.toLowerCase();
+    for (const { names } of allMonths) {
+      const index = names.findIndex((month) => month.toLowerCase() === lowered);
+      if (index >= 0) return index + 1;
+    }
+    return 0;
+  };
+
+  // "6-12 de julio" (es/pt) ou "august 11-17" (en).
+  const latinMatch = normalized.match(
+    /^(\d{1,2})\s*[–—-]\s*(\d{1,2})\s+de\s+([a-zçãõéíúâêôàüñ]+)\s*$/,
+  );
+  const englishMatch = normalized.match(/^([a-z]+)\s+(\d{1,2})\s*[–—-]\s*(\d{1,2})\s*$/);
+  let day: number | null = null;
+  let month: number | null = null;
+  if (latinMatch) {
+    day = Number(latinMatch[1]);
+    month = monthIndexOf(latinMatch[3]);
+  } else if (englishMatch) {
+    day = Number(englishMatch[2]);
+    month = monthIndexOf(englishMatch[1]);
+  }
+  if (!day || !month || day < 1 || day > 31 || month < 1 || month > 12) return null;
+  const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  if (!ISO_DATE_PATTERN.test(iso)) return null;
+  // Valida data real (ex.: rejeita 30 de fevereiro).
+  const check = new Date(Date.UTC(year, month - 1, day));
+  if (
+    check.getUTCFullYear() !== year ||
+    check.getUTCMonth() !== month - 1 ||
+    check.getUTCDate() !== day
+  ) {
+    return null;
+  }
+  return iso;
+}
+
 export async function parseWorkbookJwpub(
   buffer: Buffer,
   filename: string,
@@ -320,7 +377,7 @@ export async function parseWorkbookJwpub(
     name,
     content: {
       name,
-      weeks: mapped.map(({ week, meeting }) => ({ week, meeting })),
+      weeks: mapped.map(({ week, weekStart, meeting }) => ({ week, weekStart, meeting })),
     },
   };
 }
