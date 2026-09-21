@@ -50,6 +50,7 @@ export default async function ReunioesPage({
       : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
+  const needsOutlines = needsMeetings || tab === "oradores";
   const [
     schedule,
     songs,
@@ -65,7 +66,7 @@ export default async function ReunioesPage({
   ] = await Promise.all([
     getWeeklySchedule(),
     needsMeetings ? listSongs() : Promise.resolve([]),
-    needsMeetings ? listOutlines() : Promise.resolve([]),
+    needsOutlines ? listOutlines() : Promise.resolve([]),
     tab === "conteudo"
       ? getContentCounts()
       : Promise.resolve({
@@ -81,7 +82,7 @@ export default async function ReunioesPage({
     tab === "designacoes" ? listCleaningConfig() : Promise.resolve([]),
     tab === "designacoes" ? listSpecialEvents() : Promise.resolve([]),
     tab === "designacoes" ? listScheduleExceptions() : Promise.resolve([]),
-    needsMeetings || tab === "designacoes"
+    needsMeetings || tab === "designacoes" || tab === "oradores"
       ? getMeetingSchedule()
       : Promise.resolve({
           congregationName: "",
@@ -176,7 +177,12 @@ export default async function ReunioesPage({
 
       {tab === "oradores" && (
         <Suspense fallback={<CardSkeleton />}>
-          <OutsideSpeakersClient initialSpeakers={speakers} canManage={canManage} />
+          <OutsideSpeakersClient
+            initialSpeakers={speakers}
+            initialOutlines={outlines.map((o) => ({ number: o.number, theme: o.theme }))}
+            systemCongregation={meetingScheduleData.congregationName}
+            canManage={canManage}
+          />
         </Suspense>
       )}
 

@@ -184,6 +184,8 @@ const assignmentDetailsSchema = z.object({
   assignmentId: z.string().min(1).max(64),
   classroom: z.enum(["A", "B", "C"]).optional(),
   speakerCongregation: z.string().max(160).optional(),
+  speakerName: z.string().trim().min(1).max(160).optional(),
+  title: z.string().trim().min(1).max(300).optional(),
   study: z.string().max(300).optional(),
   source: z.string().max(300).optional(),
   notes: z.string().max(500).optional(),
@@ -254,12 +256,23 @@ export async function updateMeetingAssignmentDetails(
   await requirePrivilegedUser();
   const parsed = assignmentDetailsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Dados inválidos." };
-  const { assignmentId, ...fields } = parsed.data;
-  if (Object.keys(fields).length === 0) return { ok: true };
+  const { assignmentId, speakerName, ...fields } = parsed.data;
+  // Orador de fora: nome livre no lugar do vínculo de pessoa (limpa o anterior).
+  const setFields =
+    speakerName === undefined
+      ? fields
+      : {
+          ...fields,
+          personId: null,
+          personName: speakerName,
+          helperPersonId: null,
+          helperPersonName: "",
+        };
+  if (Object.keys(setFields).length === 0) return { ok: true };
   try {
     await getDb()
       .update(meetingAssignments)
-      .set(fields)
+      .set(setFields)
       .where(eq(meetingAssignments.id, assignmentId));
   } catch (error) {
     console.error("[meetings] falha ao salvar detalhes da parte", { assignmentId, error });

@@ -331,6 +331,14 @@ export function buildWeekendParts(
   songThemeByNumber: Map<number, string>,
 ): BuiltPart[] {
   const parts: ProgramPartInput[] = [];
+  // Presidente antes do cântico: pessoa com public_chairman. Duração zero.
+  parts.push({
+    key: "president",
+    section: "",
+    title: "Presidente",
+    durationMinutes: 0,
+    capability: "weekendPresident",
+  });
   parts.push({
     key: "opening-song",
     section: "",

@@ -1,6 +1,7 @@
 /** Mapeia a parte da reunião ao campo de habilitação da pessoa. */
 export type MeetingCapability =
   | "president"
+  | "weekendPresident"
   | "weekendOpening"
   | "prayer"
   | "treasuresTalk"
@@ -22,6 +23,8 @@ export function capabilityField(capability: string | undefined): string | null {
   switch (capability) {
     case "president":
       return "midweekChairman";
+    case "weekendPresident":
+      return "publicChairman";
     case "prayer":
       return "prayer";
     case "weekendOpening":

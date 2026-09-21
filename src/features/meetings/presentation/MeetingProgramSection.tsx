@@ -128,12 +128,13 @@ const SECTION_ICONS: Record<string, IconType> = {
 
 const WEEKDAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
-/** Partes fixas do meio de semana: só leitura, sem botão de designação. */
-const DISPLAY_ONLY_KEYS = new Set([
-  "opening-song",
+/** Partes fixas: só leitura, sem botão de designação. */
+const ALWAYS_DISPLAY_ONLY_KEYS = new Set([
   "opening-comments",
   "middle-song",
   "concluding-comments",
+  "watchtower-song",
+  "closing-song",
 ]);
 
 interface PartDisplay {
@@ -526,7 +527,16 @@ export function MeetingProgramSection({
     try {
       let done = 0;
       for (const [assignmentId, change] of entries) {
-        if (change.personId !== undefined) {
+        if (change.speakerName !== undefined) {
+          const result = await updateMeetingAssignmentDetails({
+            assignmentId,
+            speakerName: change.speakerName,
+            ...(change.speakerCongregation !== undefined
+              ? { speakerCongregation: change.speakerCongregation }
+              : {}),
+          });
+          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
+        } else if (change.personId !== undefined) {
           const result = await updateMeetingAssignment(
             assignmentId,
             change.personId,
@@ -568,6 +578,21 @@ export function MeetingProgramSection({
   function handleCancelAll() {
     setPending({});
     setError(null);
+  }
+
+  /** Troca do esboço do discurso público: atualiza o modelo e o título salvo. */
+  async function handleOutlineChange(id: string) {
+    setOutlineId(id);
+    const outline = outlines.find((o) => o.id === id) ?? null;
+    const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
+    if (!talk || !canManage) return;
+    const title = outline ? `${outline.theme} (${outline.number})` : "Discurso público";
+    const result = await updateMeetingAssignmentDetails({ assignmentId: talk.id, title });
+    if (!result.ok) {
+      setError(result.error ?? es.errorGuardar);
+      return;
+    }
+    await refresh();
   }
 
   async function refresh() {
@@ -623,6 +648,27 @@ export function MeetingProgramSection({
           {es.finSemana}
         </button>
       </div>
+
+      {kind === "weekend" && canManage && (
+        <label className="flex items-center gap-2 rounded-xl border border-input bg-background p-2">
+          <span className="shrink-0 pl-1 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            {es.esboco}
+          </span>
+          <select
+            value={outlineId}
+            disabled={saving}
+            onChange={(event) => void handleOutlineChange(event.target.value)}
+            className="h-11 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring disabled:opacity-50"
+          >
+            <option value="">{es.nenhum}</option>
+            {outlines.map((outline) => (
+              <option key={outline.id} value={outline.id}>
+                {outline.number} — {outline.theme}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <div className="flex items-center gap-3">
         <button
@@ -686,14 +732,21 @@ export function MeetingProgramSection({
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
               const display = partDisplay.get(part.id);
               if (!display) return null;
-              const isFixed = DISPLAY_ONLY_KEYS.has(part.key);
-              const interactive = canManage && programId !== null && !saving && !isFixed;
+              const isSongPart = part.key.includes("song") || part.songNumber != null;
+              const interactive =
+                canManage &&
+                programId !== null &&
+                !saving &&
+                !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
+                !(kind === "midweek" && part.key === "opening-song");
               const isDirty = dirtyIds.has(part.id);
               const infoBits = [display.subtitle].filter(Boolean);
-              const names =
-                display.line1 === "—" && !display.line2
-                  ? es.sinAsignar
-                  : `${display.line1}${display.line2 ? ` · ${display.line2}` : ""}`;
+              const hasAssignee = display.line1 !== "—" || display.line2 !== "";
+              // Nomes só aparecem com designado; cânticos nunca mostram "Sin asignar".
+              const showNames = hasAssignee || (!isSongPart && interactive);
+              const names = hasAssignee
+                ? `${display.line1}${display.line2 ? ` · ${display.line2}` : ""}`
+                : es.sinAsignar;
               const rowContent = (
                 <>
                   <span className="flex w-11 shrink-0 flex-col items-center gap-0.5 pt-0.5">
@@ -709,7 +762,11 @@ export function MeetingProgramSection({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
-                      className="block truncate text-sm font-semibold"
+                      className={
+                        part.key === "public-talk"
+                          ? "block truncate text-base font-bold"
+                          : "block truncate text-sm font-semibold"
+                      }
                       style={{ color: meta.color }}
                     >
                       {display.title}
@@ -719,10 +776,10 @@ export function MeetingProgramSection({
                         {infoBits.join(" · ")}
                       </span>
                     )}
-                    {!isFixed && (
+                    {showNames && (
                       <span className="mt-0.5 block text-right">
                         <span className="block truncate text-sm font-semibold text-session-fg">
-                          {display.line1 === "—" && !display.line2 ? es.sinAsignar : display.line1}
+                          {hasAssignee ? display.line1 : es.sinAsignar}
                         </span>
                         {display.line2 && (
                           <span className="block truncate text-xs text-session-fg opacity-90">
@@ -862,12 +919,18 @@ export function MeetingProgramSection({
           isSong={Boolean(editing.songNumber || editing.key.includes("song"))}
           // Só partes com capability permitem escolher pessoa (cântico inicial,
           // palavras de introdução e cântico do meio ficam só com o cântico).
-          // O cântico da Atalaia continua só com o cântico.
-          allowPerson={editing.key !== "watchtower-song" && Boolean(editing.capability)}
+          // O cântico da Atalaia continua só com o cântico. O cântico inicial
+          // do fim de semana é opcional e só escolhe o número.
+          allowPerson={
+            editing.key !== "watchtower-song" &&
+            Boolean(editing.capability) &&
+            !(kind === "weekend" && editing.key === "opening-song")
+          }
           partKey={editing.key}
           classroom={editing.classroom}
           speakerCongregation={editing.speakerCongregation}
           songs={songs}
+          outlines={outlines.map((o) => ({ number: o.number, theme: o.theme }))}
           currentPersonName={editing.personName ?? ""}
           currentHelperName={editing.helperPersonName ?? editing.helperName ?? ""}
           onClose={() => setEditing(null)}
