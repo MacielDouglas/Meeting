@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { IconType } from "react-icons";
+import { FaBookOpen, FaChevronLeft, FaChevronRight, FaMicrophone } from "react-icons/fa";
+import { GiSheep } from "react-icons/gi";
+import { IoDiamond } from "react-icons/io5";
+import { LuWheat } from "react-icons/lu";
 import { JwpubImportButton } from "@/features/meeting-content/presentation/JwpubImportButton-client";
-import { saveMeetingProgram } from "@/features/meetings/application/meeting-actions";
+import {
+  saveMeetingProgram,
+  updateMeetingAssignment,
+  updateMeetingAssignmentDetails,
+  updateMeetingSong,
+} from "@/features/meetings/application/meeting-actions";
 import {
   getMeetingProgram,
   type MeetingAssignmentItem,
@@ -18,10 +27,11 @@ import {
   findWatchtowerArticleIndex,
   findWorkbookWeekIndex,
 } from "@/features/meetings/domain/match-meeting-content";
+import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { formatDateBR } from "@/shared/lib/format-date";
-import { MeetingAssignModal } from "./MeetingAssignModal";
+import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
 
 interface SongOption {
   number: number;
@@ -54,6 +64,8 @@ interface MeetingProgramSectionProps {
   articles: ArticleOption[];
   midweekTime: string;
   weekendTime: string;
+  midweekDay: number;
+  weekendDay: number;
   canManage: boolean;
   initialWeekStart: string;
   initialKind: "midweek" | "weekend";
@@ -76,13 +88,55 @@ function addDays(iso: string, days: number): string {
   return dt.toISOString().slice(0, 10);
 }
 
-const SECTION_STYLES: Record<string, { badge: string; title: string }> = {
-  "TESOROS DE LA BIBLIA": { badge: "bg-cyan-400 text-black", title: "text-cyan-400" },
-  "SEAMOS MEJORES MAESTROS": { badge: "bg-amber-400 text-black", title: "text-amber-400" },
-  "NUESTRA VIDA CRISTIANA": { badge: "bg-red-300 text-black", title: "text-red-300" },
-  "PUBLIC TALK": { badge: "bg-blue-300 text-black", title: "text-blue-300" },
-  "ESTUDIO DE LA ATALAYA": { badge: "bg-green-500 text-black", title: "text-green-500" },
+const SECTION_ICONS: Record<string, IconType> = {
+  "TESOROS DE LA BIBLIA": IoDiamond,
+  "SEAMOS MEJORES MAESTROS": LuWheat,
+  "NUESTRA VIDA CRISTIANA": GiSheep,
+  "PUBLIC TALK": FaMicrophone,
+  "ESTUDIO DE LA ATALAYA": FaBookOpen,
 };
+
+const WEEKDAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+interface PartDisplay {
+  title: string;
+  subtitle: string;
+  line1: string;
+  line2: string;
+}
+
+/** Título, subtítulo e linhas de designação de uma parte (função pura). */
+function describePart(part: DisplayPart): PartDisplay {
+  // O último cântico carrega "y oración" no título do modelo
+  // ("Canción 129 y oración"); preserva o sufixo ao exibir o número.
+  const prayerSuffix = /oraci[óo]n/i.test(part.title) ? " y oración" : "";
+  const title = `${part.songNumber ? `Canción ${part.songNumber}${prayerSuffix}` : part.title}${
+    part.durationMinutes ? ` (${part.durationMinutes} min)` : ""
+  }${part.classroom && part.classroom !== "A" ? ` · Sala ${part.classroom}` : ""}`;
+  const subtitle = part.subtitle || part.songTheme || "";
+  const person = part.personName || "";
+  const helper = part.helperName || "";
+  if (part.key === "public-talk") {
+    return {
+      title,
+      subtitle,
+      line1: person || "—",
+      line2: part.speakerCongregation ? `(${part.speakerCongregation})` : "",
+    };
+  }
+  if (part.capability === "watchtowerStudy" || part.capability === "congregationStudy") {
+    return {
+      title,
+      subtitle,
+      line1: person ? `${person} (Conductor)` : "—",
+      line2: helper ? `${helper} (Lector)` : "",
+    };
+  }
+  if (helper) {
+    return { title, subtitle, line1: person || "—", line2: `${helper} (Ajudante)` };
+  }
+  return { title, subtitle, line1: person || "—", line2: "" };
+}
 
 interface DisplayPart extends BuiltPart {
   id: string;
@@ -100,6 +154,8 @@ export function MeetingProgramSection({
   articles,
   midweekTime,
   weekendTime,
+  midweekDay,
+  weekendDay,
   canManage,
   initialWeekStart,
   initialKind,
@@ -110,40 +166,55 @@ export function MeetingProgramSection({
     () => (weekOffset === 0 ? initialWeekStart : mondayOf(weekOffset)),
     [weekOffset, initialWeekStart],
   );
-  const [workbookPick, setWorkbookPick] = useState<{ week: string; index: number } | null>(null);
-  const [articlePick, setArticlePick] = useState<{ week: string; index: number } | null>(null);
   const [outlineId, setOutlineId] = useState<string>("");
-  const [openingSong, setOpeningSong] = useState<string>("");
   const [saved, setSaved] = useState<MeetingAssignmentItem[] | null>(null);
   const [programId, setProgramId] = useState<string | null>(null);
+  const [programException, setProgramException] = useState({
+    exceptionType: "",
+    exceptionLabel: "",
+  });
+  // Alterações preparadas pelo usuário (clique nas partes); só persistem no Salvar.
+  const [pending, setPending] = useState<Record<string, StagedChange>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayPart | null>(null);
+  const [initializedKey, setInitializedKey] = useState<string | null>(null);
+  const autoSaveKeyRef = useRef<string | null>(null);
+  const syncKeyRef = useRef<string | null>(null);
 
   const songMap = useMemo(() => new Map(songs.map((s) => [s.number, s.theme])), [songs]);
-
-  // Seleção inteligente: encontra exatamente a semana da apostila e o estudo
-  // da Sentinela da semana do programa. Sem correspondência exata não há
-  // default — a escolha manual ("Automático" volta ao modo exato) vale só para
-  // a semana atual, sem vazar para outras semanas.
-  const autoWorkbookIndex = useMemo(
+  // Seleção inteligente e totalmente automática: encontra exatamente a semana
+  // da apostila e o estudo da Sentinela da semana do programa. Sem
+  // correspondência exata não há default.
+  const workbookIndex = useMemo(
     () => findWorkbookWeekIndex(workbooks, weekStart),
     [workbooks, weekStart],
   );
-  const workbookIndex = workbookPick?.week === weekStart ? workbookPick.index : autoWorkbookIndex;
   const workbook = workbookIndex != null ? (workbooks[workbookIndex] ?? null) : null;
 
-  const autoArticleIndex = useMemo(
+  const articleIndex = useMemo(
     () => findWatchtowerArticleIndex(articles, weekStart),
     [articles, weekStart],
   );
-  const articleIndex = articlePick?.week === weekStart ? articlePick.index : autoArticleIndex;
   const article = articleIndex != null ? (articles[articleIndex] ?? null) : null;
 
-  // Discurso sem default: começa vazio ("Nenhum") e só assume valor por
-  // escolha do usuário ou pelo programa salvo da semana.
-  const outline = outlines.find((o) => o.id === outlineId) ?? null;
+  // Discurso sem default: começa vazio ("Nenhum") e só assume valor pelo
+  // programa salvo da semana.
+  const outline = useMemo(
+    () => outlines.find((o) => o.id === outlineId) ?? null,
+    [outlines, outlineId],
+  );
+
+  // Cabeçalho da lista: dia da semana | nome da reunião + leitura semanal.
+  const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
+  const meetingDayName = WEEKDAY_NAMES[meetingDay] ?? "";
+  const meetingTitle = kind === "midweek" ? "REUNIÓN DE ENTRE SEMANA" : "REUNIÓN DEL FIN DE SEMANA";
+  const weekBibleReading = useMemo(() => {
+    const index = findWorkbookWeekIndex(workbooks, weekStart);
+    const matched = index != null ? workbooks[index] : null;
+    return matched?.meeting.BibleReading ?? "";
+  }, [workbooks, weekStart]);
 
   const template: BuiltPart[] = useMemo(() => {
     if (kind === "midweek") {
@@ -153,13 +224,13 @@ export function MeetingProgramSection({
     if (!article) return [];
     return buildWeekendParts(
       weekendTime,
-      openingSong ? Number(openingSong) : null,
+      null,
       outline?.theme ?? "Discurso público",
       outline?.number ?? null,
       article,
       songMap,
     );
-  }, [kind, workbook, midweekTime, weekendTime, openingSong, outline, article, songMap]);
+  }, [kind, workbook, midweekTime, weekendTime, outline, article, songMap]);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,11 +242,20 @@ export function MeetingProgramSection({
         if (cancelled) return;
         setSaved(result?.assignments ?? null);
         setProgramId(result?.program.id ?? null);
+        setProgramException({
+          exceptionType: result?.program.exceptionType ?? "",
+          exceptionLabel: result?.program.exceptionLabel ?? "",
+        });
         // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
         // semana sem programa, sem carregar escolha de outra semana).
         setOutlineId(result?.program.outlineId ?? "");
+        setPending({});
+        setInitializedKey(`${kind}:${weekStart}`);
       } catch {
-        if (!cancelled) setSaved(null);
+        if (!cancelled) {
+          setSaved(null);
+          setInitializedKey(`${kind}:${weekStart}`);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -186,27 +266,164 @@ export function MeetingProgramSection({
     };
   }, [kind, weekStart]);
 
+  // Geração automática: sem botão Gerar — o programa da semana se materializa
+  // sozinho (upsert não-destrutivo) quando há conteúdo e ainda não foi salvo.
+  useEffect(() => {
+    if (!canManage || template.length === 0 || loading) return;
+    if (programId) return;
+    if (initializedKey !== `${kind}:${weekStart}`) return;
+    const key = `${kind}:${weekStart}`;
+    if (autoSaveKeyRef.current === key) return;
+    autoSaveKeyRef.current = key;
+    void (async () => {
+      setSaving(true);
+      setError(null);
+      const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
+      const result = await saveMeetingProgram(
+        kind,
+        weekStart,
+        date,
+        template.map((t) => ({
+          partKey: t.key,
+          section: t.section,
+          title: t.title,
+          subtitle: t.subtitle ?? "",
+          startTime: t.startTime,
+          durationMinutes: t.durationMinutes,
+          songNumber: t.songNumber ?? null,
+          songTheme: t.songTheme ?? "",
+          classroom: "A" as const,
+          study: "",
+          source: "",
+          notes: "",
+          speakerCongregation: "",
+        })),
+        kind === "weekend" ? (outline?.id ?? null) : null,
+        { exceptionType: "", exceptionLabel: "" },
+      );
+      if (!result.ok) {
+        setError(result.error ?? "Erro ao gerar programa.");
+        setSaving(false);
+        return;
+      }
+      const fresh = await getMeetingProgram(kind, weekStart);
+      setSaved(fresh?.assignments ?? null);
+      setProgramId(fresh?.program.id ?? result.programId ?? null);
+      setSaving(false);
+    })();
+  }, [canManage, template, programId, loading, initializedKey, kind, weekStart, outline]);
+
+  // Sincronização do modelo: programas salvos antes de uma mudança no modelo
+  // (ex.: nova parte "president", conselheiros removidos) ganham as partes
+  // novas e perdem as removidas via upsert não-destrutivo, preservando as
+  // designações e a exceção. Sem isso as partes novas ficam com id "tpl-*
+  // e o modal de designação não abre (caso do Presidente).
+  useEffect(() => {
+    if (!canManage || template.length === 0 || loading) return;
+    if (!programId || !saved) return;
+    if (initializedKey !== `${kind}:${weekStart}`) return;
+    const templateKeys = [...template.map((t) => t.key)].sort().join("|");
+    const savedKeys = [...saved.map((s) => s.partKey)].sort().join("|");
+    if (templateKeys === savedKeys) return;
+    const key = `sync:${kind}:${weekStart}:${templateKeys}`;
+    if (syncKeyRef.current === key) return;
+    syncKeyRef.current = key;
+    void (async () => {
+      setSaving(true);
+      setError(null);
+      const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
+      const result = await saveMeetingProgram(
+        kind,
+        weekStart,
+        date,
+        template.map((t) => ({
+          partKey: t.key,
+          section: t.section,
+          title: t.title,
+          subtitle: t.subtitle ?? "",
+          startTime: t.startTime,
+          durationMinutes: t.durationMinutes,
+          songNumber: t.songNumber ?? null,
+          songTheme: t.songTheme ?? "",
+          classroom: "A" as const,
+          study: "",
+          source: "",
+          notes: "",
+          speakerCongregation: "",
+        })),
+        kind === "weekend" ? (outline?.id ?? null) : null,
+        {
+          exceptionType: programException.exceptionType as
+            | ""
+            | "no_meeting"
+            | "circuit_visit"
+            | "convention"
+            | "virtual_convention"
+            | "special",
+          exceptionLabel: programException.exceptionLabel,
+        },
+      );
+      if (!result.ok) {
+        setError(result.error ?? "Erro ao sincronizar programa.");
+        setSaving(false);
+        return;
+      }
+      const fresh = await getMeetingProgram(kind, weekStart);
+      setSaved(fresh?.assignments ?? null);
+      setProgramId(fresh?.program.id ?? result.programId ?? null);
+      setSaving(false);
+    })();
+  }, [
+    canManage,
+    template,
+    programId,
+    saved,
+    loading,
+    initializedKey,
+    kind,
+    weekStart,
+    outline,
+    programException,
+  ]);
+
   const displayParts: DisplayPart[] = useMemo(() => {
+    // Sobrepõe as alterações preparadas (staged) sobre o valor salvo.
+    const applyPending = (base: DisplayPart): DisplayPart => {
+      const change = pending[base.id];
+      if (!change || base.id.startsWith("tpl-")) return base;
+      return {
+        ...base,
+        personName: change.personName ?? base.personName,
+        helperName: change.helperPersonName ?? base.helperName,
+        helperPersonName: change.helperPersonName ?? base.helperPersonName,
+        songNumber: change.songNumber ?? base.songNumber,
+        songTheme: change.songTheme ?? base.songTheme,
+        classroom: change.classroom ?? base.classroom,
+        speakerCongregation: change.speakerCongregation ?? base.speakerCongregation,
+      };
+    };
     if (template.length === 0) {
       // Sem conteúdo importado (apostila/Sentinela apagada ou ausente): mostra o
       // programa salvo exatamente como está, mesmo sem modelo para mesclar.
       if (!saved || saved.length === 0) return [];
-      return saved.map((s) => ({
-        key: s.partKey,
-        section: s.section,
-        title: s.title,
-        subtitle: s.subtitle,
-        startTime: s.startTime,
-        durationMinutes: s.durationMinutes,
-        songNumber: s.songNumber,
-        songTheme: s.songTheme,
-        id: s.id,
-        personName: s.personName ?? "",
-        helperName: s.helperPersonName ?? "",
-        helperPersonName: s.helperPersonName ?? "",
-        classroom: s.classroom ?? "A",
-        speakerCongregation: s.speakerCongregation ?? "",
-      }));
+      return saved.map((s) =>
+        applyPending({
+          key: s.partKey,
+          section: s.section,
+          title: s.title,
+          subtitle: s.subtitle,
+          startTime: s.startTime,
+          durationMinutes: s.durationMinutes,
+          songNumber: s.songNumber,
+          songTheme: s.songTheme,
+          id: s.id,
+          personName: s.personName ?? "",
+          helperName: s.helperPersonName ?? "",
+          helperPersonName: s.helperPersonName ?? "",
+          classroom: s.classroom ?? "A",
+          speakerCongregation: s.speakerCongregation ?? "",
+        }),
+      );
     }
     if (!saved || saved.length === 0)
       return template.map((t, index) => ({
@@ -220,7 +437,7 @@ export function MeetingProgramSection({
     const byKey = new Map(saved.map((a) => [a.partKey, a]));
     return template.map((t, index) => {
       const s = byKey.get(t.key);
-      return {
+      return applyPending({
         ...t,
         id: s?.id ?? `tpl-${index}`,
         personName: s?.personName ?? "",
@@ -232,51 +449,71 @@ export function MeetingProgramSection({
         subtitle: s?.subtitle ?? t.subtitle,
         songNumber: s?.songNumber ?? t.songNumber,
         songTheme: s?.songTheme ?? t.songTheme,
-      };
+      });
     });
-  }, [saved, template]);
+  }, [saved, template, pending]);
 
-  async function handleGenerate() {
+  const dirtyIds = useMemo(() => new Set(Object.keys(pending)), [pending]);
+
+  function handleStage(assignmentId: string, change: StagedChange) {
+    setPending((previous) => ({
+      ...previous,
+      [assignmentId]: { ...previous[assignmentId], ...change },
+    }));
+  }
+
+  async function handleSaveAll() {
     setSaving(true);
     setError(null);
-    const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
-    const result = await saveMeetingProgram(
-      kind,
-      weekStart,
-      date,
-      template.map((t) => ({
-        partKey: t.key,
-        section: t.section,
-        title: t.title,
-        subtitle: t.subtitle ?? "",
-        startTime: t.startTime,
-        durationMinutes: t.durationMinutes,
-        songNumber: t.songNumber ?? null,
-        songTheme: t.songTheme ?? "",
-        classroom: "A" as const,
-        study: "",
-        source: "",
-        notes: "",
-        speakerCongregation: "",
-      })),
-      kind === "weekend" ? (outline?.id ?? null) : null,
-      { exceptionType: "", exceptionLabel: "" },
-    );
-    if (!result.ok) {
-      setError(result.error ?? "Erro ao gerar programa.");
+    try {
+      for (const [assignmentId, change] of Object.entries(pending)) {
+        if (change.personId !== undefined) {
+          const result = await updateMeetingAssignment(
+            assignmentId,
+            change.personId,
+            change.helperPersonId,
+          );
+          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+        }
+        if (change.songNumber !== undefined && change.songNumber !== null) {
+          const result = await updateMeetingSong(
+            assignmentId,
+            change.songNumber,
+            change.songTheme ?? "",
+          );
+          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+        }
+        const details: { classroom?: "A" | "B" | "C"; speakerCongregation?: string } = {};
+        if (change.classroom !== undefined) details.classroom = change.classroom;
+        if (change.speakerCongregation !== undefined)
+          details.speakerCongregation = change.speakerCongregation;
+        if (Object.keys(details).length > 0) {
+          const result = await updateMeetingAssignmentDetails({ assignmentId, ...details });
+          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+        }
+      }
+      setPending({});
+      await refresh();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Erro ao salvar.");
+    } finally {
       setSaving(false);
-      return;
     }
-    const fresh = await getMeetingProgram(kind, weekStart);
-    setSaved(fresh?.assignments ?? null);
-    setProgramId(fresh?.program.id ?? result.programId ?? null);
-    setSaving(false);
+  }
+
+  function handleCancelAll() {
+    setPending({});
+    setError(null);
   }
 
   async function refresh() {
     const fresh = await getMeetingProgram(kind, weekStart);
     setSaved(fresh?.assignments ?? null);
     setProgramId(fresh?.program.id ?? null);
+    setProgramException({
+      exceptionType: fresh?.program.exceptionType ?? "",
+      exceptionLabel: fresh?.program.exceptionLabel ?? "",
+    });
   }
 
   // Calcula `showSection` fora do JSX de forma pura: a primeira parte de
@@ -297,6 +534,12 @@ export function MeetingProgramSection({
     );
     return parts;
   }, [displayParts]);
+
+  // Linhas de designação por parte (orador + congregação, condutor + leitor,
+  // titular + ajudante), como no app de referência.
+  const partDisplay = useMemo(() => {
+    return new Map(displayPartsWithSections.map((part) => [part.id, describePart(part)]));
+  }, [displayPartsWithSections]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -326,7 +569,14 @@ export function MeetingProgramSection({
         >
           <FaChevronLeft size={14} />
         </button>
-        <p className="text-sm font-semibold">Semana começando {formatDateBR(weekStart)}</p>
+        <div className="flex flex-col items-center">
+          <p className="text-sm font-semibold">Semana começando {formatDateBR(weekStart)}</p>
+          {weekBibleReading && (
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {weekBibleReading}
+            </p>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => setWeekOffset((o) => o + 1)}
@@ -337,110 +587,106 @@ export function MeetingProgramSection({
         </button>
       </div>
 
-      {kind === "midweek" && workbooks.length > 0 && (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs text-muted-foreground">Semana da apostila</span>
-          <select
-            value={workbookPick?.week === weekStart ? String(workbookPick.index) : "auto"}
-            onChange={(e) =>
-              setWorkbookPick(
-                e.target.value === "auto"
-                  ? null
-                  : { week: weekStart, index: Number(e.target.value) },
-              )
-            }
-            className="h-9 rounded-lg bg-secondary px-2 text-sm"
-          >
-            <option value="auto">
-              {autoWorkbookIndex != null
-                ? "Automático (semana exata)"
-                : "Automático (não encontrada)"}
-            </option>
-            {workbooks.map((w, i) => (
-              <option key={w.label} value={i}>
-                {w.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-      {kind === "weekend" && (
-        <div className="grid grid-cols-1 gap-2">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-xs text-muted-foreground">Estudo da Atalaya da semana</span>
-            <select
-              value={articlePick?.week === weekStart ? String(articlePick.index) : "auto"}
-              onChange={(e) =>
-                setArticlePick(
-                  e.target.value === "auto"
-                    ? null
-                    : { week: weekStart, index: Number(e.target.value) },
-                )
-              }
-              className="h-9 rounded-lg bg-secondary px-2 text-sm"
-            >
-              <option value="auto">
-                {autoArticleIndex != null
-                  ? "Automático (estudo exato)"
-                  : "Automático (não encontrado)"}
-              </option>
-              {articles.map((a, i) => (
-                <option key={a.id} value={i}>
-                  {a.label} — {a.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs text-muted-foreground">Cântico inicial (nº)</span>
-              <input
-                value={openingSong}
-                onChange={(e) => setOpeningSong(e.target.value.replace(/\D/g, ""))}
-                inputMode="numeric"
-                placeholder="Ex: 12"
-                className="h-9 rounded-lg bg-secondary px-2 text-sm"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs text-muted-foreground">Discurso (esboço)</span>
-              <select
-                value={outlineId}
-                onChange={(e) => setOutlineId(e.target.value)}
-                className="h-9 rounded-lg bg-secondary px-2 text-sm"
-              >
-                <option value="">Nenhum</option>
-                {outlines.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.number} — {o.theme}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          {openingSong && (
-            <p className="text-xs text-muted-foreground">
-              Cântico {openingSong}: {songMap.get(Number(openingSong)) ?? "tema não encontrado"}
-            </p>
-          )}
-        </div>
-      )}
-
       {error && (
         <p role="alert" className="text-sm text-red-500">
           {error}
         </p>
       )}
-
-      {canManage && (
-        <Button disabled={saving || template.length === 0} onClick={() => void handleGenerate()}>
-          {saving
-            ? "Gerando…"
-            : saved && saved.length > 0
-              ? "Atualizar programa (mantém designações)"
-              : "Gerar programa da semana"}
-        </Button>
+      {saving && !programId && <p className="text-xs text-muted-foreground">Salvando programa…</p>}
+      {!canManage && (
+        <p className="text-xs text-muted-foreground">
+          Você tem acesso de leitura. As designações são feitas por owner/admin.
+        </p>
       )}
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Carregando programa…</p>
+      ) : (
+        <Card className="flex flex-col gap-0.5 overflow-hidden bg-black p-2 text-white">
+          <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+            {meetingDayName} | {meetingTitle}
+          </p>
+          {displayPartsWithSections.map((part, index) => {
+            const meta = sectionMetaOf(part.section);
+            const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
+            const display = partDisplay.get(part.id);
+            if (!display) return null;
+            return (
+              <div key={`${part.startTime}-${part.title}-${part.id}`}>
+                {part.showSection && (
+                  <div
+                    className={`-mx-2 flex items-center gap-2 px-3 py-1.5 ${index === 0 ? "" : "mt-2"}`}
+                    style={{ backgroundColor: meta.color }}
+                  >
+                    <SectionIcon aria-hidden size={15} className="shrink-0 text-white" />
+                    <span className="text-sm font-bold uppercase tracking-wide text-white">
+                      {meta.label}
+                    </span>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={!canManage || !programId || saving}
+                  onClick={() => setEditing(part)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-1 py-2 text-left hover:bg-white/10 disabled:cursor-default"
+                >
+                  {dirtyIds.has(part.id) && (
+                    <span
+                      title="Alteração não salva"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"
+                    />
+                  )}
+                  <span
+                    className="shrink-0 rounded px-1.5 py-1 text-xs font-bold text-white"
+                    style={{ backgroundColor: meta.color }}
+                  >
+                    {part.startTime}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium leading-snug text-white line-clamp-2">
+                      {display.title}
+                    </span>
+                    {display.subtitle && (
+                      <span className="block truncate text-xs text-white/55">
+                        {display.subtitle}
+                      </span>
+                    )}
+                  </span>
+                  <span className="max-w-36 shrink-0 text-right">
+                    <span className="block truncate text-xs text-white/85">{display.line1}</span>
+                    {display.line2 && (
+                      <span className="block truncate text-xs text-white/55">{display.line2}</span>
+                    )}
+                  </span>
+                  {canManage && programId ? (
+                    <span aria-hidden className="shrink-0 text-white/50">
+                      ›
+                    </span>
+                  ) : null}
+                </button>
+              </div>
+            );
+          })}
+          {displayParts.length === 0 && (
+            <div className="flex flex-col gap-2 p-2">
+              <p className="text-sm text-white/60">Programação de reunião não encontrada.</p>
+              {canManage && <JwpubImportButton />}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {canManage && dirtyIds.size > 0 && (
+        <div className="flex gap-2">
+          <Button disabled={saving} onClick={() => void handleSaveAll()} className="flex-1">
+            {saving ? "Salvando…" : `Salvar alterações (${dirtyIds.size})`}
+          </Button>
+          <Button variant="outline" disabled={saving} onClick={handleCancelAll} className="flex-1">
+            Cancelar
+          </Button>
+        </div>
+      )}
+
       {programId && (
         <div className="flex gap-2 text-xs">
           <a
@@ -457,79 +703,17 @@ export function MeetingProgramSection({
           </a>
         </div>
       )}
-      {!canManage && (
-        <p className="text-xs text-muted-foreground">
-          Você tem acesso de leitura. As designações são feitas por owner/admin.
-        </p>
-      )}
-
-      {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando programa…</p>
-      ) : (
-        <Card className="flex flex-col gap-1 bg-black p-2 text-white">
-          <p className="px-1 text-sm font-semibold">
-            {kind === "midweek" ? "REUNIÓN DE ENTRE SEMANA" : "REUNIÓN DEL FIN DE SEMANA"} ·{" "}
-            {formatDateBR(weekStart)}
-          </p>
-          {displayPartsWithSections.map((part) => {
-            const style = SECTION_STYLES[part.section];
-            return (
-              <div key={`${part.startTime}-${part.title}-${part.id}`}>
-                {part.showSection && (
-                  <div className="mt-2 flex items-center gap-2 px-1 py-1">
-                    <span className={`text-sm font-bold ${style?.title ?? "text-white"}`}>
-                      {part.section}
-                    </span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  disabled={!canManage || !programId}
-                  onClick={() => setEditing(part)}
-                  className="flex w-full items-center gap-2 rounded-lg px-1 py-1.5 text-left hover:bg-white/10 disabled:cursor-default"
-                >
-                  <span
-                    className={`shrink-0 rounded px-1.5 py-0.5 text-xs font-semibold ${style?.badge ?? "bg-white/20 text-white"}`}
-                  >
-                    {part.startTime}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm">
-                      {part.songNumber ? `Canción ${part.songNumber}` : part.title}
-                      {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
-                      {part.classroom && part.classroom !== "A" ? ` · Sala ${part.classroom}` : ""}
-                    </span>
-                    {(part.subtitle || part.songTheme) && (
-                      <span className="block truncate text-xs text-white/60">
-                        {part.subtitle || part.songTheme}
-                      </span>
-                    )}
-                  </span>
-                  <span className="max-w-32 truncate text-right text-xs text-white/80">
-                    {part.personName ? part.personName : "—"}
-                    {part.helperName ? ` · ${part.helperName}` : ""}
-                  </span>
-                  <span aria-hidden>{canManage && programId ? "›" : ""}</span>
-                </button>
-              </div>
-            );
-          })}
-          {displayParts.length === 0 && (
-            <div className="flex flex-col gap-2 p-2">
-              <p className="text-sm text-white/60">Programação de reunião não encontrada.</p>
-              {canManage && <JwpubImportButton />}
-            </div>
-          )}
-        </Card>
-      )}
 
       {editing && !editing.id.startsWith("tpl-") && (
         <MeetingAssignModal
-          assignmentId={editing.id}
           title={editing.title}
           capability={editing.capability}
           needsHelper={editing.needsHelper}
           isSong={Boolean(editing.songNumber || editing.key.includes("song"))}
+          // Só partes com capability permitem escolher pessoa (cântico inicial,
+          // palavras de introdução e cântico do meio ficam só com o cântico).
+          // O cântico da Atalaia continua só com o cântico.
+          allowPerson={editing.key !== "watchtower-song" && Boolean(editing.capability)}
           partKey={editing.key}
           classroom={editing.classroom}
           speakerCongregation={editing.speakerCongregation}
@@ -537,7 +721,7 @@ export function MeetingProgramSection({
           currentPersonName={editing.personName ?? ""}
           currentHelperName={editing.helperPersonName ?? editing.helperName ?? ""}
           onClose={() => setEditing(null)}
-          onUpdated={() => void refresh()}
+          onStage={(change) => handleStage(editing.id, change)}
         />
       )}
     </div>

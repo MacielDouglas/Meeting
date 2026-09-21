@@ -153,6 +153,8 @@ export default async function ReunioesPage({
             )}
             midweekTime={meetingScheduleData.midweekTime}
             weekendTime={meetingScheduleData.weekendTime}
+            midweekDay={meetingScheduleData.midweekDay}
+            weekendDay={meetingScheduleData.weekendDay}
             canManage={canManage}
             initialWeekStart={schedule.weekStart}
             initialKind={selectInitialKind(todayLocalISO(), schedule.midweek.date)}

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
 import {
   cleaningAssignments,
@@ -155,6 +155,40 @@ export async function getManyPersonCleaningHistories(
     }
   }
   return result;
+}
+
+export interface PersonCleaningItem {
+  assignmentDate: string;
+  sectorKey: string;
+  sectorName: string;
+  isFamily: boolean;
+}
+
+/** Limpeza de uma pessoa no intervalo (para "minha semana" na página inicial). */
+export async function listPersonCleaningInRange(
+  personId: string,
+  startDate: string,
+  endDate: string,
+): Promise<PersonCleaningItem[]> {
+  await requireAuthenticatedUser();
+  const db = getDb();
+  const rows = await db
+    .select({
+      assignmentDate: cleaningAssignments.assignmentDate,
+      sectorKey: cleaningAssignments.sectorKey,
+      sectorName: cleaningAssignments.sectorName,
+      isFamily: cleaningAssignments.isFamily,
+    })
+    .from(cleaningAssignments)
+    .where(
+      and(
+        eq(cleaningAssignments.personId, personId),
+        gte(cleaningAssignments.assignmentDate, startDate),
+        lte(cleaningAssignments.assignmentDate, endDate),
+      ),
+    )
+    .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
+  return rows.map((row) => ({ ...row, isFamily: row.isFamily ?? false }));
 }
 
 export interface EligiblePerson {

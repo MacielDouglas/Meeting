@@ -2,8 +2,9 @@
  * Construtor do programa de reuniões (entre semana e fim de semana).
  *
  * Entre semana (1h45 = 105min), relógio corrido a partir do horário inicial:
- * - Cântico inicial + oração: 5
- * - Palavras de introdução: 1
+ * - Presidente: 0 (só designação, com filtro midweek_chairman)
+ * - Cântico inicial: 5 (sem designação de pessoa)
+ * - Palavras de introdução: 1 (sem designação de pessoa)
  * - TESOUROS (25): discurso 10 + pérolas 10 + leitura 4 + 1 do presidente (somado, sem linha)
  * - SEAMOS (15): cada parte soma duração + 1 do presidente (somado, sem linha)
  * - VIDA (45): cântico do meio 5 + partes variadas + estudo 30 + conclusão 3 + cântico final 5
@@ -42,6 +43,67 @@ export function extractSongNumber(text: string | undefined | null): number | nul
   if (!text) return null;
   const match = String(text).match(/(\d+)/);
   return match ? Number(match[1]) : null;
+}
+
+/**
+ * Normaliza texto da apostila para classificar a parte (minúsculas, sem
+ * acentos nem pontuação): "Haga discípulos" e "¿Qué dirías?" viram
+ * "haga discipulos" e "que dirias".
+ */
+export function normalizeMinistryText(value: string | undefined | null): string {
+  return (value ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[¿?¡!.,:;()"«»—–-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export interface ClassifiedMinistry {
+  capability: string;
+  needsHelper: boolean;
+}
+
+/**
+ * Classifica a parte de "Seamos mejores maestros" pelo título da apostila:
+ * - Empiece conversaciones: titular + ajudante (mesmo sexo ou família)
+ * - Haga revisitas / Haga discípulos: titular + ajudante (mesmo sexo)
+ * - Qué dirías: sem ajudante, ancião ou servo ministerial
+ * - Explique sus creencias (Escenificación): titular + ajudante (mesmo sexo ou família)
+ * - Explique sus creencias (discurso) / Discurso: sem ajudante, better_speech
+ */
+export function classifyMinistryPart(input: {
+  title: string;
+  assignment?: string;
+  territory?: string;
+}): ClassifiedMinistry {
+  const title = normalizeMinistryText(input.title);
+  const context = normalizeMinistryText(
+    `${input.territory ?? ""} ${input.assignment ?? ""} ${input.title}`,
+  );
+  if (title.includes("explique sus creencias") || context.includes("explique sus creencias")) {
+    if (context.includes("escenific")) {
+      return { capability: "ministryExplainStaging", needsHelper: true };
+    }
+    return { capability: "ministrySpeech", needsHelper: false };
+  }
+  if (title.includes("que dirias")) {
+    return { capability: "ministryElder", needsHelper: false };
+  }
+  if (title.includes("empiece conversaciones")) {
+    return { capability: "ministryStart", needsHelper: true };
+  }
+  if (title.includes("haga revisitas")) {
+    return { capability: "ministryReturn", needsHelper: true };
+  }
+  if (title.includes("haga discipulos")) {
+    return { capability: "ministryDisciples", needsHelper: true };
+  }
+  if (title === "discurso" || title.startsWith("discurso ")) {
+    return { capability: "ministrySpeech", needsHelper: false };
+  }
+  return { capability: "ministry", needsHelper: true };
 }
 
 export function addMinutes(time: string, minutes: number): string {
@@ -85,15 +147,23 @@ export function buildMidweekParts(
   const middleNum = extractSongNumber(song?.middleSong);
   const closingNum = extractSongNumber(song?.closingSong);
 
+  // Presidente antes do cântico: única designação com filtro midweek_chairman
+  // no cabeçalho. Duração zero: não consome o relógio.
+  parts.push({
+    key: "president",
+    section: "",
+    title: "Presidente",
+    durationMinutes: 0,
+    capability: "president",
+  });
   parts.push({
     key: "opening-song",
     section: "",
-    title: song?.openingSong ? `${song.openingSong} y oración` : "Canción y oración",
+    title: song?.openingSong ? `${song.openingSong}` : "Canción",
     subtitle: openingNum != null ? (songThemeByNumber.get(openingNum) ?? "") : "",
     durationMinutes: 5,
     songNumber: openingNum,
     songTheme: openingNum != null ? (songThemeByNumber.get(openingNum) ?? null) : null,
-    capability: "prayer",
   });
   void themeOf;
   parts.push({
@@ -101,23 +171,6 @@ export function buildMidweekParts(
     section: "",
     title: "Palabras de introducción",
     durationMinutes: 1,
-    capability: "president",
-  });
-  // Conselheiros auxiliares (TheocBase: COUNSELOR_A1/A2). Duração zero: não
-  // consomem o relógio, apenas registram a designação.
-  parts.push({
-    key: "counselor-1",
-    section: "",
-    title: "Conselheiro auxiliar 1",
-    durationMinutes: 0,
-    capability: "president",
-  });
-  parts.push({
-    key: "counselor-2",
-    section: "",
-    title: "Conselheiro auxiliar 2",
-    durationMinutes: 0,
-    capability: "president",
   });
 
   const treasures = week.meeting["TREASURES FROM GODS WORD"] ?? [];
@@ -159,14 +212,19 @@ export function buildMidweekParts(
   const ministry = week.meeting["APPLY YOURSELF TO THE FIELD MINISTRY"] ?? [];
   ministry.forEach((part, index) => {
     const duration = parseDurationMinutes(part.duration, 4);
+    const classified = classifyMinistryPart({
+      title: part.title,
+      assignment: part.assignment,
+      territory: part.territory,
+    });
     parts.push({
       key: `ministry-${index}`,
       section: index === 0 ? "SEAMOS MEJORES MAESTROS" : "SEAMOS MEJORES MAESTROS",
       title: part.title,
       subtitle: part.assignment ?? part.territory ?? "",
       durationMinutes: duration,
-      needsHelper: true,
-      capability: "ministry",
+      needsHelper: classified.needsHelper,
+      capability: classified.capability,
     });
   });
   const PRESIDENT_EXTRA_PER_MINISTRY_PART = 1;
@@ -177,6 +235,7 @@ export function buildMidweekParts(
   const cbs = cbsIndex >= 0 ? living[cbsIndex] : null;
   const livingAfterCbs = cbsIndex >= 0 ? living.slice(cbsIndex + 1) : [];
 
+  // Cântico do meio: sem designação de pessoa (só o número/tema).
   parts.push({
     key: "middle-song",
     section: "NUESTRA VIDA CRISTIANA",
@@ -185,7 +244,6 @@ export function buildMidweekParts(
     durationMinutes: 5,
     songNumber: middleNum,
     songTheme: middleNum != null ? (songThemeByNumber.get(middleNum) ?? null) : null,
-    capability: "prayer",
   });
 
   livingBeforeCbs.forEach((part, index) => {
@@ -221,13 +279,14 @@ export function buildMidweekParts(
     });
   });
 
+  // Palavras de conclusão: sem designação de pessoa.
   parts.push({
     key: "concluding-comments",
     section: "NUESTRA VIDA CRISTIANA",
     title: "Palabras de conclusión",
     durationMinutes: 3,
-    capability: "president",
   });
+  // Último cântico: único com designação de pessoa (filtro prayer).
   parts.push({
     key: "closing-song",
     section: "NUESTRA VIDA CRISTIANA",
@@ -281,16 +340,7 @@ export function buildWeekendParts(
     songNumber: openingSongNumber,
     songTheme:
       openingSongNumber != null ? (songThemeByNumber.get(openingSongNumber) ?? null) : null,
-    capability: "prayer",
-  });
-  // Presidência da reunião pública (TheocBase: PM_CHAIRMAN). Duração zero:
-  // conduz a reunião sem consumir o relógio.
-  parts.push({
-    key: "weekend-chairman",
-    section: "",
-    title: "Presidencia",
-    durationMinutes: 0,
-    capability: "weekendPresident",
+    capability: "weekendOpening",
   });
   parts.push({
     key: "public-talk",

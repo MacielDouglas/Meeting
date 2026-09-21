@@ -39,7 +39,10 @@ export async function GET(request: Request) {
   const firstTime = result.assignments[0]?.startTime ?? "19:30";
   const lines = result.assignments.map((part) => {
     const who = [part.personName, part.helperPersonName].filter(Boolean).join(" · ");
-    return `${part.startTime} ${part.songNumber ? `Cântico ${part.songNumber}` : part.title}${who ? ` — ${who}` : ""}`;
+    const label = part.songNumber
+      ? `Cântico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
+      : part.title;
+    return `${part.startTime} ${label}${who ? ` — ${who}` : ""}`;
   });
 
   const body = [

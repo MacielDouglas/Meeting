@@ -14,14 +14,24 @@ export interface MeetingPerson {
   helper: boolean;
   unavailable: boolean;
   lastAssignmentAt: string | null;
+  familyHead: boolean;
+  familyMemberId: string | null;
+  /** Id do cabeça da família (próprio id quando é cabeça, null sem família). */
+  familyGroupId: string | null;
 }
 
 const CAPABILITY_COLUMNS = {
+  prayer: persons.prayer,
   midweekChairman: persons.midweekChairman,
   treasuresTalk: persons.treasuresTalk,
   pearlsQuest: persons.pearlsQuest,
   bibleReading: persons.bibleReading,
   helper: persons.helper,
+  startConversations: persons.startConversations,
+  returnVisits: persons.returnVisits,
+  makeDisciples: persons.makeDisciples,
+  explainBeliefs: persons.explainBeliefs,
+  betterSpeech: persons.betterSpeech,
   analysisTalk: persons.analysisTalk,
   bibleStudy: persons.bibleStudy,
   studyReader: persons.studyReader,
@@ -49,6 +59,11 @@ export async function listMeetingPersons(
       ? CAPABILITY_COLUMNS[capabilityField as keyof typeof CAPABILITY_COLUMNS]
       : null;
   if (field) conditions.push(eq(field, true));
+  // "Qué dirías": ancião OU servo ministerial (só homens).
+  if (capabilityField === "elderOrServant") {
+    conditions.push(or(eq(persons.elder, true), eq(persons.ministerialServant, true)));
+    conditions.push(eq(persons.sex, "male"));
+  }
   // Defesa em profundidade: partes restritas a homens nunca listam mulheres,
   // mesmo se o cadastro estiver inconsistente (o formulário já normaliza).
   if (capabilityField && (FEMALE_RESTRICTED_KEYS as readonly string[]).includes(capabilityField)) {
@@ -73,6 +88,8 @@ export async function listMeetingPersons(
       helper: persons.helper,
       unavailable: persons.unavailable,
       lastAssignmentAt: persons.lastAssignmentAt,
+      familyHead: persons.familyHead,
+      familyMemberId: persons.familyMemberId,
     })
     .from(persons)
     .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -90,5 +107,8 @@ export async function listMeetingPersons(
     helper: row.helper ?? false,
     unavailable: row.unavailable ?? false,
     lastAssignmentAt: row.lastAssignmentAt ? row.lastAssignmentAt.toISOString() : null,
+    familyHead: row.familyHead ?? false,
+    familyMemberId: row.familyMemberId ?? null,
+    familyGroupId: row.familyHead ? row.id : (row.familyMemberId ?? null),
   }));
 }

@@ -3,6 +3,7 @@ import {
   addMinutes,
   buildMidweekParts,
   buildWeekendParts,
+  classifyMinistryPart,
   extractSongNumber,
   parseDurationMinutes,
 } from "@/features/meetings/domain/build-meeting-program";
@@ -53,19 +54,73 @@ describe("build-meeting-program", () => {
       "19:00",
       songs,
     );
+    // Presidente (0min) antes do cântico, sem consumir o relógio.
+    expect(parts[0].key).toBe("president");
+    expect(parts[0].capability).toBe("president");
     expect(parts[0].startTime).toBe("19:00");
-    expect(parts[1].startTime).toBe("19:05");
-    expect(parts[2].startTime).toBe("19:06");
+    expect(parts[1].key).toBe("opening-song");
+    expect(parts[1].startTime).toBe("19:00");
+    expect(parts[1].capability).toBeUndefined();
+    expect(parts[2].key).toBe("opening-comments");
+    expect(parts[2].startTime).toBe("19:05");
+    expect(parts[2].capability).toBeUndefined();
+    expect(parts[3].startTime).toBe("19:06");
+    // Sem conselheiros auxiliares.
+    expect(parts.some((p) => p.key.startsWith("counselor-"))).toBe(false);
     // cântico do meio após tesouros (6) + ministério (5+1,5+1,4+1=17) = 19:06+25=19:31? +? verifica ordem
     const middle = parts.find((p) => p.key === "middle-song");
     expect(middle?.songNumber).toBe(3);
     expect(middle?.songTheme).toBe("Tú me das fuerza");
+    expect(middle?.capability).toBeUndefined();
     const closing = parts.find((p) => p.key === "closing-song");
     expect(closing?.songNumber).toBe(156);
+    // Só o último cântico mantém designação com filtro prayer.
+    expect(closing?.capability).toBe("prayer");
+    // Classificação do ministério: Empiece com ajudante, Discurso sem ajudante.
+    const ministry = parts.filter((p) => p.key.startsWith("ministry-"));
+    expect(ministry).toHaveLength(3);
+    expect(ministry[0].capability).toBe("ministryStart");
+    expect(ministry[0].needsHelper).toBe(true);
+    expect(ministry[2].capability).toBe("ministrySpeech");
+    expect(ministry[2].needsHelper).toBeFalsy();
+    // Palavras de conclusão sem designação.
+    expect(parts.find((p) => p.key === "concluding-comments")?.capability).toBeUndefined();
     const last = parts[parts.length - 1];
     // 19:00 + 5 + 1 + (10+10+4+1) + (5+1 + 5+1 + 4+1) + 5 + (10+5) + 30 + 3 = 20:41
     expect(last.startTime).toBe("20:41");
     expect(addMinutes(last.startTime, last.durationMinutes)).toBe("20:46");
+  });
+
+  it("classifica as partes de Seamos mejores maestros", () => {
+    expect(classifyMinistryPart({ title: "Empiece conversaciones" })).toEqual({
+      capability: "ministryStart",
+      needsHelper: true,
+    });
+    expect(classifyMinistryPart({ title: "Haga revisitas" })).toEqual({
+      capability: "ministryReturn",
+      needsHelper: true,
+    });
+    expect(classifyMinistryPart({ title: "Haga discípulos" })).toEqual({
+      capability: "ministryDisciples",
+      needsHelper: true,
+    });
+    expect(classifyMinistryPart({ title: "¿Qué dirías si alguien dice…?" })).toEqual({
+      capability: "ministryElder",
+      needsHelper: false,
+    });
+    expect(
+      classifyMinistryPart({
+        title: "Explique sus creencias",
+        assignment: "Escenificación. Explique sus creencias",
+      }),
+    ).toEqual({ capability: "ministryExplainStaging", needsHelper: true });
+    expect(
+      classifyMinistryPart({ title: "Explique sus creencias", assignment: "Discurso" }),
+    ).toEqual({ capability: "ministrySpeech", needsHelper: false });
+    expect(classifyMinistryPart({ title: "Discurso" })).toEqual({
+      capability: "ministrySpeech",
+      needsHelper: false,
+    });
   });
 
   it("monta fim de semana 9:00 -> 10:45", () => {
@@ -82,17 +137,11 @@ describe("build-meeting-program", () => {
       { title: "Cómo seguir siendo amigos", openingSong: 90, closingSong: 124 },
       songs,
     );
-    expect(parts.map((p) => p.startTime)).toEqual([
-      "09:00",
-      "09:05",
-      "09:05",
-      "09:35",
-      "09:40",
-      "10:40",
-    ]);
-    expect(parts.find((p) => p.key === "weekend-chairman")?.capability).toBe("weekendPresident");
-    expect(parts[3].songTheme).toBe("Animémonos unos a otros");
-    expect(parts[5].songTheme).toBe("Siempre fieles");
-    expect(addMinutes(parts[5].startTime, parts[5].durationMinutes)).toBe("10:45");
+    expect(parts.map((p) => p.startTime)).toEqual(["09:00", "09:05", "09:35", "09:40", "10:40"]);
+    expect(parts).toHaveLength(5);
+    expect(parts[0].capability).toBe("weekendOpening");
+    expect(parts[2].songTheme).toBe("Animémonos unos a otros");
+    expect(parts[4].songTheme).toBe("Siempre fieles");
+    expect(addMinutes(parts[4].startTime, parts[4].durationMinutes)).toBe("10:45");
   });
 });

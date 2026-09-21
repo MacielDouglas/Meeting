@@ -5,6 +5,31 @@ import { getFullName, type Person, type PersonSummary } from "@/features/people/
 import { persons } from "@/features/people/infrastructure/person-schema";
 import { getDb } from "@/shared/lib/db";
 
+export interface LinkedPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  sex: "male" | "female";
+}
+
+/** Pessoa vinculada ao usuário (para "minha semana" na página inicial). */
+export async function getPersonByUserId(userId: string): Promise<LinkedPerson | null> {
+  await requireAuthenticatedUser();
+  const rows = await getDb()
+    .select({
+      id: persons.id,
+      firstName: persons.firstName,
+      lastName: persons.lastName,
+      sex: persons.sex,
+    })
+    .from(persons)
+    .where(eq(persons.userId, userId))
+    .limit(1);
+  const row = rows[0];
+  if (!row) return null;
+  return { ...row, sex: row.sex as "male" | "female" };
+}
+
 export interface UserWithRole {
   id: string;
   name: string;

@@ -7,17 +7,10 @@ import {
   type MeetingAssignmentItem,
 } from "@/features/meetings/application/meeting-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
+import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
 import { formatDateBR } from "@/shared/lib/format-date";
-
-const SECTION_COLORS: Record<string, string> = {
-  "TESOROS DE LA BIBLIA": "#656164",
-  "SEAMOS MEJORES MAESTROS": "#c78909",
-  "NUESTRA VIDA CRISTIANA": "#99131e",
-  "PUBLIC TALK": "#2f4868",
-  "ESTUDIO DE LA ATALAYA": "#4d654d",
-};
 
 const EXCEPTION_LABELS: Record<string, string> = {
   no_meeting: "Sem reunião",
@@ -173,22 +166,24 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
               </p>
             </header>
             {partsWithSections.map((part) => {
-              const color = SECTION_COLORS[part.section] ?? "#333333";
+              const meta = sectionMetaOf(part.section);
               return (
                 <div key={part.id}>
                   {part.showSection && (
                     <h3
                       className="px-4 py-1 text-sm font-bold uppercase text-white"
-                      style={{ backgroundColor: color }}
+                      style={{ backgroundColor: meta.color }}
                     >
-                      {part.section}
+                      {meta.label}
                     </h3>
                   )}
                   <div className="flex items-center gap-3 border-b px-4 py-1.5 last:border-b-0">
                     <span className="w-12 shrink-0 text-xs font-semibold">{part.startTime}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">
-                        {part.songNumber ? `Cântico ${part.songNumber}` : part.title}
+                        {part.songNumber
+                          ? `Cântico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
+                          : part.title}
                         {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
                         {part.classroom && part.classroom !== "A"
                           ? ` · Sala ${part.classroom}`
