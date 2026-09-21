@@ -51,6 +51,12 @@ yarn-error.log*
 .impeccable/*.log
 .claude/settings.local.json
 
+# skills vendor - instalação local (cada dev instala; launcher baixa o binário)
+.claude/skills/
+.claude/agents/
+.opencode/skills/
+.opencode/commands/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
