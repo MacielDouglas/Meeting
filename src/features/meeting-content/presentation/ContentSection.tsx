@@ -133,7 +133,7 @@ function ImportModal({
           {kindLabel(inspected.kind)} · {languageLabel(inspected.language)} · {items.length} itens
         </h2>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
             Este conteúdo ({kindLabel(inspected.kind).toLowerCase()}, {items.length} itens,{" "}
             {languageLabel(inspected.language).toLowerCase()}) já existe no banco de dados (
             {inspected.existingCount} registros). Deseja substituir?
@@ -143,7 +143,7 @@ function ImportModal({
             Revise o conteúdo e edite antes de salvar, se precisar.
           </p>
         )}
-        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+        {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <ul className="flex flex-1 flex-col gap-1 overflow-y-auto">
           {items.map((item) => (
             <li
@@ -172,7 +172,7 @@ function ImportModal({
                 type="button"
                 onClick={() => removeItem(item.key)}
                 aria-label={`Remover item ${item.number}`}
-                className="shrink-0 text-xs font-medium text-red-500"
+                className="shrink-0 text-xs font-medium text-danger"
               >
                 X
               </button>
@@ -233,8 +233,8 @@ function SmartImportCard({
         Envie qualquer arquivo .jwpub do seu aparelho: cânticos, esboços ou Sentinela. O app
         identifica o tipo e abre a revisão na aba correta.
       </p>
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      {status && <p className="text-sm text-emerald-500">{status}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {status && <p className="text-sm text-success">{status}</p>}
       <input
         ref={fileRef}
         type="file"
@@ -387,7 +387,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
             onSubmit={(event) => void handleCreate(event)}
             className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
           >
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
+            {formError && <p className="text-sm text-danger">{formError}</p>}
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-muted-foreground">Número</span>
@@ -518,7 +518,7 @@ function EntryModal({
                 Editar
               </Button>
               <Button
-                className="border-transparent bg-red-500 text-white"
+                className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
                 aria-label={`Apagar ${singular.toLowerCase()} ${item.number}`}
               >
@@ -528,7 +528,7 @@ function EntryModal({
           )}
           {confirmingDelete && (
             <Button
-              className="border-transparent bg-red-500 text-white"
+              className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
               Confirmar exclusão
@@ -669,8 +669,10 @@ export function ContentSection({
             key={item.value}
             type="button"
             onClick={() => setSubTab(item.value)}
-            className={`h-9 flex-1 rounded-full px-2 text-sm font-medium transition-colors ${
-              subTab === item.value ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"
+            className={`h-9 flex-1 rounded-full px-2 font-display text-sm font-medium uppercase tracking-wider transition-colors ${
+              subTab === item.value
+                ? "bg-accent text-accent-ink"
+                : "bg-secondary text-muted-foreground"
             }`}
           >
             {item.label}

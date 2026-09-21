@@ -8,6 +8,7 @@ import {
 } from "@/features/meetings/application/meeting-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
 import { formatDateBR } from "@/shared/lib/format-date";
@@ -48,20 +49,22 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
     const speakers = await listOutsideSpeakers();
     return (
       <main className="flex flex-col gap-4 pb-10">
-        <header className="flex items-center justify-between gap-3 print:hidden">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Fichas de oradores</h1>
-            <p className="text-sm text-muted-foreground">{speakers.length} orador(es)</p>
-          </div>
-          <Suspense fallback={null}>
-            <PrintButton />
-          </Suspense>
-        </header>
+        <div className="print:hidden">
+          <PageHeader
+            title="Fichas de oradores"
+            meta={`${speakers.length} orador(es)`}
+            actions={
+              <Suspense fallback={null}>
+                <PrintButton />
+              </Suspense>
+            }
+          />
+        </div>
         <Suspense fallback={<PrintFallback />}>
           {speakers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Nenhum orador cadastrado.{" "}
-              <Link href="/reunioes?tab=oradores" className="text-sky-600 underline">
+              <Link href="/reunioes?tab=oradores" className="text-accent underline">
                 Cadastrar oradores
               </Link>
             </p>
@@ -110,32 +113,31 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
 
   return (
     <main className="flex flex-col gap-4 pb-10">
-      <header className="flex items-center justify-between gap-3 print:hidden">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Impressão do programa</h1>
-          <p className="text-sm text-muted-foreground">
-            {kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"} · semana de{" "}
-            {formatDateBR(weekStart)}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Link
-            href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-            className="flex h-9 items-center rounded-full bg-secondary px-4 text-sm font-medium"
-          >
-            Baixar iCal
-          </Link>
-          <Suspense fallback={null}>
-            <PrintButton />
-          </Suspense>
-        </div>
-      </header>
+      <div className="print:hidden">
+        <PageHeader
+          title="Impressão do programa"
+          meta={`${kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"} · semana de ${formatDateBR(weekStart)}`}
+          actions={
+            <>
+              <Link
+                href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
+                className="flex h-11 items-center rounded-full bg-secondary px-4 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground"
+              >
+                Baixar iCal
+              </Link>
+              <Suspense fallback={null}>
+                <PrintButton />
+              </Suspense>
+            </>
+          }
+        />
+      </div>
 
       <Suspense fallback={<PrintFallback />}>
         {result === null ? (
           <p className="text-sm text-muted-foreground">
             Nenhum programa salvo para esta semana.{" "}
-            <Link href="/reunioes" className="text-sky-600 underline">
+            <Link href="/reunioes" className="text-accent underline">
               Voltar para Reuniões
             </Link>
           </p>

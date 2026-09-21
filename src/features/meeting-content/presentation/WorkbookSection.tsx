@@ -44,7 +44,7 @@ function SongText({ text, theme }: { text: string | undefined; theme: string | n
 function PartCard({ part }: { part: WorkbookContentPart }) {
   return (
     <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
-      <p className="text-xs font-medium text-sky-500">
+      <p className="text-xs font-medium text-accent">
         {part.number}. {part.title}
         {part.duration ? ` ${part.duration}` : ""}
       </p>
@@ -78,7 +78,7 @@ function MeetingSections({ meeting }: { meeting: WorkbookContentMeeting }) {
         if (!parts || parts.length === 0) return null;
         return (
           <div key={key} className="flex flex-col gap-1">
-            <p className="text-xs font-semibold text-sky-500">{SECTION_LABELS[key]}</p>
+            <p className="text-xs font-semibold text-accent">{SECTION_LABELS[key]}</p>
             {parts.map((part) => (
               <PartCard key={`${key}-${part.number}`} part={part} />
             ))}
@@ -140,7 +140,7 @@ export function WorkbookImportModal({
           <AlertDialogDescription>{weeks.length} semanas</AlertDialogDescription>
         </AlertDialogHeader>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
             Este conteúdo ({inspected.symbol}, {weeks.length} semanas) já existe no banco de dados.
             Deseja substituir?
           </p>
@@ -159,7 +159,7 @@ export function WorkbookImportModal({
             ))}
           </ul>
         )}
-        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+        {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <AlertDialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? "Salvando…" : inspected.hadExisting ? "Substituir" : "Salvar"}
@@ -254,7 +254,7 @@ export function WorkbookSection({
                 type="button"
                 onClick={() => setDeleteTarget(issue)}
                 aria-label={`Apagar edição ${issue.symbol}`}
-                className="rounded-lg p-2 text-red-500"
+                className="rounded-lg p-2 text-danger"
               >
                 <FaTrashAlt aria-hidden size={18} />
               </button>
@@ -268,7 +268,7 @@ export function WorkbookSection({
                   onClick={() => setSelectedWeek({ issue, week })}
                   className="block w-full rounded-xl bg-secondary p-3 text-left"
                 >
-                  <p className="text-xs font-medium text-sky-500">{week.week}</p>
+                  <p className="text-xs font-medium text-accent">{week.week}</p>
                   <p className="text-sm font-semibold">{week.meeting?.BibleReading ?? "—"}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {week.meeting?.song?.[0]?.openingSong ?? "—"} →{" "}
@@ -301,7 +301,7 @@ export function WorkbookSection({
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col sm:flex-row">
               <Button
-                className="border-transparent bg-red-500 text-white"
+                className="border-transparent bg-danger text-danger-ink"
                 onClick={() => {
                   void deleteWorkbookIssue({ id: deleteTarget.id }).then(() =>
                     setDeleteTarget(null),

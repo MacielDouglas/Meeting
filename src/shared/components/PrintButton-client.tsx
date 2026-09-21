@@ -5,7 +5,7 @@ export function PrintButton() {
     <button
       type="button"
       onClick={() => window.print()}
-      className="h-9 rounded-full bg-sky-500 px-4 text-sm font-medium text-white print:hidden"
+      className="h-11 rounded-full bg-accent px-4 font-display text-sm font-medium uppercase tracking-wider text-accent-ink print:hidden"
     >
       Imprimir
     </button>

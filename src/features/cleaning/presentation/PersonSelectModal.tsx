@@ -165,16 +165,16 @@ export function PersonSelectModal({
         </label>
 
         {error && (
-          <p role="alert" className="text-sm text-red-500">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         )}
 
         {loading ? (
-          <p className="text-sm text-muted-foreground">Carregando pessoas...</p>
+          <p className="text-sm text-muted-foreground">Cargando personas…</p>
         ) : (
           <ul className="flex flex-col gap-1">
-            {!allowYoung && <li className="px-1 text-xs text-amber-600">Setor só para adultos.</li>}
+            {!allowYoung && <li className="px-1 text-xs text-warning">Setor só para adultos.</li>}
             {persons.map((person) => {
               const isUsed = dayUsedSet.has(person.id) && person.id !== currentPersonId;
               const isYoungBlocked = !allowYoung && person.young;
@@ -194,7 +194,7 @@ export function PersonSelectModal({
                     }
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       person.id === currentPersonId
-                        ? "bg-sky-500/10 ring-1 ring-sky-500"
+                        ? "bg-accent/10 ring-1 ring-accent"
                         : isYoungBlocked
                           ? "opacity-40"
                           : "hover:bg-secondary"
@@ -203,20 +203,20 @@ export function PersonSelectModal({
                     <span className="flex-1">
                       {person.firstName} {person.lastName}
                       {person.young && (
-                        <span className="ml-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-600">
+                        <span className="ml-1 rounded-full bg-warning-soft px-1.5 py-0.5 text-xs font-medium text-warning">
                           jovem
                         </span>
                       )}
                       {person.id === currentPersonId && (
-                        <span className="ml-1 text-xs text-sky-500">(atual)</span>
+                        <span className="ml-1 text-xs text-accent">(atual)</span>
                       )}
                       {isUsed && (
-                        <span className="ml-1 text-xs text-amber-600">
+                        <span className="ml-1 text-xs text-warning">
                           (já designado hoje — manual permitido)
                         </span>
                       )}
                       {isYoungBlocked && (
-                        <span className="ml-1 text-xs text-amber-600">(só adulto)</span>
+                        <span className="ml-1 text-xs text-warning">(só adulto)</span>
                       )}
                     </span>
                     <CleaningHistoryBadge
@@ -239,7 +239,7 @@ export function PersonSelectModal({
             type="button"
             disabled={saving}
             onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, 200))}
-            className="mt-1 text-sm text-sky-600 hover:underline disabled:opacity-50"
+            className="mt-1 text-sm text-accent hover:underline disabled:opacity-50"
           >
             Mostrar mais
           </button>

@@ -83,7 +83,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
       onSubmit={(e) => void handleSubmit(e)}
       className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
     >
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">Nome do setor (ex: Câmera)</span>
         <input
@@ -206,7 +206,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
             <button
               type="button"
               onClick={() => void deleteDesignationSector({ id: sector.id })}
-              className="self-start text-xs font-medium text-red-500"
+              className="self-start text-xs font-medium text-danger"
             >
               Excluir setor
             </button>

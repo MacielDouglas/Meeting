@@ -10,7 +10,7 @@ export default function ConfiguracionLoading() {
     <main
       className="flex flex-col gap-4 pb-10"
       aria-busy="true"
-      aria-label="Carregando configuração"
+      aria-label="Cargando configuración"
     >
       <PageHeaderSkeleton lines={1} />
       <TabNavSkeleton tabs={3} />

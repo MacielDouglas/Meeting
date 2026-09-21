@@ -6,7 +6,9 @@ export default function NotFound() {
   return (
     <main className="flex flex-1 flex-col justify-center gap-4">
       <Card className="flex flex-col gap-2">
-        <CardTitle>Página no encontrada</CardTitle>
+        <CardTitle className="font-display text-3xl font-semibold uppercase leading-none tracking-wide">
+          Página no encontrada
+        </CardTitle>
         <CardDescription>La página que buscas no existe o fue movida.</CardDescription>
       </Card>
       <Link href="/">

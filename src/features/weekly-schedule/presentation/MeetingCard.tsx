@@ -1,7 +1,7 @@
 import { FaCalendarDay, FaClock, FaLocationDot } from "react-icons/fa6";
 import type { Meeting } from "@/features/weekly-schedule/domain/schedule";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
+import { Card } from "@/shared/components/ui/card";
 
 interface MeetingCardProps {
   meeting: Meeting;
@@ -14,8 +14,10 @@ export function MeetingCard({ meeting, title, badge }: MeetingCardProps) {
     <Card>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{meeting.theme}</CardDescription>
+          <h2 className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{meeting.theme}</p>
         </div>
         <Badge variant="secondary">{badge}</Badge>
       </div>

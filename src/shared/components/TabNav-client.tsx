@@ -15,28 +15,18 @@ interface TabNavProps {
   param?: string;
   defaultValue: string;
   ariaLabel: string;
-  variant?: "pill" | "segmented";
 }
 
 /**
  * Ilha client mínima: só decide a aba ativa via `useSearchParams` para
  * feedback instantâneo. A página continua server e passa `href`s prontos.
  */
-export function TabNav({
-  items,
-  param = "tab",
-  defaultValue,
-  ariaLabel,
-  variant = "pill",
-}: TabNavProps) {
+export function TabNav({ items, param = "tab", defaultValue, ariaLabel }: TabNavProps) {
   const searchParams = useSearchParams();
   const active = searchParams.get(param) ?? defaultValue;
 
   return (
-    <nav
-      aria-label={ariaLabel}
-      className={cn(variant === "pill" ? "flex gap-2" : "flex gap-1 rounded-xl bg-secondary p-1")}
-    >
+    <nav aria-label={ariaLabel} className="flex gap-2">
       {items.map((item) => {
         const isActive = active === item.value;
         return (
@@ -46,16 +36,9 @@ export function TabNav({
             prefetch
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex-1 px-3 text-center text-sm font-medium transition-colors",
-              variant === "pill"
-                ? cn(
-                    "h-9 rounded-full leading-9",
-                    isActive ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground",
-                  )
-                : cn(
-                    "rounded-lg py-2",
-                    isActive ? "bg-background shadow-sm" : "text-muted-foreground",
-                  ),
+              "flex-1 px-3 text-center font-display text-sm font-medium uppercase tracking-wider transition-colors",
+              "h-9 rounded-full leading-9",
+              isActive ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground",
             )}
           >
             {item.label}

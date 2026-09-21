@@ -227,14 +227,14 @@ export function MeetingAssignModal({
             <button
               type="button"
               onClick={handleSongStage}
-              className="h-11 rounded-lg bg-sky-500 px-3 text-sm text-white"
+              className="h-11 rounded-full bg-accent px-5 font-display text-sm font-medium uppercase tracking-wider text-accent-ink"
             >
               Definir cântico
             </button>
           </div>
         )}
         {songError && (
-          <p role="alert" className="text-sm text-red-500">
+          <p role="alert" className="text-sm text-danger">
             {songError}
           </p>
         )}
@@ -246,7 +246,7 @@ export function MeetingAssignModal({
                 key={option}
                 type="button"
                 onClick={() => handleClassroomStage(option)}
-                className={`h-11 w-12 rounded-lg text-xs font-semibold ${room === option ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+                className={`h-11 w-12 rounded-full text-xs font-semibold ${room === option ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
                 {option}
               </button>
@@ -265,7 +265,7 @@ export function MeetingAssignModal({
             <button
               type="button"
               onClick={handleCongregationStage}
-              className="h-11 rounded-lg bg-sky-500 px-3 text-sm text-white"
+              className="h-11 rounded-full bg-accent px-5 font-display text-sm font-medium uppercase tracking-wider text-accent-ink"
             >
               Definir
             </button>
@@ -276,15 +276,15 @@ export function MeetingAssignModal({
         )}
 
         {withHelperFlow && (
-          <ol className="flex gap-2" aria-label="Etapas da designação">
+          <ol className="flex gap-2" aria-label="Etapas de la designación">
             <li
-              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "titular" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "titular" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               aria-current={step === "titular" ? "step" : undefined}
             >
               <span aria-hidden>1</span> {labels.main}
             </li>
             <li
-              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "helper" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "helper" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               aria-current={step === "helper" ? "step" : undefined}
             >
               <span aria-hidden>2</span> {labels.helper}
@@ -305,22 +305,22 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={() => setOrderBy("name")}
-                className={`h-9 flex-1 rounded-full text-xs font-medium ${orderBy === "name" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+                className={`h-9 flex-1 rounded-full text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
                 Ordem alfabética
               </button>
               <button
                 type="button"
                 onClick={() => setOrderBy("rotation")}
-                className={`h-9 flex-1 rounded-full text-xs font-medium ${orderBy === "rotation" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+                className={`h-9 flex-1 rounded-full text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
                 Rodízio (menos recentes)
               </button>
             </div>
             {titularQuery.isPending ? (
-              <p className="text-sm text-muted-foreground">Carregando…</p>
+              <p className="text-sm text-muted-foreground">Cargando…</p>
             ) : titularQuery.isError ? (
-              <p role="alert" className="text-sm text-red-500">
+              <p role="alert" className="text-sm text-danger">
                 Não foi possível carregar pessoas.
               </p>
             ) : (
@@ -387,9 +387,9 @@ export function MeetingAssignModal({
               className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
             />
             {helperQuery.isPending ? (
-              <p className="text-sm text-muted-foreground">Carregando…</p>
+              <p className="text-sm text-muted-foreground">Cargando…</p>
             ) : helperQuery.isError ? (
-              <p role="alert" className="text-sm text-red-500">
+              <p role="alert" className="text-sm text-danger">
                 Não foi possível carregar pessoas.
               </p>
             ) : (
@@ -418,7 +418,7 @@ export function MeetingAssignModal({
                             {formatLastAssignment(h.lastAssignmentAt)}
                           </span>
                         </span>
-                        <span className="shrink-0 text-xs text-sky-600">Escolher</span>
+                        <span className="shrink-0 text-xs text-accent">Escolher</span>
                       </button>
                     </li>
                   ))}

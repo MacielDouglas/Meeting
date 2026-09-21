@@ -547,14 +547,14 @@ export function MeetingProgramSection({
         <button
           type="button"
           onClick={() => setKind("midweek")}
-          className={`h-9 flex-1 rounded-full text-sm font-medium ${kind === "midweek" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+          className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "midweek" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
         >
           Entre semana
         </button>
         <button
           type="button"
           onClick={() => setKind("weekend")}
-          className={`h-9 flex-1 rounded-full text-sm font-medium ${kind === "weekend" ? "bg-sky-500 text-white" : "bg-secondary text-muted-foreground"}`}
+          className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "weekend" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
         >
           Fim de semana
         </button>
@@ -588,7 +588,7 @@ export function MeetingProgramSection({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
@@ -600,7 +600,7 @@ export function MeetingProgramSection({
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Carregando programa…</p>
+        <p className="text-sm text-muted-foreground">Cargando el programa…</p>
       ) : (
         <Card className="flex flex-col gap-0.5 overflow-hidden bg-black p-2 text-white">
           <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-white/60">
@@ -633,7 +633,7 @@ export function MeetingProgramSection({
                   {dirtyIds.has(part.id) && (
                     <span
                       title="Alteração não salva"
-                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning"
                     />
                   )}
                   <span

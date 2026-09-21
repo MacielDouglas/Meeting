@@ -7,7 +7,9 @@ export default function OfflinePage() {
   return (
     <main className="flex flex-1 flex-col justify-center gap-4">
       <Card className="flex flex-col gap-2">
-        <CardTitle>{es.offlineTitle}</CardTitle>
+        <CardTitle className="font-display text-3xl font-semibold uppercase leading-none tracking-wide">
+          {es.offlineTitle}
+        </CardTitle>
         <CardDescription>{es.offlineDescription}</CardDescription>
       </Card>
       <Link href="/">

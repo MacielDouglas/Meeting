@@ -5,7 +5,13 @@ import { deletePerson } from "@/features/people/application/actions";
 import { Button } from "@/shared/components/ui/button";
 import { es } from "@/shared/i18n/es";
 
-export function DeletePersonButton({ personId }: { personId: string }) {
+export function DeletePersonButton({
+  personId,
+  className,
+}: {
+  personId: string;
+  className?: string;
+}) {
   const [pending, setPending] = useState(false);
 
   async function handleDelete() {
@@ -19,7 +25,12 @@ export function DeletePersonButton({ personId }: { personId: string }) {
   }
 
   return (
-    <Button variant="outline" disabled={pending} onClick={() => void handleDelete()}>
+    <Button
+      variant="outline"
+      disabled={pending}
+      onClick={() => void handleDelete()}
+      className={className}
+    >
       {es.delete}
     </Button>
   );

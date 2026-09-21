@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/features/auth/application/session";
 import { listEnabledDesignationFlags } from "@/features/cleaning/application/queries";
 import { listPersonOptions, listUserOptions } from "@/features/people/application/queries";
 import { PersonForm } from "@/features/people/presentation/PersonForm";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { FormSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
 
@@ -22,15 +23,28 @@ export default async function NewPersonPage() {
 
   return (
     <main className="flex flex-col gap-4">
-      <header className="flex items-center gap-3">
-        <Link href="/personas" aria-label={es.cancel} className="rounded-lg p-2">
-          <FaArrowLeft aria-hidden />
-        </Link>
-        <h1 className="flex-1 text-xl font-bold tracking-tight">{es.newPerson}</h1>
-        <button type="submit" form="person-form" aria-label={es.save} className="rounded-lg p-2">
-          <FaCheck aria-hidden size={20} />
-        </button>
-      </header>
+      <PageHeader
+        title={es.newPerson}
+        actions={
+          <>
+            <Link
+              href="/personas"
+              aria-label={es.cancel}
+              className="grid h-11 w-11 place-items-center rounded-full border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            >
+              <FaArrowLeft aria-hidden />
+            </Link>
+            <button
+              type="submit"
+              form="person-form"
+              aria-label={es.save}
+              className="grid h-11 w-11 place-items-center rounded-full bg-accent text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            >
+              <FaCheck aria-hidden size={20} />
+            </button>
+          </>
+        }
+      />
       <Suspense fallback={<FormSkeleton fields={6} />}>
         <PersonForm
           mode="create"

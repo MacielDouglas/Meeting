@@ -14,7 +14,9 @@ export default function RootError({
   return (
     <main className="flex flex-1 flex-col justify-center gap-4" role="alert">
       <Card className="flex flex-col gap-3">
-        <CardTitle>Algo salió mal</CardTitle>
+        <CardTitle className="font-display text-3xl font-semibold uppercase leading-none tracking-wide">
+          Algo salió mal
+        </CardTitle>
         <CardDescription>
           {error.message || "No fue posible cargar esta página. Inténtalo de nuevo."}
         </CardDescription>

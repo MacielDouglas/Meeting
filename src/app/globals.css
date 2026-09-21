@@ -1,21 +1,32 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Mundo NRC: papel tinta no claro, preto volt no escuro. Volt fixo, acento por tema. */
 :root {
   color-scheme: light;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111113;
   --card: #ffffff;
-  --card-foreground: #171717;
-  --primary: #171717;
+  --card-foreground: #111113;
+  --primary: #111113;
   --primary-foreground: #fafafa;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --border: #e4e4e7;
-  --input: #e4e4e7;
-  --ring: #0ea5e9;
+  --secondary: #f3f3f1;
+  --secondary-foreground: #17171a;
+  --muted: #f3f3f1;
+  --muted-foreground: #63636b;
+  --border: #e5e5e1;
+  --input: #e5e5e1;
+  --ring: #0b6bcb;
+  --volt: #d8ff00;
+  --accent: #0b6bcb;
+  --accent-ink: #ffffff;
+  --success: #12805c;
+  --success-soft: #def5e9;
+  --warning: #9a6200;
+  --warning-soft: #fdeecd;
+  --danger: #d92d20;
+  --danger-soft: #fde4e2;
+  --danger-ink: #ffffff;
   --radius: 1rem;
 }
 
@@ -33,43 +44,74 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-volt: var(--volt);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-barlow-condensed);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
     color-scheme: dark;
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #111113;
-    --card-foreground: #ededed;
-    --primary: #ededed;
-    --primary-foreground: #0a0a0a;
-    --secondary: #27272a;
+    --background: #0a0a0b;
+    --foreground: #f5f5f4;
+    --card: #141417;
+    --card-foreground: #f5f5f4;
+    --primary: #f5f5f4;
+    --primary-foreground: #0a0a0b;
+    --secondary: #1c1c20;
     --secondary-foreground: #fafafa;
-    --muted: #27272a;
-    --muted-foreground: #a1a1aa;
-    --border: #27272a;
-    --input: #27272a;
+    --muted: #1c1c20;
+    --muted-foreground: #a3a3ab;
+    --border: #26262b;
+    --input: #26262b;
+    --ring: #d8ff00;
+    --accent: #d8ff00;
+    --accent-ink: #0a0a0b;
+    --success: #3ddc97;
+    --success-soft: #0e2e23;
+    --warning: #ffb224;
+    --warning-soft: #33230a;
+    --danger: #f97066;
+    --danger-soft: #3a1410;
+    --danger-ink: #0a0a0b;
   }
 }
 
 /* Tema escuro forçado via `.dark` (alternador do cabeçalho). Mesmos valores do bloco acima. */
 :root.dark {
   color-scheme: dark;
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #111113;
-  --card-foreground: #ededed;
-  --primary: #ededed;
-  --primary-foreground: #0a0a0a;
-  --secondary: #27272a;
+  --background: #0a0a0b;
+  --foreground: #f5f5f4;
+  --card: #141417;
+  --card-foreground: #f5f5f4;
+  --primary: #f5f5f4;
+  --primary-foreground: #0a0a0b;
+  --secondary: #1c1c20;
   --secondary-foreground: #fafafa;
-  --muted: #27272a;
-  --muted-foreground: #a1a1aa;
-  --border: #27272a;
-  --input: #27272a;
+  --muted: #1c1c20;
+  --muted-foreground: #a3a3ab;
+  --border: #26262b;
+  --input: #26262b;
+  --ring: #d8ff00;
+  --accent: #d8ff00;
+  --accent-ink: #0a0a0b;
+  --success: #3ddc97;
+  --success-soft: #0e2e23;
+  --warning: #ffb224;
+  --warning-soft: #33230a;
+  --danger: #f97066;
+  --danger-soft: #3a1410;
+  --danger-ink: #0a0a0b;
 }
 
 body {
@@ -81,8 +123,8 @@ body {
 }
 
 ::selection {
-  background: var(--ring);
-  color: #ffffff;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .app-shell {

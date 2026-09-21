@@ -105,7 +105,7 @@ function SectorForm({
       onSubmit={(e) => void handleSubmit(e)}
       className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
     >
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">Nome do setor</span>
         <input
@@ -215,7 +215,7 @@ function SectorIcon({
   return (
     <span
       aria-hidden
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-sky-500"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-accent"
     >
       <Icon size={20} />
     </span>
@@ -287,7 +287,7 @@ function SectorModal({
                 Editar
               </Button>
               <Button
-                className="border-transparent bg-red-500 text-white"
+                className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
               >
                 Excluir
@@ -296,7 +296,7 @@ function SectorModal({
           )}
           {confirmingDelete && (
             <Button
-              className="border-transparent bg-red-500 text-white"
+              className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
               Confirmar exclusão

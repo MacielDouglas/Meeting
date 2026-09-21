@@ -7,9 +7,10 @@ import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { todayLocalISO } from "@/shared/lib/format-date";
 
 /**
- * "Minha semana" da página inicial: reuniões da semana principal com as
- * designações da pessoa vinculada ao usuário (partes + limpeza), próxima
- * reunião em primeiro lugar. Sem pessoa vinculada, devolve só as reuniões.
+ * "Mi semana" de la página inicial: reuniones de la semana principal con las
+ * designaciones de la persona vinculada al usuario (partes + limpieza),
+ * próxima reunión en primer lugar. Sin persona vinculada, devuelve solo las
+ * reuniones.
  */
 export async function getMyWeek(userId: string, reference: Date = new Date()): Promise<MyWeek> {
   const [person, schedule] = await Promise.all([

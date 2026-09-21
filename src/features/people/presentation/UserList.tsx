@@ -53,7 +53,7 @@ export function UserList({ users, currentUserId, isOwner }: UserListProps) {
       {error && (
         <p
           role="alert"
-          className="rounded-xl border border-red-500/50 px-3 py-2 text-sm text-red-500"
+          className="rounded-xl border border-danger/50 px-3 py-2 text-sm text-danger"
         >
           {error}
         </p>

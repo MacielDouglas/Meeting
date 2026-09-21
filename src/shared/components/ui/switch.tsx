@@ -19,8 +19,8 @@ export function Switch({ checked, onCheckedChange, disabled = false, label }: Sw
       disabled={disabled}
       onClick={() => onCheckedChange(!checked)}
       className={cn(
-        "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-        checked ? "bg-sky-500" : "bg-input",
+        "relative h-7 w-12 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+        checked ? "bg-accent" : "bg-input",
         disabled && "cursor-not-allowed opacity-40",
       )}
     >

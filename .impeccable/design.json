@@ -1,138 +1,172 @@
 {
   "components": [
     {
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 16px; font-size: 16px; font-weight: 500; background: var(--primary, #171717); color: #fafafa; border: none; border-radius: 12px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .ds-btn-primary:hover { filter: brightness(1.12); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring, #0ea5e9); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; } @media (min-width: 640px) { .ds-btn-primary { width: auto; } }",
-      "description": "Ação principal: tinta sobre papel-contraste, tátil com press 0.98.",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 20px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); border: none; border-radius: 999px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #0b6bcb); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; } @media (min-width: 640px) { .ds-btn-primary { width: auto; } }",
+      "description": "Ação primária: pílula volt em caixa alta condensada, tátil com press 0.98.",
       "html": "<button class=\"ds-btn-primary\">Guardar horarios</button>",
       "kind": "button",
       "name": "Primary Button",
       "refersTo": "button-primary"
     },
     {
-      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 16px; font-size: 16px; font-weight: 500; background: var(--secondary, #f4f4f5); color: #18181b; border: none; border-radius: 12px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .ds-btn-secondary:hover { filter: brightness(0.96); } .ds-btn-secondary:active { transform: scale(0.98); } .ds-btn-secondary:focus-visible { outline: 2px solid var(--ring, #0ea5e9); outline-offset: 2px; } @media (min-width: 640px) { .ds-btn-secondary { width: auto; } }",
-      "description": "Ação secundária em papel suave para fluxos de apoio.",
-      "html": "<button class=\"ds-btn-secondary\">Cancelar</button>",
-      "kind": "button",
-      "name": "Secondary Button",
-      "refersTo": "button-secondary"
-    },
-    {
-      "css": ".ds-card { background: var(--card, #ffffff); color: var(--foreground, #171717); border: 1px solid var(--border, #e4e4e7); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); } .ds-card-title { margin: 0; font-size: 18px; font-weight: 600; line-height: 1.5; } .ds-card-desc { margin: 0; font-size: 14px; color: #71717a; } .ds-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; } .ds-card-foot { margin-top: 12px; font-size: 14px; color: #71717a; }",
-      "description": "Cartão de reunião: título, badge, metadados e rodapé de contagem.",
-      "html": "<div class=\"ds-card\"><div style=\"display:flex;justify-content:space-between;gap:12px;align-items:flex-start\"><div><h2 class=\"ds-card-title\">Reuni\u00f3n entre semana</h2><p class=\"ds-card-desc\">Tesoros de la Biblia</p></div><span class=\"ds-badge\">Entre semana</span></div><div class=\"ds-card-meta\">Mie 19:30 \u00b7 Sal\u00f3n principal</div><p class=\"ds-card-foot\">6 partes programadas.</p></div>",
+      "css": ".ds-card { background: var(--card, #fff); color: var(--foreground, #111113); border: 1px solid var(--border, #e5e5e1); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); } .ds-card-title { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; } .ds-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; } .ds-card-foot { margin-top: 12px; font-size: 14px; color: var(--muted-foreground, #63636b); }",
+      "description": "Cartão de sessão: título display em caixa alta, numeral de hora e metadados.",
+      "html": "<div class=\"ds-card\"><div style=\"display:flex;justify-content:space-between;gap:12px;align-items:flex-start\"><div><h2 class=\"ds-card-title\">Reuni\u00f3n entre semana</h2></div><span class=\"ds-badge\">Entre semana</span></div><div class=\"ds-card-meta\">Mie 19:30 \u00b7 Sal\u00f3n principal</div><p class=\"ds-card-foot\">6 partes programadas.</p></div>",
       "kind": "card",
-      "name": "Meeting Card",
-      "refersTo": "card"
+      "name": "Session Card",
+      "refersTo": "card-sessao"
     },
     {
-      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-size: 12px; font-weight: 500; background: var(--secondary, #f4f4f5); color: #18181b; }",
-      "description": "Etiqueta de período em pílula total sobre papel suave.",
-      "html": "<span class=\"ds-badge\">Fin de semana</span>",
+      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; background: var(--secondary, #f3f3f1); color: var(--secondary-foreground, #17171a); } .ds-badge[data-tone=\"accent\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); }",
+      "description": "Etiqueta de período em pílula condensada; tom acento para estados.",
+      "html": "<span class=\"ds-badge\">Fin de semana</span> <span class=\"ds-badge\" data-tone=\"accent\">Pr\u00f3xima</span>",
       "kind": "chip",
       "name": "Badge",
-      "refersTo": "badge-secondary"
+      "refersTo": "badge-periodo"
     },
     {
-      "css": ".ds-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; } .ds-field label { font-size: 14px; font-weight: 500; color: var(--foreground, #171717); } .ds-field input { height: 44px; width: 100%; max-width: 220px; padding: 0 12px; font-size: 14px; text-align: right; color: var(--foreground, #171717); background: var(--secondary, #f4f4f5); border: 1px solid transparent; border-radius: 8px; outline: none; } .ds-field input:focus { border-color: var(--ring, #0ea5e9); } .ds-field input::placeholder { color: #71717a; }",
-      "description": "Campo rótulo-esquerda / valor-direita com foco em Azul Sinal.",
+      "css": ".ds-tabs { display: flex; gap: 8px; } .ds-tab { flex: 1; height: 36px; line-height: 36px; padding: 0 12px; text-align: center; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 999px; text-decoration: none; background: var(--secondary, #f3f3f1); color: var(--muted-foreground, #63636b); transition: background 0.2s, color 0.2s; } .ds-tab:hover { filter: brightness(0.96); } .ds-tab[data-active=\"true\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); }",
+      "description": "Abas em pílula única; ativa em acento.",
+      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab\" data-active=\"true\">Reuni\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Designa\u00e7\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Conte\u00fado</a></nav>",
+      "kind": "nav",
+      "name": "Tab Pill",
+      "refersTo": "aba-ativa"
+    },
+    {
+      "css": ".ds-bottomnav { display: flex; justify-content: space-around; border-top: 1px solid var(--border, #e5e5e1); background: var(--background, #fff); padding-bottom: env(safe-area-inset-bottom); } .ds-bottomnav a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; color: var(--muted-foreground, #63636b); } .ds-bottomnav a[data-active=\"true\"] { color: var(--foreground, #111113); } .ds-bottomnav .ds-ic { display: grid; place-items: center; border-radius: 999px; padding: 6px; } .ds-bottomnav a[data-active=\"true\"] .ds-ic { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); } .ds-bottomnav svg { width: 20px; height: 20px; }",
+      "description": "Navegação inferior com pílula de acento no item ativo.",
+      "html": "<nav class=\"ds-bottomnav\"><a data-active=\"true\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3z\"/></svg></span>Inicio</a><a data-active=\"false\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5h16v14H4z\"/></svg></span>Reuni\u00f5es</a><a data-active=\"false\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 4-6 8-6s8 2 8 6\"/></svg></span>Personas</a></nav>",
+      "kind": "nav",
+      "name": "Bottom Nav",
+      "refersTo": "button-ghost"
+    },
+    {
+      "css": ".ds-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; } .ds-field label { font-size: 14px; font-weight: 500; color: var(--foreground, #111113); } .ds-field input { height: 44px; width: 100%; max-width: 220px; padding: 0 12px; font-size: 14px; text-align: right; color: var(--foreground, #111113); background: var(--secondary, #f3f3f1); border: 1px solid transparent; border-radius: 8px; outline: none; } .ds-field input:focus { border-color: var(--accent, #0b6bcb); } .ds-field input::placeholder { color: var(--muted-foreground, #63636b); }",
+      "description": "Campo rótulo-esquerda / valor-direita com foco em acento.",
       "html": "<div class=\"ds-field\"><label>Hora de inicio</label><input value=\"19:30\" /></div>",
       "kind": "input",
       "name": "Text Field",
       "refersTo": "input-field"
     },
     {
-      "css": ".ds-tabs { display: flex; gap: 8px; } .ds-tab { flex: 1; height: 36px; line-height: 36px; padding: 0 12px; text-align: center; font-size: 14px; font-weight: 500; border-radius: 999px; text-decoration: none; background: var(--secondary, #f4f4f5); color: #71717a; transition: background 0.2s, color 0.2s; } .ds-tab:hover { filter: brightness(0.96); } .ds-tab[data-active=\"true\"] { background: #0ea5e9; color: #fff; }",
-      "description": "Navegação por abas em pílula; ativa em Azul Sinal.",
-      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab\" data-active=\"true\">Reuni\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Designa\u00e7\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Conte\u00fado</a></nav>",
-      "kind": "nav",
-      "name": "Tab Pill",
-      "refersTo": "tab-pill-active"
-    },
-    {
-      "css": ".ds-bottomnav { display: flex; justify-content: space-around; border-top: 1px solid var(--border, #e4e4e7); background: var(--background, #ffffff); padding-bottom: env(safe-area-inset-bottom); } .ds-bottomnav a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 0; font-size: 12px; font-weight: 500; text-decoration: none; color: #71717a; } .ds-bottomnav a[data-active=\"true\"] { color: #0ea5e9; } .ds-bottomnav svg { width: 22px; height: 22px; }",
-      "description": "Navegação inferior fixa com safe-area; ativo em Azul Sinal.",
-      "html": "<nav class=\"ds-bottomnav\"><a data-active=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3z\"/></svg>Inicio</a><a data-active=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5h16v14H4z\"/></svg>Reuni\u00f5es</a><a data-active=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 4-6 8-6s8 2 8 6\"/></svg>Personas</a></nav>",
-      "kind": "nav",
-      "name": "Bottom Nav",
-      "refersTo": "button-ghost"
-    },
-    {
-      "css": ".ds-switch { position: relative; width: 48px; height: 28px; border-radius: 999px; border: none; cursor: pointer; background: var(--input, #e4e4e7); transition: background 0.2s; } .ds-switch[data-on=\"true\"] { background: #0ea5e9; } .ds-switch span { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.2); transition: transform 0.2s; } .ds-switch[data-on=\"true\"] span { transform: translateX(20px); } .ds-switch:focus-visible { outline: 2px solid #0ea5e9; outline-offset: 2px; }",
-      "description": "Interruptor redondo com trilho em Azul Sinal quando ligado.",
+      "css": ".ds-switch { position: relative; width: 48px; height: 28px; border-radius: 999px; border: none; cursor: pointer; background: var(--input, #e5e5e1); transition: background 0.2s; } .ds-switch[data-on=\"true\"] { background: var(--accent, #0b6bcb); } .ds-switch span { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.2); transition: transform 0.2s; } .ds-switch[data-on=\"true\"] span { transform: translateX(20px); } .ds-switch:focus-visible { outline: 2px solid var(--accent, #0b6bcb); outline-offset: 2px; }",
+      "description": "Interruptor redondo com trilho em acento quando ligado.",
       "html": "<button class=\"ds-switch\" data-on=\"true\" aria-label=\"Dispon\u00edvel\"><span></span></button>",
       "kind": "custom",
       "name": "Switch",
       "refersTo": "button-ghost"
     },
     {
-      "css": ".ds-dialog { width: 100%; max-width: 448px; background: var(--background, #ffffff); border: 1px solid var(--border, #e4e4e7); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.2); } .ds-dialog h2 { margin: 0; font-size: 18px; font-weight: 600; } .ds-dialog p { margin: 8px 0 0; font-size: 14px; color: #71717a; } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; } .ds-dialog-danger { height: 40px; padding: 0 16px; border: none; border-radius: 12px; background: #ef4444; color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; } .ds-dialog-danger:hover { filter: brightness(1.05); } .ds-dialog-cancel { height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--input, #e4e4e7); background: var(--background, #ffffff); font-size: 14px; font-weight: 500; cursor: pointer; }",
-      "description": "Confirmação destrutiva com ação de perigo em vermelho sólido.",
+      "css": ".ds-dialog { width: 100%; max-width: 448px; background: var(--background, #fff); border: 1px solid var(--border, #e5e5e1); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.2); } .ds-dialog h2 { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; } .ds-dialog p { margin: 8px 0 0; font-size: 14px; color: var(--muted-foreground, #63636b); } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; } .ds-dialog-danger { height: 40px; padding: 0 20px; border: none; border-radius: 999px; background: var(--danger, #d92d20); color: var(--danger-ink, #fff); font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; } .ds-dialog-danger:hover { filter: brightness(1.05); } .ds-dialog-cancel { height: 40px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--input, #e5e5e1); background: var(--background, #fff); font-size: 14px; font-weight: 500; cursor: pointer; }",
+      "description": "Confirmação com título display e ação de perigo em pílula.",
       "html": "<div class=\"ds-dialog\"><h2>Eliminar registro?</h2><p>Esta acci\u00f3n no se puede deshacer.</p><div class=\"ds-dialog-actions\"><button class=\"ds-dialog-cancel\">Cancelar</button><button class=\"ds-dialog-danger\">Eliminar</button></div></div>",
       "kind": "custom",
       "name": "Confirm Dialog",
-      "refersTo": "card"
+      "refersTo": "card-sessao"
+    },
+    {
+      "css": ".ds-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; } .ds-cal span { display: flex; align-items: center; justify-content: center; height: 36px; font-size: 14px; border-radius: 8px; } .ds-cal span[data-state=\"selected\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); font-weight: 600; } .ds-cal span[data-state=\"done\"] { background: var(--success-soft, #def5e9); color: var(--success, #12805c); } .ds-cal span[data-state=\"assembly\"] { background: var(--danger-soft, #fde4e2); color: var(--danger, #d92d20); }",
+      "description": "Dia do calendário com estados semafóricos tokenizados.",
+      "html": "<div class=\"ds-cal\"><span>12</span><span data-state=\"selected\">13</span><span data-state=\"done\">14</span><span data-state=\"assembly\">15</span></div>",
+      "kind": "custom",
+      "name": "Calendar Day",
+      "refersTo": "aba-ativa"
     }
   ],
   "extensions": {
     "breakpoints": [{ "name": "sm", "value": "640px" }, { "name": "lg", "value": "1024px" }],
     "colorMeta": {
-      "azul-sinal": {
-        "canonical": "#0ea5e9",
-        "displayName": "Azul Sinal",
+      "acento": {
+        "canonical": "#d8ff00",
+        "displayName": "Volt / Acento",
+        "note": "Acento por tema: claro #0b6bcb com tinta #ffffff; escuro volt #d8ff00 com tinta #0a0a0b.",
         "role": "primary",
         "tonalRamp": [
-          "#082f49",
-          "#0c4a6e",
-          "#0369a1",
-          "#0284c7",
-          "#0ea5e9",
-          "#38bdf8",
-          "#7dd3fc",
-          "#e0f2fe"
+          "#0b3d91",
+          "#0b6bcb",
+          "#3d9be9",
+          "#7cc4f5",
+          "#d8ff00",
+          "#e4ff4d",
+          "#f0ff99",
+          "#faffcc"
         ]
       },
-      "campo-borda": {
-        "canonical": "#e4e4e7",
-        "displayName": "Linha de Campo",
+      "alerta": {
+        "canonical": "#9a6200",
+        "displayName": "Alerta",
+        "note": "Escuro #ffb224 sobre #33230a.",
         "role": "neutral",
         "tonalRamp": [
-          "#27272a",
-          "#3f3f46",
-          "#52525b",
-          "#71717a",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#e4e4e7",
-          "#fafafa"
+          "#33230a",
+          "#5c3d00",
+          "#9a6200",
+          "#c98a12",
+          "#ffb224",
+          "#ffcf6b",
+          "#ffe3a3",
+          "#fdeecd"
+        ]
+      },
+      "alerta-suave": {
+        "canonical": "#fdeecd",
+        "displayName": "Alerta Suave",
+        "role": "neutral",
+        "tonalRamp": [
+          "#33230a",
+          "#5c3d00",
+          "#9a6200",
+          "#c98a12",
+          "#ffb224",
+          "#ffcf6b",
+          "#ffe3a3",
+          "#fdeecd"
+        ]
+      },
+      "exito": {
+        "canonical": "#12805c",
+        "displayName": "Êxito",
+        "note": "Escuro #3ddc97 sobre #0e2e23.",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0e2e23",
+          "#0f513f",
+          "#12805c",
+          "#22a07a",
+          "#3ddc97",
+          "#86e8bd",
+          "#bff0d8",
+          "#def5e9"
+        ]
+      },
+      "exito-suave": {
+        "canonical": "#def5e9",
+        "displayName": "Êxito Suave",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0e2e23",
+          "#0f513f",
+          "#12805c",
+          "#22a07a",
+          "#3ddc97",
+          "#86e8bd",
+          "#bff0d8",
+          "#def5e9"
         ]
       },
       "linha": {
-        "canonical": "#e4e4e7",
+        "canonical": "#e5e5e1",
         "displayName": "Linha",
+        "note": "Escuro #26262b.",
         "role": "neutral",
         "tonalRamp": [
-          "#27272a",
+          "#26262b",
           "#3f3f46",
           "#52525b",
           "#71717a",
           "#a1a1aa",
           "#d4d4d8",
-          "#e4e4e7",
-          "#fafafa"
-        ]
-      },
-      "nevoa": {
-        "canonical": "#f4f4f5",
-        "displayName": "Névoa Suave",
-        "role": "neutral",
-        "tonalRamp": [
-          "#27272a",
-          "#3f3f46",
-          "#52525b",
-          "#71717a",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#f4f4f5",
+          "#e5e5e1",
           "#fafafa"
         ]
       },
@@ -141,104 +175,184 @@
         "displayName": "Papel",
         "role": "neutral",
         "tonalRamp": [
-          "#18181b",
+          "#111113",
           "#27272a",
           "#52525b",
           "#a1a1aa",
           "#d4d4d8",
-          "#e4e4e7",
-          "#f4f4f5",
-          "#ffffff"
-        ]
-      },
-      "papel-contraste": {
-        "canonical": "#fafafa",
-        "displayName": "Papel Contraste",
-        "role": "neutral",
-        "tonalRamp": [
-          "#18181b",
-          "#27272a",
-          "#52525b",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#e4e4e7",
-          "#fafafa",
+          "#e5e5e1",
+          "#f3f3f1",
           "#ffffff"
         ]
       },
       "papel-suave": {
-        "canonical": "#f4f4f5",
+        "canonical": "#f3f3f1",
         "displayName": "Papel Suave",
+        "note": "Escuro #1c1c20.",
         "role": "neutral",
         "tonalRamp": [
-          "#27272a",
+          "#1c1c20",
           "#3f3f46",
-          "#52525b",
-          "#71717a",
+          "#63636b",
           "#a1a1aa",
           "#d4d4d8",
-          "#f4f4f5",
+          "#e5e5e1",
+          "#f3f3f1",
           "#fafafa"
         ]
       },
       "perigo": {
-        "canonical": "#ef4444",
-        "displayName": "Vermelho Perigo",
+        "canonical": "#d92d20",
+        "displayName": "Perigo",
+        "note": "Escuro #f97066 com tinta #0a0a0b; claro com tinta #ffffff.",
         "role": "primary",
         "tonalRamp": [
-          "#7f1d1d",
-          "#b91c1c",
-          "#dc2626",
-          "#ef4444",
-          "#f87171",
-          "#fca5a5",
-          "#fecaca",
-          "#fee2e2"
+          "#3a1410",
+          "#7a271a",
+          "#d92d20",
+          "#f04438",
+          "#f97066",
+          "#fda29b",
+          "#fecdca",
+          "#fde4e2"
+        ]
+      },
+      "perigo-suave": {
+        "canonical": "#fde4e2",
+        "displayName": "Perigo Suave",
+        "role": "neutral",
+        "tonalRamp": [
+          "#3a1410",
+          "#7a271a",
+          "#d92d20",
+          "#f04438",
+          "#f97066",
+          "#fda29b",
+          "#fecdca",
+          "#fde4e2"
+        ]
+      },
+      "pista": {
+        "canonical": "#0a0a0b",
+        "displayName": "Pista",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0a0a0b",
+          "#111113",
+          "#141417",
+          "#1c1c20",
+          "#26262b",
+          "#3f3f46",
+          "#71717a",
+          "#a3a3ab"
+        ]
+      },
+      "superficie": {
+        "canonical": "#141417",
+        "displayName": "Superfície Escura",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0a0a0b",
+          "#111113",
+          "#141417",
+          "#1c1c20",
+          "#26262b",
+          "#52525b",
+          "#a1a1aa",
+          "#f5f5f4"
         ]
       },
       "texto-secundario": {
-        "canonical": "#71717a",
+        "canonical": "#63636b",
         "displayName": "Texto Secundário",
+        "note": "Escuro #a3a3ab.",
         "role": "neutral",
         "tonalRamp": [
-          "#18181b",
+          "#111113",
           "#27272a",
           "#3f3f46",
           "#52525b",
-          "#71717a",
+          "#63636b",
           "#a1a1aa",
           "#d4d4d8",
-          "#f4f4f5"
+          "#f3f3f1"
         ]
       },
       "tinta": {
-        "canonical": "#171717",
-        "displayName": "Tinta de Ata",
+        "canonical": "#111113",
+        "displayName": "Tinta",
         "role": "primary",
         "tonalRamp": [
-          "#09090b",
-          "#101012",
-          "#171717",
+          "#0a0a0b",
+          "#111113",
+          "#17171a",
           "#27272a",
           "#3f3f46",
           "#71717a",
           "#d4d4d8",
-          "#f4f4f5"
+          "#f3f3f1"
+        ]
+      },
+      "tinta-acento": {
+        "canonical": "#ffffff",
+        "displayName": "Tinta de Acento",
+        "note": "Escuro #0a0a0b sobre volt.",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0a0a0b",
+          "#3f3f46",
+          "#71717a",
+          "#a1a1aa",
+          "#d4d4d8",
+          "#f3f3f1",
+          "#fafafa",
+          "#ffffff"
+        ]
+      },
+      "tinta-perigo": {
+        "canonical": "#ffffff",
+        "displayName": "Tinta de Perigo",
+        "note": "Escuro #0a0a0b.",
+        "role": "neutral",
+        "tonalRamp": [
+          "#0a0a0b",
+          "#7a271a",
+          "#d92d20",
+          "#f97066",
+          "#fda29b",
+          "#fde4e2",
+          "#fafafa",
+          "#ffffff"
         ]
       },
       "tinta-suave": {
-        "canonical": "#18181b",
+        "canonical": "#17171a",
         "displayName": "Tinta Suave",
         "role": "neutral",
         "tonalRamp": [
-          "#09090b",
-          "#101012",
-          "#18181b",
+          "#0a0a0b",
+          "#111113",
+          "#17171a",
           "#27272a",
           "#52525b",
           "#71717a",
           "#d4d4d8",
-          "#f4f4f5"
+          "#f3f3f1"
+        ]
+      },
+      "volt": {
+        "canonical": "#d8ff00",
+        "displayName": "Volt",
+        "role": "primary",
+        "tonalRamp": [
+          "#2a3300",
+          "#4d5c00",
+          "#758a00",
+          "#a3bd00",
+          "#d8ff00",
+          "#e4ff4d",
+          "#f0ff99",
+          "#faffcc"
         ]
       }
     },
@@ -255,7 +369,7 @@
       },
       {
         "name": "skeleton-pulso",
-        "purpose": "Pulsação honesta durante carregamento por aba.",
+        "purpose": "Pulsação honesta durante carregamento por seção.",
         "value": "animate-pulse sobre papel suave"
       }
     ],
@@ -266,9 +380,9 @@
         "value": "shadow-sm (Tailwind)"
       },
       {
-        "name": "polegar-switch",
-        "purpose": "Disco branco do interruptor sobre o trilho.",
-        "value": "shadow (Tailwind)"
+        "name": "marca-3d",
+        "purpose": "Marca volt do header com camadas de offset, blur e highlights inset.",
+        "value": "0 1px 2px rgb(0 0 0/0.25), 0 8px 20px -6px rgb(0 0 0/0.4), inset 0 1px 1px rgb(255 255 255/0.3), inset 0 -3px 6px rgb(0 0 0/0.28)"
       },
       {
         "name": "dialogo",
@@ -277,44 +391,56 @@
       }
     ],
     "typographyMeta": {
-      "body": { "displayName": "Body", "purpose": "Descrições e metadados em 14px legível." },
-      "display": { "displayName": "Display", "purpose": "Título da página, um por tela." },
-      "headline": { "displayName": "Headline", "purpose": "Título de cartão e diálogo." },
-      "label": { "displayName": "Label", "purpose": "Badges, navegação e micro-rótulos." }
+      "body": { "displayName": "Body", "purpose": "Descrições e metadados em 14px direto." },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título da página em Barlow Condensed caixa alta, um por tela."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título de cartão de sessão em caixa alta."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, abas e navegação em condensado caixa alta."
+      }
     }
   },
   "generatedAt": "2026-09-21T12:00:00.000Z",
   "narrative": {
     "dos": [
-      "Do manter o shell estreito e centrado com respiro inferior para a navegação fixa.",
-      "Do reservar o Azul Sinal (#0ea5e9) para ativo, foco e estado.",
-      "Do usar esqueletos em papel suave com pulsação durante cada carregamento por aba.",
-      "Do alinhar campos em linha rótulo-esquerda / valor-direita com 44px de altura tocável.",
-      "Do responder ao toque com active:scale-[0.98] em botões e ações."
+      "Do abrir toda tela com PageHeader: um display, meta atlética, ações à direita.",
+      "Do reservar o volt/acento para ativo, selecionado e foco.",
+      "Do usar uma única gramática de pílulas para abas, filtros e ordenações.",
+      "Do tokenizar todo estado (êxito, alerta, perigo + suaves).",
+      "Do responder ao toque com active:scale-[0.98] em botões e ações.",
+      "Do preservar faixas TheocBase, layout de impressão e conteúdo real como verdade de domínio."
     ],
     "donts": [
       "Don't usar gradientes de texto, brilhos coloridos ou sombras coloridas.",
-      "Don't pintar grandes superfícies de tinta ou azul — o fundo é papel.",
-      "Don't criar novas cores de acento fora do Azul Sinal e do vermelho de perigo.",
-      "Don't bloquear o shell esperando dados; cada aba tem seu Suspense e fallback.",
+      "Don't pintar grandes superfícies de volt.",
+      "Don't criar cores de acento fora do volt/acento e dos semáforos.",
+      "Don't misturar gramáticas de aba.",
+      "Don't bloquear o shell esperando dados.",
+      "Don't gamificar: sem pontos, competição ou hype.",
       "Don't inventar conteúdo de programa, depoimentos ou estatísticas."
     ],
     "keyCharacteristics": [
-      "Acolhedor e simples, nunca administrativo e frio.",
-      "Neutro como voz, azul como sinal.",
-      "Contido e tátil: cantos generosos, resposta física sutil ao toque.",
-      "Mobile-first com uma mão, expansível para tablet e desktop."
+      "Atlético e legível, nunca administrativo e frio.",
+      "Display condensado em caixa alta; corpo direto e hospitaleiro.",
+      "Volt como sinal, nunca como decoração.",
+      "Mobile-first com sensação nativa, expansível para tablet e desktop."
     ],
-    "northStar": "O Salão Sereno",
-    "overview": "Um sistema acolhedor e simples para quem organiza e para quem consulta. A interface se comporta como a folha do programa sobre a mesa: ordem calma, hierarquia curta e cada designação encontrável em segundos, com uma mão, no salão ou em campo. O neutro carrega as superfícies; o azul aparece só como sinal funcional. Densidade confortável sem empilhar ruído: shell estreito centrado, cartões por reunião, abas por seção e esqueletos honestos durante o carregamento. Nada compete com a verdade do programa — data, conteúdo e designado vêm primeiro.",
+    "northStar": "Semana de Treino",
+    "overview": "A semana de reuniões programada como uma semana de treino: cada reunião é uma sessão com hora, elenco e partes, legível de relance como um plano de corrida. Títulos condensados em caixa alta marcam o ritmo; o volt elétrico marca só o que está ativo, selecionado ou em foco. Energia atlética nos números e nos cabeçalhos, hospitalidade nos textos — sem gamificação, sem competição, sem hype. Densidade confortável para operar com uma mão: shell estreito centrado, cartões de sessão, abas em pílula com uma única gramática e esqueletos honestos por seção.",
     "rules": [
       {
-        "body": "O Azul Sinal aparece em ≤10% de qualquer tela, somente em ativo, foco ou estado. Sua raridade é o ponto.",
-        "name": "The Azul com Moderação Rule",
+        "body": "O volt aparece em ≤10% de qualquer tela, somente em ativo, selecionado ou foco. Sua raridade é o ponto.",
+        "name": "The Volt com Moderação Rule",
         "section": "colors"
       },
       {
-        "body": "Fundos são papel ou papel suave; tinta é para texto e ação primária, nunca para grandes superfícies decorativas.",
+        "body": "Fundos são papel/pista ou superfícies suaves; tinta e volt carregam texto e ação, nunca grandes áreas decorativas.",
         "name": "The Papel Primeiro Rule",
         "section": "colors"
       },
@@ -324,7 +450,12 @@
         "section": "typography"
       },
       {
-        "body": "Superfícies em repouso são planas ou tonais; sombra entra como resposta a elevação, hover ou foco — e a nova direção padrão aceita presença maior, desde que funcional.",
+        "body": "Caixa alta é reservada ao display e aos rótulos atléticos; corpo e descrições nunca gritam.",
+        "name": "The Caixa Alta com patente Rule",
+        "section": "typography"
+      },
+      {
+        "body": "Superfícies em repouso são planas ou tonais; sombra entra como resposta a elevação, hover ou foco.",
         "name": "The Sombra É Estado Rule",
         "section": "elevation"
       }

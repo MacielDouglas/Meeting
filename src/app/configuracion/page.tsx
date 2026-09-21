@@ -13,6 +13,7 @@ import {
 import { MeetingScheduleForm } from "@/features/settings/presentation/MeetingScheduleForm";
 import { ScheduleExceptionSection } from "@/features/settings/presentation/ScheduleExceptionSection";
 import { SpecialEventSection } from "@/features/settings/presentation/SpecialEventSection";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { CardSkeleton, FormSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
@@ -56,9 +57,7 @@ export default async function ConfiguracionPage({
 
   return (
     <main className="flex flex-col gap-4 pb-10">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">{es.configuracion}</h1>
-      </header>
+      <PageHeader title={es.configuracion} />
 
       <Suspense
         fallback={

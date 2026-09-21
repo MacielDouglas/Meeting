@@ -114,7 +114,7 @@ export function PersonForm({
       {error && (
         <p
           role="alert"
-          className="rounded-xl border border-red-500/50 px-3 py-2 text-sm text-red-500"
+          className="rounded-xl border border-danger/50 px-3 py-2 text-sm text-danger"
         >
           {error}
         </p>
@@ -147,7 +147,7 @@ export function PersonForm({
                 name="sex"
                 checked={values.sex === option}
                 onChange={() => handleSexChange(option)}
-                className="h-6 w-6 accent-sky-500"
+                className="h-6 w-6 accent-accent"
               />
             </label>
           ))}

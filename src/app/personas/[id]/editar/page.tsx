@@ -13,6 +13,7 @@ import {
 import { getFullName } from "@/features/people/domain/person";
 import { DeletePersonButton } from "@/features/people/presentation/DeletePersonButton";
 import { PersonForm } from "@/features/people/presentation/PersonForm";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { FormSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
 
@@ -77,20 +78,29 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
 
   return (
     <main className="flex flex-col gap-4">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Link href="/personas" aria-label={es.cancel} className="shrink-0 rounded-lg p-2">
-            <FaArrowLeft aria-hidden />
-          </Link>
-          <h1 className="truncate text-xl font-bold tracking-tight">{getFullName(person)}</h1>
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <DeletePersonButton personId={person.id} />
-          <button type="submit" form="person-form" aria-label={es.save} className="rounded-lg p-2">
-            <FaCheck aria-hidden size={20} />
-          </button>
-        </div>
-      </header>
+      <PageHeader
+        title={getFullName(person)}
+        actions={
+          <>
+            <Link
+              href="/personas"
+              aria-label={es.cancel}
+              className="grid h-11 w-11 place-items-center rounded-full border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            >
+              <FaArrowLeft aria-hidden />
+            </Link>
+            <DeletePersonButton personId={person.id} className="w-auto" />
+            <button
+              type="submit"
+              form="person-form"
+              aria-label={es.save}
+              className="grid h-11 w-11 place-items-center rounded-full bg-accent text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            >
+              <FaCheck aria-hidden size={20} />
+            </button>
+          </>
+        }
+      />
       <Suspense fallback={<FormSkeleton fields={6} />}>
         <PersonForm
           mode="edit"

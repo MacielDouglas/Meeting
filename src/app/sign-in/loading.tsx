@@ -5,7 +5,7 @@ export default function SignInLoading() {
     <main
       className="flex flex-1 flex-col justify-center gap-4"
       aria-busy="true"
-      aria-label="Carregando login"
+      aria-label="Cargando inicio de sesión"
     >
       <CardSkeleton />
     </main>

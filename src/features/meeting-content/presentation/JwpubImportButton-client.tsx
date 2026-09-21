@@ -51,7 +51,7 @@ export function JwpubImportButton({ label = "Importar .jwpub" }: { label?: strin
 
   return (
     <div className="flex flex-col gap-2">
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <input
         ref={fileRef}
         type="file"
@@ -82,7 +82,7 @@ export function JwpubImportButton({ label = "Importar .jwpub" }: { label?: strin
       {inspected && (inspected.kind === "songs" || inspected.kind === "outlines") && (
         <p className="text-sm text-muted-foreground">
           Este arquivo é de {inspected.kind === "songs" ? "cânticos" : "esboços"}. Importe na{" "}
-          <Link href="/reunioes?tab=conteudo" className="text-sky-600 underline">
+          <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
             aba Conteúdo
           </Link>
           .

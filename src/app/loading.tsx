@@ -6,7 +6,7 @@ import {
 
 export default function HomeLoading() {
   return (
-    <main className="flex flex-col gap-4" aria-busy="true" aria-label="Carregando início">
+    <main className="flex flex-col gap-4" aria-busy="true" aria-label="Cargando inicio">
       <PageHeaderSkeleton />
       <WeekCardsSkeleton />
       <section aria-label="Designaciones" className="flex flex-col gap-2">

@@ -45,12 +45,12 @@ export function MeetingScheduleForm({ initial }: { initial: MeetingSchedule }) {
     <Card className="flex flex-col gap-2">
       <CardTitle>{es.meetingSchedules}</CardTitle>
       {error && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
       {saved && (
-        <p role="status" className="text-sm text-emerald-500">
+        <p role="status" className="text-sm text-success">
           {es.schedulesSaved}
         </p>
       )}

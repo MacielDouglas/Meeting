@@ -27,7 +27,7 @@ export function CleaningHistoryBadge({
         return (
           <span
             key={`${h.sectorKey}-${h.assignmentDate}`}
-            className={isSameSector ? "text-red-500" : "text-sky-500"}
+            className={isSameSector ? "text-danger" : "text-accent"}
             title={`${h.sectorName} — ${h.assignmentDate}`}
           >
             <Icon size={12} />

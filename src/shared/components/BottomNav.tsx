@@ -47,11 +47,18 @@ export function BottomNav({ showSettings }: { showSettings: boolean }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium",
-                active ? "text-sky-500" : "text-muted-foreground",
+                "flex flex-1 flex-col items-center gap-1 py-2 font-display text-xs font-medium uppercase tracking-widest",
+                active ? "text-foreground" : "text-muted-foreground",
               )}
             >
-              <Icon aria-hidden size={22} />
+              <span
+                className={cn(
+                  "grid place-items-center rounded-full p-1.5 transition-colors",
+                  active && "bg-accent text-accent-ink",
+                )}
+              >
+                <Icon aria-hidden size={20} />
+              </span>
               {item.label}
             </Link>
           );

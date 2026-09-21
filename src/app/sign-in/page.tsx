@@ -8,7 +8,9 @@ export default function SignInPage() {
   return (
     <main className="flex flex-1 flex-col justify-center gap-4">
       <Card className="flex flex-col gap-3">
-        <CardTitle>{es.signInTitle}</CardTitle>
+        <CardTitle className="font-display text-3xl font-semibold uppercase leading-none tracking-wide">
+          {es.signInTitle}
+        </CardTitle>
         <CardDescription>{es.signInDescription}</CardDescription>
         <SignInButton />
       </Card>

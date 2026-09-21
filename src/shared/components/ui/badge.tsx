@@ -4,7 +4,7 @@ import { cn } from "@/shared/lib/utils";
 type BadgeVariant = "default" | "secondary" | "outline";
 
 const VARIANTS: Record<BadgeVariant, string> = {
-  default: "bg-primary text-primary-foreground",
+  default: "bg-accent text-accent-ink",
   secondary: "bg-secondary text-secondary-foreground",
   outline: "border border-input text-foreground",
 };
@@ -17,7 +17,7 @@ export function Badge({ variant = "default", className, ...props }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 font-display text-xs font-medium uppercase tracking-wider",
         VARIANTS[variant],
         className,
       )}

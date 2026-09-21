@@ -96,7 +96,7 @@ export function WatchtowerImportModal({
           </AlertDialogDescription>
         </AlertDialogHeader>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-amber-500/10 px-3 py-2 text-sm text-amber-600">
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
             Este conteúdo ({inspected.symbol}, {inspected.articles?.length ?? 0} artigos) já existe
             no banco de dados. Deseja substituir?
           </p>
@@ -113,7 +113,7 @@ export function WatchtowerImportModal({
             ))}
           </ul>
         )}
-        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+        {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <AlertDialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? "Salvando…" : inspected.hadExisting ? "Substituir" : "Salvar"}
@@ -157,7 +157,7 @@ export function WatchtowerSection({
                 type="button"
                 onClick={() => setDeleteTarget(issue)}
                 aria-label={`Apagar edição ${issue.symbol}`}
-                className="rounded-lg p-2 text-red-500"
+                className="rounded-lg p-2 text-danger"
               >
                 <FaTrashAlt aria-hidden size={18} />
               </button>
@@ -171,7 +171,7 @@ export function WatchtowerSection({
                   onClick={() => setSelected({ issue, article })}
                   className="block w-full rounded-xl bg-secondary p-3 text-left"
                 >
-                  <p className="text-xs font-medium text-sky-500">{article.weekLabel}</p>
+                  <p className="text-xs font-medium text-accent">{article.weekLabel}</p>
                   <p className="text-sm font-semibold">{article.title}</p>
                   <div className="mt-1">
                     <SongLine
@@ -223,7 +223,7 @@ export function WatchtowerSection({
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col sm:flex-row">
               <Button
-                className="border-transparent bg-red-500 text-white"
+                className="border-transparent bg-danger text-danger-ink"
                 onClick={() => {
                   void deleteWatchtowerIssue({ id: deleteTarget.id }).then(() =>
                     setDeleteTarget(null),
@@ -308,7 +308,7 @@ function ArticleModal({
         </AlertDialogHeader>
         {editing ? (
           <form onSubmit={(event) => void handleSave(event)} className="flex flex-col gap-2">
-            {formError && <p className="text-sm text-red-500">{formError}</p>}
+            {formError && <p className="text-sm text-danger">{formError}</p>}
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">Semana</span>
               <input
@@ -389,7 +389,7 @@ function ArticleModal({
                 Editar
               </Button>
               <Button
-                className="border-transparent bg-red-500 text-white"
+                className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
               >
                 Deletar
@@ -398,7 +398,7 @@ function ArticleModal({
           )}
           {confirmingDelete && (
             <Button
-              className="border-transparent bg-red-500 text-white"
+              className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
               Confirmar exclusão

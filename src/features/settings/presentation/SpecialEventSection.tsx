@@ -99,7 +99,7 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
 
       <h3 className="pt-2 text-base font-semibold">{es.newEvent}</h3>
       {error && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

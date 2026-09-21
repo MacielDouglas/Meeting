@@ -21,6 +21,7 @@ import {
 } from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
+import { PageHeader } from "@/shared/components/PageHeader";
 import { CalendarSkeleton, CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
@@ -93,12 +94,10 @@ export default async function ReunioesPage({
 
   return (
     <main className="flex flex-col gap-4 pb-10">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">Reuniões</h1>
-        <p className="text-sm text-muted-foreground">
-          {formatDateBR(schedule.weekStart)} — {formatDateBR(schedule.weekEnd)}
-        </p>
-      </header>
+      <PageHeader
+        title="Reuniões"
+        meta={`${formatDateBR(schedule.weekStart)} — ${formatDateBR(schedule.weekEnd)}`}
+      />
 
       <Suspense
         fallback={

@@ -139,10 +139,10 @@ export function ProgramDetail({
             <span
               className={
                 program.status === "confirmed"
-                  ? "text-emerald-500"
+                  ? "text-success"
                   : program.status === "archived"
                     ? "text-muted-foreground"
-                    : "text-amber-500"
+                    : "text-warning"
               }
             >
               {program.status === "draft"
@@ -186,7 +186,7 @@ export function ProgramDetail({
           <Button
             size="sm"
             variant="outline"
-            className="text-red-500"
+            className="text-danger"
             onClick={() => setConfirmDelete(true)}
             title="Excluir programa"
           >
@@ -196,7 +196,7 @@ export function ProgramDetail({
       </div>
 
       {dayError && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {dayError}
         </p>
       )}
@@ -211,7 +211,7 @@ export function ProgramDetail({
                   type="button"
                   disabled={deletingDay === date}
                   onClick={() => void handleDeleteDay(date)}
-                  className="text-xs text-red-500 hover:underline disabled:opacity-50"
+                  className="text-xs text-danger hover:underline disabled:opacity-50"
                   title={`Excluir dia ${date}`}
                 >
                   {deletingDay === date ? "Excluindo…" : "Excluir dia"}
@@ -226,7 +226,7 @@ export function ProgramDetail({
                     key={assignment.id}
                     className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm"
                   >
-                    <Icon size={16} className="shrink-0 text-sky-500" />
+                    <Icon size={16} className="shrink-0 text-accent" />
                     <span className="w-32 shrink-0 truncate text-xs text-muted-foreground">
                       {assignment.sectorName}
                     </span>
@@ -235,7 +235,7 @@ export function ProgramDetail({
                         <em className="text-muted-foreground">Sem designação</em>
                       )}
                       {assignment.isFamily && (
-                        <span className="ml-1 text-xs text-amber-500">(família)</span>
+                        <span className="ml-1 text-xs text-warning">(família)</span>
                       )}
                     </span>
                     {canEdit && (
@@ -257,10 +257,10 @@ export function ProgramDetail({
       })}
 
       {messages.length > 0 && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <p className="mb-1 text-xs font-semibold text-amber-700">Observações</p>
+        <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
+          <p className="mb-1 text-xs font-semibold text-warning">Observações</p>
           {messages.map((msg) => (
-            <p key={msg.date} className="text-xs text-amber-600">
+            <p key={msg.date} className="text-xs text-warning">
               {msg.date}: {msg.message}
             </p>
           ))}
@@ -301,7 +301,7 @@ export function ProgramDetail({
             <AlertDialogFooter>
               <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
               <Button
-                className="bg-red-500 text-white"
+                className="bg-danger text-danger-ink"
                 disabled={deleting}
                 onClick={() => void handleDelete()}
               >

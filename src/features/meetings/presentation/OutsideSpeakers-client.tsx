@@ -99,7 +99,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
@@ -173,7 +173,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
       )}
 
       {speakersQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {speakers.map((speaker) => (
@@ -197,7 +197,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                     <button
                       type="button"
                       onClick={() => startEdit(speaker)}
-                      className="rounded-lg px-2 py-1 text-xs text-sky-600"
+                      className="rounded-lg px-2 py-1 text-xs text-accent"
                     >
                       Editar
                     </button>
@@ -205,7 +205,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                       type="button"
                       disabled={deleteMutation.isPending}
                       onClick={() => deleteMutation.mutate(speaker.id)}
-                      className="rounded-lg px-2 py-1 text-xs text-red-500"
+                      className="rounded-lg px-2 py-1 text-xs text-danger"
                     >
                       Excluir
                     </button>

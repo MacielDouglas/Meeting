@@ -1,0 +1,38 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#2f4868",
+        "createdAt": "2026-09-21T14:29:51.296Z",
+        "reason": "Agent: cor de domínio TheocBase (Discurso Público), sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#656164",
+        "createdAt": "2026-09-21T14:29:58.219Z",
+        "reason": "Agent: cor de domínio Theocbase, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#c78909",
+        "createdAt": "2026-09-21T14:29:58.283Z",
+        "reason": "Agent: cor de domínio Theocbase, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#99131e",
+        "createdAt": "2026-09-21T14:29:58.359Z",
+        "reason": "Agent: cor de domínio Theocbase, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#4d654d",
+        "createdAt": "2026-09-21T14:29:58.423Z",
+        "reason": "Agent: cor de domínio Theocbase, sancionada em DESIGN.md como verdade de domínio"
+      }
+    ]
+  }
+}

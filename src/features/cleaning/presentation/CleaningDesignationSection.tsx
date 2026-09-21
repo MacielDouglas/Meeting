@@ -323,9 +323,9 @@ export function CleaningDesignationSection({
                 setSelectedDates(new Set());
                 setViewingProgram(null);
               }}
-              className={`h-9 flex-1 rounded-full px-2 text-sm font-medium transition-colors ${
+              className={`h-9 flex-1 rounded-full px-2 font-display text-sm font-medium uppercase tracking-wider transition-colors ${
                 selectedType === type.key
-                  ? "bg-sky-500 text-white"
+                  ? "bg-accent text-accent-ink"
                   : "bg-secondary text-muted-foreground"
               }`}
             >
@@ -355,7 +355,7 @@ export function CleaningDesignationSection({
                     type="date"
                     value={rangeStart}
                     onChange={(e) => setRangeStart(e.target.value)}
-                    className="h-9 rounded-md border bg-background px-2 text-sm"
+                    className="h-9 rounded-lg border bg-background px-2 text-sm"
                   />
                 </label>
                 <label className="flex flex-1 flex-col gap-1">
@@ -364,7 +364,7 @@ export function CleaningDesignationSection({
                     type="date"
                     value={rangeEnd}
                     onChange={(e) => setRangeEnd(e.target.value)}
-                    className="h-9 rounded-md border bg-background px-2 text-sm"
+                    className="h-9 rounded-lg border bg-background px-2 text-sm"
                   />
                 </label>
               </div>
@@ -376,7 +376,7 @@ export function CleaningDesignationSection({
               {rangeOverlapDates.length > 0 && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+                  className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
                 >
                   Já foi criada tabela para aquela semana
                   {rangeOverlapPrograms[0]
@@ -407,7 +407,7 @@ export function CleaningDesignationSection({
           {selectedType !== "per_meeting" && duplicateSelectedDates.length > 0 && (
             <div
               role="alert"
-              className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"
+              className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
             >
               Já foi criada tabela para aquela semana ({duplicateSelectedDates.sort()[0]}). Edite a
               tabela existente em vez de criar outra.
@@ -415,18 +415,18 @@ export function CleaningDesignationSection({
           )}
 
           {errorMsg && (
-            <p role="alert" className="text-sm text-red-500">
+            <p role="alert" className="text-sm text-danger">
               {errorMsg}
             </p>
           )}
-          {statusMsg && <p className="text-sm text-emerald-500">{statusMsg}</p>}
+          {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
           {resultMessages.length > 0 && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-              <p className="mb-1 text-xs font-semibold text-amber-700">
+            <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
+              <p className="mb-1 text-xs font-semibold text-warning">
                 Avisos do sorteio (revise antes de confirmar)
               </p>
               {resultMessages.map((msg) => (
-                <p key={`${msg.date}-${msg.message}`} className="text-xs text-amber-600">
+                <p key={`${msg.date}-${msg.message}`} className="text-xs text-warning">
                   {msg.date}: {msg.message}
                 </p>
               ))}
@@ -494,10 +494,10 @@ export function CleaningDesignationSection({
                   <span
                     className={
                       program.status === "confirmed"
-                        ? "text-emerald-500"
+                        ? "text-success"
                         : program.status === "archived"
                           ? "text-muted-foreground"
-                          : "text-amber-500"
+                          : "text-warning"
                     }
                   >
                     {program.status === "draft"

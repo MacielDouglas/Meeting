@@ -36,9 +36,11 @@ function PartNames({
 function MeetingBlock({ meeting, isMale }: { meeting: MyWeekMeeting; isMale: boolean }) {
   const groups = groupPartsBySection(meeting.parts);
   return (
-    <Card className={cn("p-4", meeting.isNext && "ring-2 ring-sky-500")}>
+    <Card className={cn("p-4", meeting.isNext && "ring-2 ring-accent")}>
       <div className="flex items-start justify-between gap-3">
-        <h3 className="text-base font-bold">{meeting.title}</h3>
+        <h3 className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+          {meeting.title}
+        </h3>
         {meeting.isNext && <Badge>Próxima</Badge>}
       </div>
       <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
@@ -121,14 +123,14 @@ function MeetingBlock({ meeting, isMale }: { meeting: MyWeekMeeting; isMale: boo
 
 export function MyWeekSection({ myWeek }: MyWeekSectionProps) {
   return (
-    <section aria-label="Minha semana" className="flex flex-col gap-3">
+    <section aria-label="Mi semana" className="flex flex-col gap-3">
       {myWeek.personName ? (
         <p className="text-sm text-muted-foreground">{myWeek.personName}</p>
       ) : (
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">
             Tu usuario aún no está vinculado a una persona.{" "}
-            <Link href="/personas" className="text-sky-600 underline">
+            <Link href="/personas" className="font-medium text-accent underline">
               Vincular en Personas
             </Link>
           </p>

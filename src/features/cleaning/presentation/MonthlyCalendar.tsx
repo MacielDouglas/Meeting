@@ -83,7 +83,7 @@ export function MonthlyCalendar({
           type="button"
           onClick={onPrevMonth}
           className="rounded-lg p-2 hover:bg-secondary"
-          aria-label="Mês anterior"
+          aria-label="Mes anterior"
         >
           <FaChevronLeft size={14} />
         </button>
@@ -94,7 +94,7 @@ export function MonthlyCalendar({
           type="button"
           onClick={onNextMonth}
           className="rounded-lg p-2 hover:bg-secondary"
-          aria-label="Próximo mês"
+          aria-label="Próximo mes"
         >
           <FaChevronRight size={14} />
         </button>
@@ -120,10 +120,10 @@ export function MonthlyCalendar({
           const hasProgram = programDates.has(dateStr);
 
           let bgClass = "";
-          if (isAssembly) bgClass = "bg-red-100 text-red-700";
-          else if (isSelected) bgClass = "bg-sky-500 text-white";
-          else if (hasProgram) bgClass = "bg-emerald-100 text-emerald-700";
-          else if (isMeeting) bgClass = "bg-sky-50 text-sky-700";
+          if (isAssembly) bgClass = "bg-danger-soft text-danger";
+          else if (isSelected) bgClass = "bg-accent text-accent-ink";
+          else if (hasProgram) bgClass = "bg-success-soft text-success";
+          else if (isMeeting) bgClass = "bg-accent/10 text-accent";
 
           const isBlocked = hasProgram;
           const day = cell.day;
@@ -145,13 +145,13 @@ export function MonthlyCalendar({
             >
               {day}
               {isMeeting && !isAssembly && (
-                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-sky-500" />
+                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent" />
               )}
               {isAssembly && (
-                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-red-500" />
+                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-danger" />
               )}
               {hasProgram && (
-                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-emerald-500" />
+                <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-success" />
               )}
             </button>
           );
