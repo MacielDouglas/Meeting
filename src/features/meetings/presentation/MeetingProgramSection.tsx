@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IconType } from "react-icons";
-import { FaBookOpen, FaChevronLeft, FaChevronRight, FaMicrophone } from "react-icons/fa";
+import { FaBookOpen, FaChevronLeft, FaChevronRight, FaClock, FaMicrophone } from "react-icons/fa";
 import { GiSheep } from "react-icons/gi";
 import { IoDiamond } from "react-icons/io5";
 import { LuWheat } from "react-icons/lu";
@@ -125,6 +125,14 @@ const SECTION_ICONS: Record<string, IconType> = {
 };
 
 const WEEKDAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+/** Partes fixas do meio de semana: só leitura, sem botão de designação. */
+const DISPLAY_ONLY_KEYS = new Set([
+  "opening-song",
+  "opening-comments",
+  "middle-song",
+  "concluding-comments",
+]);
 
 interface PartDisplay {
   title: string;
@@ -664,8 +672,8 @@ export function MeetingProgramSection({
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando el programa…</p>
       ) : (
-        <Card className="flex flex-col overflow-hidden bg-session p-0 text-session-fg">
-          <p className="px-4 pb-2 pt-4 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
+        <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
+          <p className="px-0 pb-2 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
             {meetingDayName} | {meetingTitle}
           </p>
           <div className="flex flex-col divide-y divide-session-line">
@@ -674,43 +682,56 @@ export function MeetingProgramSection({
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
               const display = partDisplay.get(part.id);
               if (!display) return null;
-              const interactive = canManage && programId !== null && !saving;
+              const isFixed = DISPLAY_ONLY_KEYS.has(part.key);
+              const interactive = canManage && programId !== null && !saving && !isFixed;
               const isDirty = dirtyIds.has(part.id);
+              const infoBits = [display.subtitle].filter(Boolean);
+              const names =
+                display.line1 === "—" && !display.line2
+                  ? es.sinAsignar
+                  : `${display.line1}${display.line2 ? ` · ${display.line2}` : ""}`;
               const rowContent = (
                 <>
-                  {isDirty && (
-                    <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning">
-                      <span className="sr-only">{es.sinGuardar}</span>
-                    </span>
-                  )}
-                  <span
-                    className="shrink-0 rounded-md px-1.5 py-1 text-xs font-bold text-white"
-                    style={{ backgroundColor: meta.color }}
-                  >
-                    {part.startTime}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium leading-snug text-session-fg line-clamp-2">
-                      {display.title}
-                    </span>
-                    {display.subtitle && (
-                      <span className="mt-0.5 block truncate text-xs text-session-mute">
-                        {display.subtitle}
+                  <span className="flex w-11 shrink-0 flex-col items-center gap-0.5 pt-0.5">
+                    {isDirty && (
+                      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning">
+                        <span className="sr-only">{es.sinGuardar}</span>
                       </span>
                     )}
+                    <FaClock aria-hidden size={16} className="shrink-0 text-session-faint" />
+                    <span className="text-xs font-semibold tabular-nums text-session-mute">
+                      {part.startTime}
+                    </span>
                   </span>
-                  <span className="max-w-44 shrink-0 text-right">
-                    <span className="block truncate text-xs text-session-fg">{display.line1}</span>
-                    {display.line2 && (
-                      <span className="mt-0.5 block truncate text-xs text-session-mute">
-                        {display.line2}
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className="block truncate text-sm font-semibold"
+                      style={{ color: meta.color }}
+                    >
+                      {display.title}
+                    </span>
+                    {infoBits.length > 0 && (
+                      <span className="mt-0.5 block text-left text-xs text-session-mute">
+                        {infoBits.join(" · ")}
+                      </span>
+                    )}
+                    {!isFixed && (
+                      <span className="mt-0.5 block text-right">
+                        <span className="block truncate text-sm font-semibold text-session-fg">
+                          {display.line1 === "—" && !display.line2 ? es.sinAsignar : display.line1}
+                        </span>
+                        {display.line2 && (
+                          <span className="block truncate text-xs text-session-fg opacity-90">
+                            {display.line2}
+                          </span>
+                        )}
                       </span>
                     )}
                   </span>
                   {interactive ? (
                     <span
                       aria-hidden
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-session-chip text-session-faint"
+                      className="grid h-7 w-7 shrink-0 place-items-center self-center rounded-full bg-session-chip text-session-faint"
                     >
                       <FaChevronRight size={12} />
                     </span>
@@ -720,12 +741,17 @@ export function MeetingProgramSection({
               return (
                 <div key={`${part.startTime}-${part.title}-${part.id}`}>
                   {part.showSection && (
-                    <div
-                      className={`flex items-center gap-2 px-4 py-2 ${index === 0 ? "" : "mt-2"}`}
-                      style={{ backgroundColor: meta.color }}
-                    >
-                      <SectionIcon aria-hidden size={15} className="shrink-0 text-white" />
-                      <span className="font-display text-base font-semibold uppercase tracking-wide text-white">
+                    <div className={`flex items-center gap-3 py-3 ${index === 0 ? "" : "mt-2"}`}>
+                      <span
+                        className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
+                        style={{ backgroundColor: meta.color }}
+                      >
+                        <SectionIcon aria-hidden size={30} />
+                      </span>
+                      <span
+                        className="font-display text-2xl font-semibold uppercase leading-none tracking-wide"
+                        style={{ color: meta.color }}
+                      >
                         {meta.label}
                       </span>
                     </div>
@@ -735,14 +761,14 @@ export function MeetingProgramSection({
                       type="button"
                       onClick={() => setEditing(part)}
                       aria-label={`Asignar ${display.title}`}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-session-hover active:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
+                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover active:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
                     >
                       {rowContent}
                     </button>
                   ) : (
                     <article
-                      aria-label={`${display.title} — ${display.line1}`}
-                      className="flex w-full items-center gap-3 px-4 py-3"
+                      aria-label={`${display.title} — ${names}`}
+                      className="flex w-full items-start gap-3 py-3"
                     >
                       {rowContent}
                     </article>
@@ -752,7 +778,7 @@ export function MeetingProgramSection({
             })}
           </div>
           {displayParts.length === 0 && (
-            <div className="flex flex-col gap-2 p-4">
+            <div className="flex flex-col gap-2 px-0 py-4">
               <p className="text-sm text-session-mute">{es.programaNoEncontrado}</p>
               {canManage && <JwpubImportButton />}
             </div>

@@ -133,6 +133,13 @@
   --danger: #f97066;
   --danger-soft: #3a1410;
   --danger-ink: #0a0a0b;
+  --session: #000000;
+  --session-fg: #ffffff;
+  --session-mute: rgb(255 255 255 / 0.6);
+  --session-faint: rgb(255 255 255 / 0.5);
+  --session-hover: rgb(255 255 255 / 0.1);
+  --session-line: rgb(255 255 255 / 0.1);
+  --session-chip: rgb(255 255 255 / 0.15);
 }
 
 body {

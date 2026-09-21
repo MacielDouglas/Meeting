@@ -32,6 +32,24 @@
         "value": "#4d654d",
         "createdAt": "2026-09-21T14:29:58.423Z",
         "reason": "Agent: cor de domínio Theocbase, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3c7f8b",
+        "createdAt": "2026-09-21T16:55:10.635Z",
+        "reason": "Agent: cor de domínio das seções, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#d68f00",
+        "createdAt": "2026-09-21T16:55:10.703Z",
+        "reason": "Agent: cor de domínio das seções, sancionada em DESIGN.md como verdade de domínio"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#bf2f13",
+        "createdAt": "2026-09-21T16:55:10.771Z",
+        "reason": "Agent: cor de domínio das seções, sancionada em DESIGN.md como verdade de domínio"
       }
     ]
   }

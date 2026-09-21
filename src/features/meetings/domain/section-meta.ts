@@ -1,5 +1,5 @@
 /**
- * Identidade visual das seções do programa (cores do TheocBase).
+ * Identidade visual das seções do programa (cores oficiais da congregação).
  * "PUBLIC TALK" é exibido como "DISCURSO PÚBLICO".
  */
 
@@ -11,9 +11,9 @@ export interface SectionMeta {
 export const DEFAULT_SECTION_COLOR = "#3f3f46";
 
 const SECTION_META: Record<string, SectionMeta> = {
-  "TESOROS DE LA BIBLIA": { label: "TESOROS DE LA BIBLIA", color: "#656164" },
-  "SEAMOS MEJORES MAESTROS": { label: "SEAMOS MEJORES MAESTROS", color: "#c78909" },
-  "NUESTRA VIDA CRISTIANA": { label: "NUESTRA VIDA CRISTIANA", color: "#99131e" },
+  "TESOROS DE LA BIBLIA": { label: "TESOROS DE LA BIBLIA", color: "#3c7f8b" },
+  "SEAMOS MEJORES MAESTROS": { label: "SEAMOS MEJORES MAESTROS", color: "#d68f00" },
+  "NUESTRA VIDA CRISTIANA": { label: "NUESTRA VIDA CRISTIANA", color: "#bf2f13" },
   "PUBLIC TALK": { label: "DISCURSO PÚBLICO", color: "#2f4868" },
   "ESTUDIO DE LA ATALAYA": { label: "ESTUDIO DE LA ATALAYA", color: "#4d654d" },
 };

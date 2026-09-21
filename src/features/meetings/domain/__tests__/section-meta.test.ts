@@ -8,7 +8,9 @@ describe("sectionMetaOf", () => {
 
   it("mantém as demais seções", () => {
     expect(sectionMetaOf("ESTUDIO DE LA ATALAYA").label).toBe("ESTUDIO DE LA ATALAYA");
-    expect(sectionMetaOf("TESOROS DE LA BIBLIA").color).toBe("#656164");
+    expect(sectionMetaOf("TESOROS DE LA BIBLIA").color).toBe("#3c7f8b");
+    expect(sectionMetaOf("SEAMOS MEJORES MAESTROS").color).toBe("#d68f00");
+    expect(sectionMetaOf("NUESTRA VIDA CRISTIANA").color).toBe("#bf2f13");
   });
 
   it("usa cor neutra para seção desconhecida", () => {

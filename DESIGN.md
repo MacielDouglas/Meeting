@@ -132,7 +132,7 @@ Preto pista e volt no escuro; papel e tinta no claro. Um único acento funcional
 - **Perigo** (claro #d92d20 / escuro #f97066), **Perigo Suave** e **Tinta Perigo**: erros e ações destrutivas.
 
 ### Cores de domínio (sancionadas, não são drift)
-- **Seções TheocBase**: faixas do programa com identidade própria — Tesouros #656164, Maestros #c78909, Vida Cristã #99131e, Discurso Público #2f4868, Atalaya #4d654d. Preservadas como verdade de domínio.
+- **Seções**: Tesouros #3c7f8b, Maestros #d68f00, Vida Cristã #bf2f13, Discurso Público #2f4868, Atalaya #4d654d — caixa de ícone na cor, faixa e título da parte na cor da seção. Preservadas como verdade de domínio.
 - **Sexo**: rosa (`text-rose-500`) e céu (`text-sky-500`) nos avatares da lista — convenção de domínio, fora do sistema.
 
 ### Named Rules

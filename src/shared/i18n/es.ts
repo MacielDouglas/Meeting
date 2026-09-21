@@ -126,6 +126,7 @@ export const es = {
   descargarICal: "Descargar iCal",
   imprimirPrograma: "Imprimir programa",
   sinGuardar: "Sin guardar",
+  sinAsignar: "Sin asignar",
   sala: "Sala",
   asignar: "Asignar",
   volver: "Volver",
