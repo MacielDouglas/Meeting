@@ -43,6 +43,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# impeccable - local-only runtime (shared config stays committed)
+.impeccable/config.local.json
+.impeccable/live/sessions/
+.impeccable/live/inject-journal.json
+.impeccable/live/roots.json
+.impeccable/*.log
+.claude/settings.local.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
