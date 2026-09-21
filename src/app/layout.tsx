@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { OnlineStatus } from "@/features/offline/OnlineStatus";
 import { QueryProvider } from "@/features/offline/QueryProvider";
 import { BottomNavShell } from "@/shared/components/BottomNavShell";
+import { SiteHeaderShell } from "@/shared/components/SiteHeaderShell";
 import { es } from "@/shared/i18n/es";
 import "./globals.css";
 
@@ -51,11 +52,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
+        {/* Aplica o tema salvo antes da primeira pintura (evita flash claro/escuro). */}
+        <script src="/theme-init.js" />
         <QueryProvider>
           <div className="app-shell flex flex-col gap-3 pb-20">
             <Suspense fallback={null}>
               <OnlineStatus />
             </Suspense>
+            <SiteHeaderShell />
             {children}
           </div>
           <BottomNavShell />
