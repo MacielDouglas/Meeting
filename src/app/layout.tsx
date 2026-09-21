@@ -58,6 +58,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="es"
+      // O theme-init.js e extensões ajustam classes do <html> antes da hidratação;
+      // React deve aceitar o atributo do cliente sem reclamar.
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <body className="min-h-full">

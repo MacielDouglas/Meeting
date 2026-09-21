@@ -189,7 +189,7 @@ Pílulas atléticas em caixa alta condensada, com resposta física ao toque.
 
 ### Cards / Containers
 - **Corner Style:** 16px.
-- **Background:** papel/pista com borda de linha; cartão de sessão do programa em preto com texto branco nos dois temas.
+- **Background:** papel no claro com borda de linha, preto sessão no escuro (`--session`); faixas TheocBase preservadas.
 - **Shadow Strategy:** repouso mínimo (ver Elevation & Depth).
 - **Internal Padding:** 16px.
 - **Assinatura:** cartão de sessão — título display em caixa alta, badge de período, numeral de hora em destaque, linhas de data/local, faixas TheocBase preservadas.

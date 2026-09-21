@@ -30,7 +30,7 @@ import {
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
-import { formatDateBR } from "@/shared/lib/format-date";
+import { es } from "@/shared/i18n/es";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
 
 interface SongOption {
@@ -72,13 +72,41 @@ interface MeetingProgramSectionProps {
 }
 
 function mondayOf(offsetWeeks: number): string {
+  // Meio-dia local: evita deriva de fuso do toISOString na virada do dia.
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
+  now.setHours(12, 0, 0, 0);
   const day = now.getDay();
   const diff = (day + 6) % 7;
   const monday = new Date(now);
   monday.setDate(now.getDate() - diff + offsetWeeks * 7);
-  return monday.toISOString().slice(0, 10);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
+}
+
+const MES_CORTO = [
+  "ENE",
+  "FEB",
+  "MAR",
+  "ABR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AGO",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DIC",
+];
+
+/** Intervalo da semana em display atlético: "12 – 18 ENE" ou "28 ENE – 3 FEB". */
+function formatWeekRange(weekStart: string): string {
+  const end = addDays(weekStart, 6);
+  const [, sm, sd] = weekStart.split("-").map(Number);
+  const [, em, ed] = end.split("-").map(Number);
+  const startDay = String(sd).padStart(2, "0");
+  const endDay = String(ed).padStart(2, "0");
+  if (sm === em) return `${startDay} – ${endDay} ${MES_CORTO[sm - 1]}`;
+  return `${startDay} ${MES_CORTO[sm - 1]} – ${endDay} ${MES_CORTO[em - 1]}`;
 }
 
 function addDays(iso: string, days: number): string {
@@ -133,7 +161,7 @@ function describePart(part: DisplayPart): PartDisplay {
     };
   }
   if (helper) {
-    return { title, subtitle, line1: person || "—", line2: `${helper} (Ajudante)` };
+    return { title, subtitle, line1: person || "—", line2: `${helper} (Ayudante)` };
   }
   return { title, subtitle, line1: person || "—", line2: "" };
 }
@@ -177,6 +205,8 @@ export function MeetingProgramSection({
   const [pending, setPending] = useState<Record<string, StagedChange>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayPart | null>(null);
   const [initializedKey, setInitializedKey] = useState<string | null>(null);
@@ -302,7 +332,7 @@ export function MeetingProgramSection({
         { exceptionType: "", exceptionLabel: "" },
       );
       if (!result.ok) {
-        setError(result.error ?? "Erro ao gerar programa.");
+        setError(result.error ?? es.errorGuardar);
         setSaving(false);
         return;
       }
@@ -364,7 +394,7 @@ export function MeetingProgramSection({
         },
       );
       if (!result.ok) {
-        setError(result.error ?? "Erro ao sincronizar programa.");
+        setError(result.error ?? es.errorSincronizar);
         setSaving(false);
         return;
       }
@@ -455,6 +485,19 @@ export function MeetingProgramSection({
 
   const dirtyIds = useMemo(() => new Set(Object.keys(pending)), [pending]);
 
+  // Resumo legível do que vai salvar ("Oración → García"), sem jargão de ids.
+  const dirtySummary = useMemo(() => {
+    const items = Object.keys(pending).map((id) => {
+      const part = displayParts.find((d) => d.id === id);
+      const change = pending[id];
+      const name =
+        change.personName || (change.songNumber ? `Canción ${change.songNumber}` : "") || "—";
+      return `${part?.title ?? id} → ${name}`;
+    });
+    if (items.length <= 2) return items.join(" · ");
+    return `${items.slice(0, 2).join(" · ")} · +${items.length - 2} más`;
+  }, [pending, displayParts]);
+
   function handleStage(assignmentId: string, change: StagedChange) {
     setPending((previous) => ({
       ...previous,
@@ -463,17 +506,21 @@ export function MeetingProgramSection({
   }
 
   async function handleSaveAll() {
+    const entries = Object.entries(pending);
     setSaving(true);
+    setSaveProgress({ done: 0, total: entries.length });
+    setJustSaved(false);
     setError(null);
     try {
-      for (const [assignmentId, change] of Object.entries(pending)) {
+      let done = 0;
+      for (const [assignmentId, change] of entries) {
         if (change.personId !== undefined) {
           const result = await updateMeetingAssignment(
             assignmentId,
             change.personId,
             change.helperPersonId,
           );
-          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
         }
         if (change.songNumber !== undefined && change.songNumber !== null) {
           const result = await updateMeetingSong(
@@ -481,7 +528,7 @@ export function MeetingProgramSection({
             change.songNumber,
             change.songTheme ?? "",
           );
-          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
         }
         const details: { classroom?: "A" | "B" | "C"; speakerCongregation?: string } = {};
         if (change.classroom !== undefined) details.classroom = change.classroom;
@@ -489,15 +536,20 @@ export function MeetingProgramSection({
           details.speakerCongregation = change.speakerCongregation;
         if (Object.keys(details).length > 0) {
           const result = await updateMeetingAssignmentDetails({ assignmentId, ...details });
-          if (!result.ok) throw new Error(result.error ?? "Erro ao salvar.");
+          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
         }
+        done += 1;
+        setSaveProgress({ done, total: entries.length });
       }
       setPending({});
       await refresh();
+      setJustSaved(true);
+      window.setTimeout(() => setJustSaved(false), 6000);
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Erro ao salvar.");
+      setError(error instanceof Error ? error.message : es.errorGuardar);
     } finally {
       setSaving(false);
+      setSaveProgress(null);
     }
   }
 
@@ -549,41 +601,53 @@ export function MeetingProgramSection({
           onClick={() => setKind("midweek")}
           className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "midweek" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
         >
-          Entre semana
+          {es.entreSemana}
         </button>
         <button
           type="button"
           onClick={() => setKind("weekend")}
           className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "weekend" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
         >
-          Fim de semana
+          {es.finSemana}
         </button>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border bg-background p-2">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => setWeekOffset((o) => o - 1)}
-          className="rounded-lg p-2 hover:bg-secondary"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           aria-label="Semana anterior"
         >
-          <FaChevronLeft size={14} />
+          <FaChevronLeft size={16} />
         </button>
-        <div className="flex flex-col items-center">
-          <p className="text-sm font-semibold">Semana começando {formatDateBR(weekStart)}</p>
-          {weekBibleReading && (
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {weekBibleReading}
-            </p>
-          )}
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+          <p className="truncate font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+            {formatWeekRange(weekStart)}
+          </p>
+          <p className="truncate font-display text-sm font-medium uppercase tracking-widest text-muted-foreground">
+            {kind === "midweek" ? es.entreSemana : es.finSemana} ·{" "}
+            {WEEKDAY_NAMES[kind === "midweek" ? midweekDay : weekendDay]?.slice(0, 3).toUpperCase()}{" "}
+            {kind === "midweek" ? midweekTime : weekendTime}
+            {weekBibleReading ? ` · ${weekBibleReading}` : ""}
+          </p>
         </div>
+        {weekOffset !== 0 && (
+          <button
+            type="button"
+            onClick={() => setWeekOffset(0)}
+            className="h-11 shrink-0 rounded-full px-4 font-display text-sm font-medium uppercase tracking-wider text-accent transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          >
+            {es.hoy}
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setWeekOffset((o) => o + 1)}
-          className="rounded-lg p-2 hover:bg-secondary"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           aria-label="Próxima semana"
         >
-          <FaChevronRight size={14} />
+          <FaChevronRight size={16} />
         </button>
       </div>
 
@@ -592,84 +656,104 @@ export function MeetingProgramSection({
           {error}
         </p>
       )}
-      {saving && !programId && <p className="text-xs text-muted-foreground">Salvando programa…</p>}
-      {!canManage && (
-        <p className="text-xs text-muted-foreground">
-          Você tem acesso de leitura. As designações são feitas por owner/admin.
-        </p>
+      {saving && !programId && (
+        <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
       )}
+      {!canManage && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Cargando el programa…</p>
       ) : (
-        <Card className="flex flex-col gap-0.5 overflow-hidden bg-black p-2 text-white">
-          <p className="px-1 pb-1 text-xs font-semibold uppercase tracking-wide text-white/60">
+        <Card className="flex flex-col overflow-hidden bg-session p-0 text-session-fg">
+          <p className="px-4 pb-2 pt-4 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
             {meetingDayName} | {meetingTitle}
           </p>
-          {displayPartsWithSections.map((part, index) => {
-            const meta = sectionMetaOf(part.section);
-            const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
-            const display = partDisplay.get(part.id);
-            if (!display) return null;
-            return (
-              <div key={`${part.startTime}-${part.title}-${part.id}`}>
-                {part.showSection && (
-                  <div
-                    className={`-mx-2 flex items-center gap-2 px-3 py-1.5 ${index === 0 ? "" : "mt-2"}`}
-                    style={{ backgroundColor: meta.color }}
-                  >
-                    <SectionIcon aria-hidden size={15} className="shrink-0 text-white" />
-                    <span className="text-sm font-bold uppercase tracking-wide text-white">
-                      {meta.label}
+          <div className="flex flex-col divide-y divide-session-line">
+            {displayPartsWithSections.map((part, index) => {
+              const meta = sectionMetaOf(part.section);
+              const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
+              const display = partDisplay.get(part.id);
+              if (!display) return null;
+              const interactive = canManage && programId !== null && !saving;
+              const isDirty = dirtyIds.has(part.id);
+              const rowContent = (
+                <>
+                  {isDirty && (
+                    <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning">
+                      <span className="sr-only">{es.sinGuardar}</span>
                     </span>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  disabled={!canManage || !programId || saving}
-                  onClick={() => setEditing(part)}
-                  className="flex w-full items-center gap-2.5 rounded-lg px-1 py-2 text-left hover:bg-white/10 disabled:cursor-default"
-                >
-                  {dirtyIds.has(part.id) && (
-                    <span
-                      title="Alteração não salva"
-                      className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning"
-                    />
                   )}
                   <span
-                    className="shrink-0 rounded px-1.5 py-1 text-xs font-bold text-white"
+                    className="shrink-0 rounded-md px-1.5 py-1 text-xs font-bold text-white"
                     style={{ backgroundColor: meta.color }}
                   >
                     {part.startTime}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium leading-snug text-white line-clamp-2">
+                    <span className="block text-sm font-medium leading-snug text-session-fg line-clamp-2">
                       {display.title}
                     </span>
                     {display.subtitle && (
-                      <span className="block truncate text-xs text-white/55">
+                      <span className="mt-0.5 block truncate text-xs text-session-mute">
                         {display.subtitle}
                       </span>
                     )}
                   </span>
-                  <span className="max-w-36 shrink-0 text-right">
-                    <span className="block truncate text-xs text-white/85">{display.line1}</span>
+                  <span className="max-w-44 shrink-0 text-right">
+                    <span className="block truncate text-xs text-session-fg">{display.line1}</span>
                     {display.line2 && (
-                      <span className="block truncate text-xs text-white/55">{display.line2}</span>
+                      <span className="mt-0.5 block truncate text-xs text-session-mute">
+                        {display.line2}
+                      </span>
                     )}
                   </span>
-                  {canManage && programId ? (
-                    <span aria-hidden className="shrink-0 text-white/50">
-                      ›
+                  {interactive ? (
+                    <span
+                      aria-hidden
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-session-chip text-session-faint"
+                    >
+                      <FaChevronRight size={12} />
                     </span>
                   ) : null}
-                </button>
-              </div>
-            );
-          })}
+                </>
+              );
+              return (
+                <div key={`${part.startTime}-${part.title}-${part.id}`}>
+                  {part.showSection && (
+                    <div
+                      className={`flex items-center gap-2 px-4 py-2 ${index === 0 ? "" : "mt-2"}`}
+                      style={{ backgroundColor: meta.color }}
+                    >
+                      <SectionIcon aria-hidden size={15} className="shrink-0 text-white" />
+                      <span className="font-display text-base font-semibold uppercase tracking-wide text-white">
+                        {meta.label}
+                      </span>
+                    </div>
+                  )}
+                  {interactive ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditing(part)}
+                      aria-label={`Asignar ${display.title}`}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-session-hover active:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
+                    >
+                      {rowContent}
+                    </button>
+                  ) : (
+                    <article
+                      aria-label={`${display.title} — ${display.line1}`}
+                      className="flex w-full items-center gap-3 px-4 py-3"
+                    >
+                      {rowContent}
+                    </article>
+                  )}
+                </div>
+              );
+            })}
+          </div>
           {displayParts.length === 0 && (
-            <div className="flex flex-col gap-2 p-2">
-              <p className="text-sm text-white/60">Programação de reunião não encontrada.</p>
+            <div className="flex flex-col gap-2 p-4">
+              <p className="text-sm text-session-mute">{es.programaNoEncontrado}</p>
               {canManage && <JwpubImportButton />}
             </div>
           )}
@@ -677,29 +761,54 @@ export function MeetingProgramSection({
       )}
 
       {canManage && dirtyIds.size > 0 && (
-        <div className="flex gap-2">
-          <Button disabled={saving} onClick={() => void handleSaveAll()} className="flex-1">
-            {saving ? "Salvando…" : `Salvar alterações (${dirtyIds.size})`}
-          </Button>
-          <Button variant="outline" disabled={saving} onClick={handleCancelAll} className="flex-1">
-            Cancelar
-          </Button>
+        <div className="fixed inset-x-0 bottom-[76px] z-30 mx-auto w-full max-w-md px-4 sm:max-w-xl">
+          <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
+            <p className="truncate text-sm">
+              <span className="font-semibold">
+                {dirtyIds.size} {es.sinGuardar}:
+              </span>{" "}
+              <span className="text-muted-foreground">{dirtySummary}</span>
+            </p>
+            {saving && saveProgress && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {es.guardando} {saveProgress.done}/{saveProgress.total}…
+              </p>
+            )}
+            <div className="mt-2 flex gap-2">
+              <Button disabled={saving} onClick={() => void handleSaveAll()} className="flex-1">
+                {saving ? es.guardando : `${es.guardarCambios} (${dirtyIds.size})`}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={saving}
+                onClick={handleCancelAll}
+                className="flex-1"
+              >
+                {es.descartar}
+              </Button>
+            </div>
+          </div>
         </div>
+      )}
+      {justSaved && (
+        <p role="status" className="text-sm font-medium text-success">
+          {es.programaGuardado} · {formatWeekRange(weekStart)}
+        </p>
       )}
 
       {programId && (
-        <div className="flex gap-2 text-xs">
+        <div className="flex gap-2">
           <a
             href={`/reunioes/imprimir?kind=${kind}&week=${weekStart}`}
-            className="flex-1 rounded-full bg-secondary px-3 py-2 text-center font-medium text-muted-foreground"
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
           >
-            Imprimir programa
+            {es.imprimirPrograma}
           </a>
           <a
             href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-            className="flex-1 rounded-full bg-secondary px-3 py-2 text-center font-medium text-muted-foreground"
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
           >
-            Baixar iCal
+            {es.descargarICal}
           </a>
         </div>
       )}
@@ -707,6 +816,7 @@ export function MeetingProgramSection({
       {editing && !editing.id.startsWith("tpl-") && (
         <MeetingAssignModal
           title={editing.title}
+          subtitle={`${meetingDayName} · ${editing.startTime}`}
           capability={editing.capability}
           needsHelper={editing.needsHelper}
           isSong={Boolean(editing.songNumber || editing.key.includes("song"))}

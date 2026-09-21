@@ -27,6 +27,13 @@
   --danger: #d92d20;
   --danger-soft: #fde4e2;
   --danger-ink: #ffffff;
+  --session: #ffffff;
+  --session-fg: #111113;
+  --session-mute: #63636b;
+  --session-faint: #a3a3ab;
+  --session-hover: rgb(17 17 19 / 0.06);
+  --session-line: #e5e5e1;
+  --session-chip: rgb(17 17 19 / 0.08);
   --radius: 1rem;
 }
 
@@ -54,6 +61,13 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-danger-ink: var(--danger-ink);
+  --color-session: var(--session);
+  --color-session-fg: var(--session-fg);
+  --color-session-mute: var(--session-mute);
+  --color-session-faint: var(--session-faint);
+  --color-session-hover: var(--session-hover);
+  --color-session-line: var(--session-line);
+  --color-session-chip: var(--session-chip);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-barlow-condensed);
@@ -84,6 +98,13 @@
     --danger: #f97066;
     --danger-soft: #3a1410;
     --danger-ink: #0a0a0b;
+    --session: #000000;
+    --session-fg: #ffffff;
+    --session-mute: rgb(255 255 255 / 0.6);
+    --session-faint: rgb(255 255 255 / 0.5);
+    --session-hover: rgb(255 255 255 / 0.1);
+    --session-line: rgb(255 255 255 / 0.1);
+    --session-chip: rgb(255 255 255 / 0.15);
   }
 }
 

@@ -10,6 +10,7 @@ import {
 import { WatchtowerImportModal } from "@/features/meeting-content/presentation/WatchtowerSection";
 import { WorkbookImportModal } from "@/features/meeting-content/presentation/WorkbookSection";
 import { Button } from "@/shared/components/ui/button";
+import { es } from "@/shared/i18n/es";
 
 type SmartInspected = Extract<AnyInspectResult, { ok: true }>;
 
@@ -18,7 +19,7 @@ type SmartInspected = Extract<AnyInspectResult, { ok: true }>;
  * estados de "programação não encontrada". Após salvar, atualiza a página
  * para recarregar o programa da semana.
  */
-export function JwpubImportButton({ label = "Importar .jwpub" }: { label?: string }) {
+export function JwpubImportButton({ label = es.importarJwpub }: { label?: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [reading, setReading] = useState(false);
@@ -56,13 +57,13 @@ export function JwpubImportButton({ label = "Importar .jwpub" }: { label?: strin
         ref={fileRef}
         type="file"
         accept=".jwpub"
-        aria-label="Arquivo .jwpub (apostila ou Sentinela)"
+        aria-label={es.archivoJwpub}
         className="hidden"
         onChange={(event) => void handleFileSelected(event.target.files?.[0])}
       />
       <div>
         <Button disabled={reading} onClick={() => fileRef.current?.click()}>
-          {reading ? "Lendo arquivo…" : label}
+          {reading ? es.leyendoArchivo : label}
         </Button>
       </div>
       {inspected && inspected.kind === "workbook" && (
@@ -81,9 +82,9 @@ export function JwpubImportButton({ label = "Importar .jwpub" }: { label?: strin
       )}
       {inspected && (inspected.kind === "songs" || inspected.kind === "outlines") && (
         <p className="text-sm text-muted-foreground">
-          Este arquivo é de {inspected.kind === "songs" ? "cânticos" : "esboços"}. Importe na{" "}
+          Este archivo es de {inspected.kind === "songs" ? "cánticos" : "esbozos"}. Importa en la{" "}
           <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
-            aba Conteúdo
+            pestaña Contenido
           </Link>
           .
         </p>

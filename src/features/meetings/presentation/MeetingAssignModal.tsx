@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import {
   listMeetingPersons,
   type MeetingPerson,
@@ -20,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { es } from "@/shared/i18n/es";
 import { formatDateBR } from "@/shared/lib/format-date";
 
 interface SongOption {
@@ -41,6 +43,7 @@ export interface StagedChange {
 
 interface MeetingAssignModalProps {
   title: string;
+  subtitle?: string;
   capability?: string;
   needsHelper?: boolean;
   isSong?: boolean;
@@ -65,20 +68,21 @@ function fullName(person: MeetingPerson): string {
 /** Rótulos do fluxo conforme a parte (ministério usa titular/ajudante). */
 function roleLabels(capability?: string) {
   if (capability === "congregationStudy" || capability === "watchtowerStudy") {
-    return { main: "Condutor", helper: "Leitor", withoutHelper: "Continuar sem leitor" };
+    return { main: es.conductor, helper: es.lector, withoutHelper: es.continuarSinLector };
   }
-  return { main: "Titular", helper: "Ajudante", withoutHelper: "Continuar sem ajudante" };
+  return { main: es.titular, helper: es.ayudante, withoutHelper: es.continuarSinAyudante };
 }
 
 function formatLastAssignment(iso: string | null): string {
-  if (!iso) return "sem histórico";
+  if (!iso) return es.sinHistorial;
   const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "sem histórico";
+  if (Number.isNaN(date.getTime())) return es.sinHistorial;
   return `última: ${formatDateBR(iso.slice(0, 10))}`;
 }
 
 export function MeetingAssignModal({
   title,
+  subtitle,
   capability,
   needsHelper,
   isSong,
@@ -99,6 +103,9 @@ export function MeetingAssignModal({
   const [orderBy, setOrderBy] = useState<"name" | "rotation">("name");
   const [songNumber, setSongNumber] = useState("");
   const [songError, setSongError] = useState<string | null>(null);
+  // Alteração local do modal: nada fecha nem salva sozinho — o rodapé
+  // "Asignar" confirma tudo de uma vez (pessoa + cântico + sala + congregação).
+  const [staged, setStaged] = useState<StagedChange | null>(null);
   const [room, setRoom] = useState<"A" | "B" | "C">(
     classroom === "B" || classroom === "C" ? classroom : "A",
   );
@@ -159,19 +166,22 @@ export function MeetingAssignModal({
       setStep("helper");
       return;
     }
-    onStage({ personId: person.id, personName: fullName(person) });
-    onClose();
+    setStaged((previous) => ({
+      ...previous,
+      personId: person.id,
+      personName: fullName(person),
+    }));
   }
 
   function handlePickHelper(helper: MeetingPerson | null) {
     if (!selectedTitular) return;
-    onStage({
+    setStaged((previous) => ({
+      ...previous,
       personId: selectedTitular.id,
       personName: fullName(selectedTitular),
       helperPersonId: helper ? helper.id : null,
       helperPersonName: helper ? fullName(helper) : "",
-    });
-    onClose();
+    }));
   }
 
   function handleBackToTitular() {
@@ -181,21 +191,33 @@ export function MeetingAssignModal({
   function handleSongStage() {
     const n = Number(songNumber);
     if (!Number.isInteger(n) || n <= 0) {
-      setSongError("Informe o número do cântico.");
+      setSongError(es.numeroCancion);
       return;
     }
+    setSongError(null);
     const theme = songs.find((s) => s.number === n)?.theme ?? "";
-    onStage({ songNumber: n, songTheme: theme });
-    onClose();
+    setStaged((previous) => ({ ...previous, songNumber: n, songTheme: theme }));
   }
 
   function handleClassroomStage(value: "A" | "B" | "C") {
     setRoom(value);
-    onStage({ classroom: value });
   }
 
   function handleCongregationStage() {
-    onStage({ speakerCongregation: congregation.trim().slice(0, 160) });
+    setStaged((previous) => ({
+      ...previous,
+      speakerCongregation: congregation.trim().slice(0, 160),
+    }));
+  }
+
+  function handleAsignar() {
+    if (!staged) return;
+    onStage({
+      ...staged,
+      ...(isMinistry ? { classroom: room } : {}),
+      ...(isPublicTalk ? { speakerCongregation: congregation.trim().slice(0, 160) } : {}),
+    });
+    onClose();
   }
 
   return (
@@ -207,30 +229,43 @@ export function MeetingAssignModal({
     >
       <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
         <AlertDialogHeader>
-          <AlertDialogTitle className="truncate">{title}</AlertDialogTitle>
+          <AlertDialogTitle className="leading-snug">{title}</AlertDialogTitle>
+          {subtitle && (
+            <p className="font-display text-sm font-medium uppercase tracking-widest text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
         </AlertDialogHeader>
         {(currentPersonName || currentHelperName) && (
           <p className="text-sm text-muted-foreground">
-            Atual: <span className="font-medium text-foreground">{currentPersonName}</span>
+            {es.actual}: <span className="font-medium text-foreground">{currentPersonName}</span>
             {currentHelperName ? ` · ${currentHelperName}` : ""}
           </p>
         )}
         {isSong && (
-          <div className="flex gap-2">
-            <input
-              value={songNumber}
-              onChange={(e) => setSongNumber(e.target.value)}
-              inputMode="numeric"
-              placeholder="Nº do cântico"
-              className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none"
-            />
-            <button
-              type="button"
-              onClick={handleSongStage}
-              className="h-11 rounded-full bg-accent px-5 font-display text-sm font-medium uppercase tracking-wider text-accent-ink"
-            >
-              Definir cântico
-            </button>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input
+                value={songNumber}
+                onChange={(e) => setSongNumber(e.target.value)}
+                inputMode="numeric"
+                placeholder={es.numCancion}
+                className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring"
+              />
+              <button
+                type="button"
+                onClick={handleSongStage}
+                className="h-11 rounded-full bg-secondary px-5 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+              >
+                {es.definir}
+              </button>
+            </div>
+            {staged?.songNumber ? (
+              <p className="text-sm font-medium text-accent">
+                Canción {staged.songNumber}
+                {staged.songTheme ? ` · ${staged.songTheme}` : ""}
+              </p>
+            ) : null}
           </div>
         )}
         {songError && (
@@ -240,7 +275,7 @@ export function MeetingAssignModal({
         )}
         {isMinistry && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Sala:</span>
+            <span className="text-xs text-muted-foreground">{es.sala}:</span>
             {(["A", "B", "C"] as const).map((option) => (
               <button
                 key={option}
@@ -258,21 +293,21 @@ export function MeetingAssignModal({
             <input
               value={congregation}
               onChange={(e) => setCongregation(e.target.value)}
-              placeholder="Congregação do orador"
+              placeholder={es.congregacionOrador}
               maxLength={160}
-              className="h-11 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none"
+              className="h-11 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring"
             />
             <button
               type="button"
               onClick={handleCongregationStage}
-              className="h-11 rounded-full bg-accent px-5 font-display text-sm font-medium uppercase tracking-wider text-accent-ink"
+              className="h-11 rounded-full bg-secondary px-5 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
             >
-              Definir
+              {es.definir}
             </button>
           </div>
         )}
         {!isSong && !allowPerson && (
-          <p className="text-sm text-muted-foreground">Esta parte não tem designação.</p>
+          <p className="text-sm text-muted-foreground">{es.estaParteSinAsignacion}</p>
         )}
 
         {withHelperFlow && (
@@ -305,28 +340,28 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={() => setOrderBy("name")}
-                className={`h-9 flex-1 rounded-full text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-9 flex-1 rounded-full font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
-                Ordem alfabética
+                {es.ordenAlfabetico}
               </button>
               <button
                 type="button"
                 onClick={() => setOrderBy("rotation")}
-                className={`h-9 flex-1 rounded-full text-xs font-medium focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-9 flex-1 rounded-full font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
-                Rodízio (menos recentes)
+                {es.rotacion}
               </button>
             </div>
             {titularQuery.isPending ? (
               <p className="text-sm text-muted-foreground">Cargando…</p>
             ) : titularQuery.isError ? (
               <p role="alert" className="text-sm text-danger">
-                Não foi possível carregar pessoas.
+                {es.errorCargarPersonas}
               </p>
             ) : (
               <>
                 {titularQuery.isFetching && (
-                  <p className="text-xs text-muted-foreground">Atualizando…</p>
+                  <p className="text-xs text-muted-foreground">{es.actualizando}</p>
                 )}
                 <ul className="flex flex-col gap-1">
                   {(titularQuery.data ?? []).map((p) => (
@@ -334,7 +369,13 @@ export function MeetingAssignModal({
                       <button
                         type="button"
                         onClick={() => handlePickTitular(p)}
-                        className="flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-secondary"
+                        aria-pressed={staged?.personId === p.id}
+                        className={`flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                          staged?.personId === p.id ||
+                          (withHelperFlow && selectedTitular?.id === p.id)
+                            ? "bg-accent/10 ring-1 ring-accent"
+                            : ""
+                        }`}
                       >
                         <span className="flex-1">
                           {p.firstName} {p.lastName}
@@ -342,14 +383,16 @@ export function MeetingAssignModal({
                             {formatLastAssignment(p.lastAssignmentAt)}
                           </span>
                         </span>
-                        <span aria-hidden className="shrink-0 text-muted-foreground">
-                          ›
-                        </span>
+                        <FaChevronRight
+                          aria-hidden
+                          size={12}
+                          className="shrink-0 text-muted-foreground"
+                        />
                       </button>
                     </li>
                   ))}
                   {(titularQuery.data ?? []).length === 0 && (
-                    <li className="text-sm text-muted-foreground">Nenhuma pessoa encontrada.</li>
+                    <li className="text-sm text-muted-foreground">{es.ningunaPersona}</li>
                   )}
                 </ul>
               </>
@@ -367,16 +410,16 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={handleBackToTitular}
-                className="h-9 shrink-0 rounded-full bg-background px-3 text-xs font-medium"
+                className="h-9 shrink-0 rounded-full bg-background px-3 font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
               >
-                Trocar
+                {es.cambiar}
               </button>
             </div>
             {helperRule && (
               <p className="text-xs text-muted-foreground">
                 {helperRule === "sameSex"
-                  ? `${labels.helper}: alguém do mesmo sexo que ${selectedTitular.firstName}.`
-                  : `${labels.helper}: alguém do mesmo sexo ou da mesma família que ${selectedTitular.firstName}.`}
+                  ? `${labels.helper}: alguien del mismo sexo que ${selectedTitular.firstName}.`
+                  : `${labels.helper}: alguien del mismo sexo o de la misma familia que ${selectedTitular.firstName}.`}
               </p>
             )}
             <input
@@ -390,12 +433,12 @@ export function MeetingAssignModal({
               <p className="text-sm text-muted-foreground">Cargando…</p>
             ) : helperQuery.isError ? (
               <p role="alert" className="text-sm text-danger">
-                Não foi possível carregar pessoas.
+                {es.errorCargarPersonas}
               </p>
             ) : (
               <>
                 {helperQuery.isFetching && (
-                  <p className="text-xs text-muted-foreground">Atualizando…</p>
+                  <p className="text-xs text-muted-foreground">{es.actualizando}</p>
                 )}
                 <button
                   type="button"
@@ -410,7 +453,10 @@ export function MeetingAssignModal({
                       <button
                         type="button"
                         onClick={() => handlePickHelper(h)}
-                        className="flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-secondary"
+                        aria-pressed={staged?.helperPersonId === h.id}
+                        className={`flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                          staged?.helperPersonId === h.id ? "bg-accent/10 ring-1 ring-accent" : ""
+                        }`}
                       >
                         <span className="flex-1">
                           {h.firstName} {h.lastName}
@@ -418,13 +464,15 @@ export function MeetingAssignModal({
                             {formatLastAssignment(h.lastAssignmentAt)}
                           </span>
                         </span>
-                        <span className="shrink-0 text-xs text-accent">Escolher</span>
+                        <span className="shrink-0 font-display text-xs font-medium uppercase tracking-wider text-accent">
+                          {es.elegir}
+                        </span>
                       </button>
                     </li>
                   ))}
                   {eligibleHelpers.length === 0 && (
                     <li className="text-sm text-muted-foreground">
-                      Nenhum {labels.helper.toLowerCase()} elegível para {selectedTitular.firstName}
+                      Ningún {labels.helper.toLowerCase()} elegible para {selectedTitular.firstName}
                       .
                     </li>
                   )}
@@ -439,12 +487,21 @@ export function MeetingAssignModal({
             <button
               type="button"
               onClick={handleBackToTitular}
-              className="h-11 flex-1 rounded-lg bg-secondary px-3 text-sm font-medium"
+              className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-secondary px-3 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
             >
-              ‹ Voltar
+              <FaChevronLeft aria-hidden size={12} />
+              {es.volver}
             </button>
           )}
-          <AlertDialogCancel className="mt-0">Fechar</AlertDialogCancel>
+          <AlertDialogCancel className="mt-0 flex-1">Cancelar</AlertDialogCancel>
+          <button
+            type="button"
+            disabled={!staged}
+            onClick={handleAsignar}
+            className="h-11 flex-1 rounded-full bg-accent px-4 font-display text-sm font-medium uppercase tracking-wider text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+          >
+            {es.asignar}
+          </button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

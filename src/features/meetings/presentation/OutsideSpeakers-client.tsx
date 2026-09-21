@@ -13,6 +13,7 @@ import {
 } from "@/features/meetings/application/outside-speaker-queries";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 
 interface OutsideSpeakersClientProps {
   initialSpeakers: OutsideSpeakerItem[];
@@ -52,7 +53,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
     },
     onSuccess: (result) => {
       if (!result.ok) {
-        setError(result.error ?? "Erro ao salvar.");
+        setError(result.error ?? es.errorGuardar);
         return;
       }
       setForm(EMPTY_FORM);
@@ -60,19 +61,19 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
       setError(null);
       invalidate();
     },
-    onError: () => setError("Erro ao salvar."),
+    onError: () => setError(es.errorGuardar),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteOutsideSpeaker(id),
     onSuccess: (result) => {
       if (!result.ok) {
-        setError(result.error ?? "Erro ao excluir.");
+        setError(result.error ?? es.errorExcluir);
         return;
       }
       invalidate();
     },
-    onError: () => setError("Erro ao excluir."),
+    onError: () => setError(es.errorExcluir),
   });
 
   function startEdit(speaker: OutsideSpeakerItem) {
@@ -89,12 +90,14 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">Oradores de fora</h2>
+        <h2 className="font-display text-xl font-semibold uppercase tracking-wide">
+          {es.oradoresFuera}
+        </h2>
         <a
           href="/reunioes/imprimir?view=slips"
-          className="rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground"
+          className="rounded-full bg-secondary px-3 py-1.5 font-display text-xs font-medium uppercase tracking-wider text-muted-foreground"
         >
-          Fichas (slips)
+          {es.fichas}
         </a>
       </div>
 
@@ -109,7 +112,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
           <input
             value={form.name}
             onChange={(e) => setForm((previous) => ({ ...previous, name: e.target.value }))}
-            placeholder="Nome do orador"
+            placeholder={es.nombreOrador}
             maxLength={160}
             className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
           />
@@ -119,7 +122,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
               onChange={(e) =>
                 setForm((previous) => ({ ...previous, congregation: e.target.value }))
               }
-              placeholder="Congregação"
+              placeholder={es.congregacion}
               maxLength={160}
               className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
             />
@@ -132,21 +135,21 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                 }))
               }
               inputMode="numeric"
-              placeholder="Nº do discurso"
+              placeholder={es.numDiscurso}
               className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
             />
           </div>
           <input
             value={form.talkTheme}
             onChange={(e) => setForm((previous) => ({ ...previous, talkTheme: e.target.value }))}
-            placeholder="Tema do discurso"
+            placeholder={es.temaDiscurso}
             maxLength={300}
             className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
           />
           <input
             value={form.phone}
             onChange={(e) => setForm((previous) => ({ ...previous, phone: e.target.value }))}
-            placeholder="Telefone (opcional)"
+            placeholder={es.telefonoOpcional}
             maxLength={40}
             className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none"
           />
@@ -155,7 +158,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
               disabled={saveMutation.isPending || form.name.trim() === ""}
               onClick={() => saveMutation.mutate()}
             >
-              {editingId ? "Salvar alterações" : "Adicionar orador"}
+              {editingId ? es.guardarCambios : es.anadirOrador}
             </Button>
             {editingId && (
               <Button
@@ -182,7 +185,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium">{speaker.name}</span>
                   <span className="block truncate text-xs text-muted-foreground">
-                    {[speaker.congregation, speaker.talkNumber ? `Nº ${speaker.talkNumber}` : ""]
+                    {[speaker.congregation, speaker.talkNumber ? `N.º ${speaker.talkNumber}` : ""]
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </span>
@@ -197,7 +200,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                     <button
                       type="button"
                       onClick={() => startEdit(speaker)}
-                      className="rounded-lg px-2 py-1 text-xs text-accent"
+                      className="rounded-lg px-2 py-1 font-display text-xs font-medium uppercase tracking-wider text-accent"
                     >
                       Editar
                     </button>
@@ -205,9 +208,9 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
                       type="button"
                       disabled={deleteMutation.isPending}
                       onClick={() => deleteMutation.mutate(speaker.id)}
-                      className="rounded-lg px-2 py-1 text-xs text-danger"
+                      className="rounded-lg px-2 py-1 font-display text-xs font-medium uppercase tracking-wider text-danger"
                     >
-                      Excluir
+                      {es.eliminar}
                     </button>
                   </span>
                 )}
@@ -215,7 +218,7 @@ export function OutsideSpeakersClient({ initialSpeakers, canManage }: OutsideSpe
             </li>
           ))}
           {speakers.length === 0 && (
-            <li className="text-sm text-muted-foreground">Nenhum orador cadastrado.</li>
+            <li className="text-sm text-muted-foreground">{es.ningunOrador}</li>
           )}
         </ul>
       )}
