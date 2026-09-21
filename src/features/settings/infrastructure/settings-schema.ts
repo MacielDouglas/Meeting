@@ -4,6 +4,7 @@ export const SETTINGS_ID = "global";
 
 export const meetingSettings = pgTable("meeting_settings", {
   id: text("id").primaryKey(),
+  congregationName: text("congregation_name").notNull().default(""),
   midweekDay: integer("midweek_day").notNull().default(2),
   midweekTime: text("midweek_time").notNull().default("19:30"),
   weekendDay: integer("weekend_day").notNull().default(0),

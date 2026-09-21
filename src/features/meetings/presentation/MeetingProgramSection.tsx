@@ -32,6 +32,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
+import { PdfExportModal } from "./PdfExportModal-client";
 
 interface SongOption {
   number: number;
@@ -69,6 +70,7 @@ interface MeetingProgramSectionProps {
   canManage: boolean;
   initialWeekStart: string;
   initialKind: "midweek" | "weekend";
+  congregationName: string;
 }
 
 function mondayOf(offsetWeeks: number): string {
@@ -195,6 +197,7 @@ export function MeetingProgramSection({
   canManage,
   initialWeekStart,
   initialKind,
+  congregationName,
 }: MeetingProgramSectionProps) {
   const [kind, setKind] = useState<"midweek" | "weekend">(initialKind);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -217,6 +220,7 @@ export function MeetingProgramSection({
   const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayPart | null>(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
   const [initializedKey, setInitializedKey] = useState<string | null>(null);
   const autoSaveKeyRef = useRef<string | null>(null);
   const syncKeyRef = useRef<string | null>(null);
@@ -743,7 +747,7 @@ export function MeetingProgramSection({
                   {part.showSection && (
                     <div className={`flex items-center gap-3 py-3 ${index === 0 ? "" : "mt-2"}`}>
                       <span
-                        className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
+                        className="section-emblem grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
                         style={{ backgroundColor: meta.color }}
                       >
                         <SectionIcon aria-hidden size={30} />
@@ -824,12 +828,13 @@ export function MeetingProgramSection({
 
       {programId && (
         <div className="flex gap-2">
-          <a
-            href={`/reunioes/imprimir?kind=${kind}&week=${weekStart}`}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
+          <button
+            type="button"
+            onClick={() => setPdfOpen(true)}
+            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-accent px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           >
-            {es.imprimirPrograma}
-          </a>
+            {es.crearPdf}
+          </button>
           <a
             href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
             className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
@@ -837,6 +842,15 @@ export function MeetingProgramSection({
             {es.descargarICal}
           </a>
         </div>
+      )}
+      {pdfOpen && (
+        <PdfExportModal
+          kind={kind}
+          midweekDay={midweekDay}
+          weekendDay={weekendDay}
+          congregationName={congregationName}
+          onClose={() => setPdfOpen(false)}
+        />
       )}
 
       {editing && !editing.id.startsWith("tpl-") && (

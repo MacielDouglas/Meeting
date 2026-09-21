@@ -31,6 +31,7 @@ export const SCHEDULE_EXCEPTION_TYPES = [
 export type ScheduleExceptionType = (typeof SCHEDULE_EXCEPTION_TYPES)[number]["value"];
 
 export interface MeetingSchedule {
+  congregationName: string;
   midweekDay: WeekDay;
   midweekTime: string;
   weekendDay: WeekDay;
@@ -38,6 +39,7 @@ export interface MeetingSchedule {
 }
 
 export const DEFAULT_MEETING_SCHEDULE: MeetingSchedule = {
+  congregationName: "",
   midweekDay: 2,
   midweekTime: "19:30",
   weekendDay: 0,

@@ -20,24 +20,50 @@ function toWeekDay(value: number): WeekDay {
 }
 
 export async function getMeetingSchedule(): Promise<MeetingSchedule> {
-  const rows = await getDb()
-    .select({
-      midweekDay: meetingSettings.midweekDay,
-      midweekTime: meetingSettings.midweekTime,
-      weekendDay: meetingSettings.weekendDay,
-      weekendTime: meetingSettings.weekendTime,
-    })
-    .from(meetingSettings)
-    .where(eq(meetingSettings.id, SETTINGS_ID))
-    .limit(1);
-  const row = rows[0];
-  if (!row) return DEFAULT_MEETING_SCHEDULE;
-  return {
-    midweekDay: toWeekDay(row.midweekDay),
-    midweekTime: row.midweekTime,
-    weekendDay: toWeekDay(row.weekendDay),
-    weekendTime: row.weekendTime,
-  };
+  const db = getDb();
+  try {
+    const rows = await db
+      .select({
+        congregationName: meetingSettings.congregationName,
+        midweekDay: meetingSettings.midweekDay,
+        midweekTime: meetingSettings.midweekTime,
+        weekendDay: meetingSettings.weekendDay,
+        weekendTime: meetingSettings.weekendTime,
+      })
+      .from(meetingSettings)
+      .where(eq(meetingSettings.id, SETTINGS_ID))
+      .limit(1);
+    const row = rows[0];
+    if (!row) return DEFAULT_MEETING_SCHEDULE;
+    return {
+      congregationName: row.congregationName ?? "",
+      midweekDay: toWeekDay(row.midweekDay),
+      midweekTime: row.midweekTime,
+      weekendDay: toWeekDay(row.weekendDay),
+      weekendTime: row.weekendTime,
+    };
+  } catch {
+    // Coluna ainda sem migração no banco: horários sem congregação.
+    const rows = await db
+      .select({
+        midweekDay: meetingSettings.midweekDay,
+        midweekTime: meetingSettings.midweekTime,
+        weekendDay: meetingSettings.weekendDay,
+        weekendTime: meetingSettings.weekendTime,
+      })
+      .from(meetingSettings)
+      .where(eq(meetingSettings.id, SETTINGS_ID))
+      .limit(1);
+    const row = rows[0];
+    if (!row) return DEFAULT_MEETING_SCHEDULE;
+    return {
+      congregationName: "",
+      midweekDay: toWeekDay(row.midweekDay),
+      midweekTime: row.midweekTime,
+      weekendDay: toWeekDay(row.weekendDay),
+      weekendTime: row.weekendTime,
+    };
+  }
 }
 
 export interface SpecialEventItem {

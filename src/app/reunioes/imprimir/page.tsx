@@ -8,6 +8,7 @@ import {
 } from "@/features/meetings/application/meeting-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
@@ -91,7 +92,10 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
     );
   }
 
-  const result = await getMeetingProgram(kind, weekStart);
+  const [result, meetingScheduleData] = await Promise.all([
+    getMeetingProgram(kind, weekStart),
+    getMeetingSchedule(),
+  ]);
 
   // Cabeçalho de seção derivado de forma pura (a primeira parte de cada seção
   // exibe a faixa colorida), calculado antes do JSX.
@@ -157,6 +161,9 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
         ) : (
           <article className="overflow-hidden rounded-xl border bg-white text-black">
             <header className="border-b p-4 text-center">
+              {meetingScheduleData.congregationName && (
+                <p className="text-lg font-bold">{meetingScheduleData.congregationName}</p>
+              )}
               <h2 className="text-xl font-bold uppercase">
                 {kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"}
               </h2>

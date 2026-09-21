@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireOwnerUser } from "@/features/auth/application/session";
 import {
@@ -36,13 +36,32 @@ export async function saveMeetingSchedule(input: unknown): Promise<SettingsActio
   } catch {
     return { ok: false, error: "Solo el owner puede cambiar los horarios." };
   }
-  await getDb()
-    .insert(meetingSettings)
-    .values({ id: SETTINGS_ID, ...parsed.data })
-    .onConflictDoUpdate({
-      target: meetingSettings.id,
-      set: { ...parsed.data, updatedAt: new Date() },
-    });
+  const scheduleValues = {
+    congregationName: parsed.data.congregationName ?? "",
+    midweekDay: parsed.data.midweekDay,
+    midweekTime: parsed.data.midweekTime,
+    weekendDay: parsed.data.weekendDay,
+    weekendTime: parsed.data.weekendTime,
+  };
+  const values = { id: SETTINGS_ID, ...scheduleValues };
+  const onConflictSet = { ...scheduleValues, updatedAt: new Date() };
+  try {
+    await getDb()
+      .insert(meetingSettings)
+      .values(values)
+      .onConflictDoUpdate({ target: meetingSettings.id, set: onConflictSet });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // Banco ainda sem a migração: cria a coluna e tenta de novo sozinho.
+    if (!message.includes("congregation_name")) throw error;
+    await getDb().execute(
+      sql`ALTER TABLE meeting_settings ADD COLUMN IF NOT EXISTS congregation_name text NOT NULL DEFAULT ''`,
+    );
+    await getDb()
+      .insert(meetingSettings)
+      .values(values)
+      .onConflictDoUpdate({ target: meetingSettings.id, set: onConflictSet });
+  }
   revalidateSettingsPages();
   return { ok: true };
 }

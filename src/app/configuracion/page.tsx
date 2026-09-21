@@ -44,6 +44,7 @@ export default async function ConfiguracionPage({
     needsReunioes
       ? getMeetingSchedule()
       : Promise.resolve({
+          congregationName: "",
           midweekDay: 2 as const,
           midweekTime: "19:30",
           weekendDay: 0 as const,

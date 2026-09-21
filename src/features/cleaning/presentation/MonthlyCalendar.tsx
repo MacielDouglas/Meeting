@@ -49,6 +49,12 @@ interface MonthlyCalendarProps {
   selectedDates: Set<string>;
   programDates: Set<string>;
   onDateClick: (date: string) => void;
+  monthNames?: string[];
+  weekdayHeaders?: string[];
+  /** false libera clicar em datas com programa (padrão da limpeza: bloqueia). */
+  disableProgramDates?: boolean;
+  /** Texto do tooltip nas datas com programa. */
+  programDateHint?: string;
 }
 
 interface CalendarCell {
@@ -66,6 +72,10 @@ export function MonthlyCalendar({
   selectedDates,
   programDates,
   onDateClick,
+  monthNames = MONTH_NAMES,
+  weekdayHeaders = WEEKDAY_HEADERS,
+  disableProgramDates = true,
+  programDateHint = "Já foi criada tabela para aquela semana — edite a tabela existente",
 }: MonthlyCalendarProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);
@@ -88,7 +98,7 @@ export function MonthlyCalendar({
           <FaChevronLeft size={14} />
         </button>
         <h3 className="text-sm font-semibold">
-          {MONTH_NAMES[month]} {year}
+          {monthNames[month]} {year}
         </h3>
         <button
           type="button"
@@ -101,7 +111,7 @@ export function MonthlyCalendar({
       </div>
 
       <div className="mb-1 grid grid-cols-7 gap-1">
-        {WEEKDAY_HEADERS.map((h) => (
+        {weekdayHeaders.map((h) => (
           <div key={h} className="py-1 text-center text-xs font-medium text-muted-foreground">
             {h}
           </div>
@@ -125,7 +135,7 @@ export function MonthlyCalendar({
           else if (hasProgram) bgClass = "bg-success-soft text-success";
           else if (isMeeting) bgClass = "bg-accent/10 text-accent";
 
-          const isBlocked = hasProgram;
+          const isBlocked = disableProgramDates && hasProgram;
           const day = cell.day;
           return (
             <button
@@ -135,13 +145,7 @@ export function MonthlyCalendar({
               onClick={() => onDateClick(dateStr)}
               aria-disabled={isBlocked}
               className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass}`}
-              title={
-                isAssembly
-                  ? (info?.assemblyType ?? "")
-                  : hasProgram
-                    ? "Já foi criada tabela para aquela semana — edite a tabela existente"
-                    : ""
-              }
+              title={isAssembly ? (info?.assemblyType ?? "") : hasProgram ? programDateHint : ""}
             >
               {day}
               {isMeeting && !isAssembly && (

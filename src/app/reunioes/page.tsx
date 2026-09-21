@@ -84,6 +84,7 @@ export default async function ReunioesPage({
     needsMeetings || tab === "designacoes"
       ? getMeetingSchedule()
       : Promise.resolve({
+          congregationName: "",
           midweekDay: 2 as const,
           midweekTime: "19:30",
           weekendDay: 0 as const,
@@ -93,7 +94,7 @@ export default async function ReunioesPage({
   ]);
 
   return (
-    <main className="flex flex-col gap-4 pb-10">
+    <main className="flex flex-col gap-4 pb-28">
       <PageHeader
         title="Reuniões"
         meta={`${formatDateBR(schedule.weekStart)} — ${formatDateBR(schedule.weekEnd)}`}
@@ -157,6 +158,7 @@ export default async function ReunioesPage({
             canManage={canManage}
             initialWeekStart={schedule.weekStart}
             initialKind={selectInitialKind(todayLocalISO(), schedule.midweek.date)}
+            congregationName={meetingScheduleData.congregationName}
           />
         </Suspense>
       )}

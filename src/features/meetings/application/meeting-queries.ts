@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
 import {
   type MeetingKind,
@@ -30,6 +30,101 @@ export interface MeetingAssignmentItem {
   notes: string;
   speakerCongregation: string;
   sortOrder: number;
+}
+
+export interface PdfProgramItem {
+  id: string;
+  kind: MeetingKind;
+  weekStart: string;
+  date: string;
+  assignments: MeetingAssignmentItem[];
+}
+
+/** Segunda-feira da semana de uma data ISO (expande o filtro do intervalo). */
+function mondayOfWeek(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d, 12));
+  dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7));
+  return dt.toISOString().slice(0, 10);
+}
+
+/** Programas de um tipo com semana no intervalo (para o PDF de designações). */
+export async function listProgramsForPdf(
+  kind: MeetingKind,
+  from: string,
+  to: string,
+): Promise<PdfProgramItem[]> {
+  await requireAuthenticatedUser();
+  const db = getDb();
+  const programs = await db
+    .select()
+    .from(meetingPrograms)
+    .where(
+      and(
+        eq(meetingPrograms.kind, kind),
+        gte(meetingPrograms.weekStart, mondayOfWeek(from)),
+        lte(meetingPrograms.weekStart, to),
+      ),
+    )
+    .orderBy(asc(meetingPrograms.weekStart));
+  const items: PdfProgramItem[] = [];
+  for (const program of programs) {
+    const assignmentRows = await db
+      .select()
+      .from(meetingAssignments)
+      .where(eq(meetingAssignments.programId, program.id))
+      .orderBy(asc(meetingAssignments.sortOrder));
+    items.push({
+      id: program.id,
+      kind: program.kind,
+      weekStart: program.weekStart,
+      date: program.date,
+      assignments: assignmentRows.map((row) => ({
+        id: row.id,
+        programId: row.programId,
+        partKey: row.partKey,
+        section: row.section,
+        title: row.title,
+        subtitle: row.subtitle,
+        startTime: row.startTime,
+        durationMinutes: row.durationMinutes,
+        personId: row.personId,
+        personName: row.personName,
+        helperPersonId: row.helperPersonId,
+        helperPersonName: row.helperPersonName,
+        songNumber: row.songNumber,
+        songTheme: row.songTheme,
+        classroom: row.classroom ?? "A",
+        study: row.study ?? "",
+        source: row.source ?? "",
+        notes: row.notes ?? "",
+        speakerCongregation: row.speakerCongregation ?? "",
+        sortOrder: row.sortOrder,
+      })),
+    });
+  }
+  return items;
+}
+
+/** Datas de reunião com programa salvo no intervalo (destaques do calendário). */
+export async function listProgramDates(
+  kind: MeetingKind,
+  from: string,
+  to: string,
+): Promise<string[]> {
+  await requireAuthenticatedUser();
+  const db = getDb();
+  const programs = await db
+    .select({ date: meetingPrograms.date })
+    .from(meetingPrograms)
+    .where(
+      and(
+        eq(meetingPrograms.kind, kind),
+        gte(meetingPrograms.weekStart, mondayOfWeek(from)),
+        lte(meetingPrograms.weekStart, to),
+      ),
+    );
+  return [...new Set(programs.map((p) => p.date))].sort();
 }
 
 export interface MeetingProgramItem {

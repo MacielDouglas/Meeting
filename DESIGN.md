@@ -202,11 +202,17 @@ Pílulas atléticas em caixa alta condensada, com resposta física ao toque.
 ### Navigation
 Abas em pílula com uma única gramática (ativa em acento com texto em tinta de acento, inativa em papel suave); seletores de opção no mesmo idioma. Navegação inferior fixa com pílula de acento no item ativo, ícones de 20px e rótulo condensado em caixa alta, com safe-area respeitada. Menu mobile do header em painel de cartão com links condensados.
 
+### Emblema de seção
+Caixa na cor da seção com relevo 3D (sombras em camadas com offset e blur, highlights inset, ícone branco com sombra projetada) + rótulo display na cor da seção. Classe `.section-emblem` em `globals.css`.
+
 ### Dialog
 Confirmação centrada em 16px com sombra alta; ação destrutiva em perigo sólido com tinta de perigo, cancelamento em outline; animações de fade e zoom sutis.
 
 ### Calendar
 Estados semafóricos tokenizados: selecionado em acento, programa existente em êxito suave, assembleia em perigo suave, reunião em acento translúcido, com dots na mesma gramática.
+
+### Impresso PDF
+Documento A4 sempre claro, 2 entre semana ou 4 fim de semana por página com autofit: cabeçalho com congregação, faixa da seção em tinta clara com ícone branco real, fileira `hora | Nº título (durmin) | pessoa (papel)`, sem descrições.
 
 ## Do's and Don'ts
 

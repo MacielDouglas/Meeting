@@ -6,11 +6,13 @@ import { type MeetingSchedule, WEEK_DAYS } from "@/features/settings/domain/sett
 import { ChipSelect } from "@/features/settings/presentation/ChipSelect";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
+import { TextField } from "@/shared/components/ui/input";
 import { es } from "@/shared/i18n/es";
 
 const DAY_OPTIONS = WEEK_DAYS.map((day) => ({ value: String(day.value), label: day.label }));
 
 export function MeetingScheduleForm({ initial }: { initial: MeetingSchedule }) {
+  const [congregationName, setCongregationName] = useState(initial.congregationName);
   const [midweekDay, setMidweekDay] = useState(String(initial.midweekDay));
   const [midweekTime, setMidweekTime] = useState(initial.midweekTime);
   const [weekendDay, setWeekendDay] = useState(String(initial.weekendDay));
@@ -26,6 +28,7 @@ export function MeetingScheduleForm({ initial }: { initial: MeetingSchedule }) {
     setPending(true);
     try {
       const result = await saveMeetingSchedule({
+        congregationName,
         midweekDay: Number(midweekDay),
         midweekTime,
         weekendDay: Number(weekendDay),
@@ -55,6 +58,14 @@ export function MeetingScheduleForm({ initial }: { initial: MeetingSchedule }) {
         </p>
       )}
       <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-3">
+        <TextField
+          id="congregation-name"
+          label={es.congregacion}
+          value={congregationName}
+          onChange={setCongregationName}
+          placeholder="Española Ipojuca"
+          maxLength={120}
+        />
         <h3 className="text-base font-semibold">{es.midweekMeeting}</h3>
         <ChipSelect
           label={es.midweekMeetingDay}

@@ -38,7 +38,7 @@ Confirmado no código:
 - Designações com elegibilidade por sexo, idade (jovem), batismo, privilégios e indisponibilidade; gestão de pessoas e usuários vinculados (`/personas`, `/configuracion?tab=designacoes`).
 - Limpeza: setores configuráveis, algoritmo em 8 passadas com fairness de 90 dias (inclui drafts futuros), descanso por sessão e semanal, família atômica, bloqueio de jovem em setor adulto exceto fallback com aviso — ver `docs/cleaning-algorithm.md` e `assign-cleaning.ts`.
 - Conteúdo: importação e consulta de `.jwpub` (`jwpub/*.jwpub`: `mwb_S_202607`, `w_S_202606`, `sjj_S`, `S-34_S`), contagens por idioma.
-- Config: horários, eventos especiais, exceções, setores de limpeza e regras de designação — restrito a `owner` em `/configuracion`.
+- Config: horários, nome da congregação (cabeçalho do programa e do PDF), eventos especiais, exceções, setores de limpeza e regras de designação — restrito a `owner` em `/configuracion`.
 - Auth: `better-auth` com Google; sessão server-side (`getCurrentUser`); `canManage`/`isOwner`/`currentUserId` no client, nunca objeto `user` completo.
 - Padrão técnico obrigatório (`AGENTS.md`): páginas server async + `Promise.all`, interatividade só em ilhas `"use client"`, `<Suspense>` por aba com skeletons, TanStack Query no client, zero supressão de lint.
 

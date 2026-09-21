@@ -13,6 +13,7 @@ const dateField = z
   .refine((value) => isValidISODate(value), { message: "Fecha no válida (YYYY-MM-DD)" });
 
 export const meetingScheduleSchema = z.object({
+  congregationName: optionalPlainText(120),
   midweekDay: dayField,
   midweekTime: timeField,
   weekendDay: dayField,
