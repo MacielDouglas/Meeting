@@ -126,7 +126,7 @@ function ImportModal({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Revisar conteúdo do .jwpub"
+      aria-label="Revisar el contenido del .jwpub"
       className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 p-0 sm:items-center sm:p-4"
     >
       <div className="flex max-h-full w-full max-w-lg flex-col gap-3 overflow-hidden rounded-none bg-background p-4 sm:rounded-2xl">
@@ -667,16 +667,17 @@ export function ContentSection({
         />
       )}
 
-      <nav className="flex gap-2" aria-label="Tipos de conteúdo">
+      <nav className="flex gap-4 border-b border-border" aria-label="Tipos de contenido">
         {SUBTABS.map((item) => (
           <button
             key={item.value}
             type="button"
+            aria-pressed={subTab === item.value}
             onClick={() => setSubTab(item.value)}
-            className={`h-9 flex-1 rounded-full px-2 font-display text-sm font-medium uppercase tracking-wider transition-colors ${
+            className={`-mb-px border-b-2 px-1 pb-2 font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               subTab === item.value
-                ? "bg-accent text-accent-ink"
-                : "bg-secondary text-muted-foreground"
+                ? "border-accent text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {item.label}
@@ -691,7 +692,7 @@ export function ContentSection({
             <p className="text-sm text-muted-foreground">
               {es.canticos} — ES: {counts.songsEs} · PT: {counts.songsPt} · EN: {counts.songsEn}
             </p>
-            {!canManage && <p className="text-sm text-muted-foreground">{es.accesoSoloVista}</p>}
+            {!canManage && <p className="text-sm text-muted-foreground">{es.soloLectura}</p>}
           </Card>
           <EntryList kind="songs" items={initialSongs} canManage={canManage} />
         </>
@@ -705,7 +706,7 @@ export function ContentSection({
               {es.bosquejosDiscursos} — ES: {counts.outlinesEs} · PT: {counts.outlinesPt} · EN:{" "}
               {counts.outlinesEn}
             </p>
-            {!canManage && <p className="text-sm text-muted-foreground">{es.accesoSoloVista}</p>}
+            {!canManage && <p className="text-sm text-muted-foreground">{es.soloLectura}</p>}
           </Card>
           <EntryList kind="outlines" items={initialOutlines} canManage={canManage} />
         </>

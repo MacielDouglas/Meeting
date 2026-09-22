@@ -233,6 +233,15 @@ export const es = {
   archivado: "Archivado",
   verPrograma: "Ver programa",
   verProgramaCompleto: "Ver programa completo",
+  crearProgramaSemana: "Crear programa de esta semana",
+  tipoReunion: "Tipo de reunión",
+  exportar: "Exportar",
+  asignadas: "asignadas",
+  sincronizar: "Sincronizar",
+  buscarEsbozo: "Buscar esbozo (n.º o tema)",
+  descartarCambioSemana: "Tienes cambios sin guardar. ¿Descartarlos y cambiar de semana?",
+  modeloCambiado:
+    "El modelo trajo partes nuevas. Sincroniza para añadirlas sin perder las designaciones.",
   ningunTipoLimpieza: "Ningún tipo de limpieza activado. Actívalo en Configuración › Limpieza.",
   avisosSorteo: "Avisos del sorteo (revisa antes de confirmar)",
   // Conteúdo
@@ -240,7 +249,6 @@ export const es = {
   bosquejosDiscursos: "Bosquejos de discursos",
   contenidoReuniones: "Contenido de las reuniones",
   contenidoGuardado: "Contenido guardado",
-  accesoSoloVista: "Tienes acceso de solo lectura.",
   buscarNumeroTema: "Buscar por número o tema",
   filtrarPorIdioma: "Filtrar por idioma",
   todosIdiomas: "Todos",

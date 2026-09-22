@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
-import { FaBookOpen, FaChevronLeft, FaChevronRight, FaClock, FaMicrophone } from "react-icons/fa";
+import {
+  FaBookOpen,
+  FaChevronDown,
+  FaChevronLeft,
+  FaChevronRight,
+  FaClock,
+  FaMicrophone,
+} from "react-icons/fa";
 import { GiSheep } from "react-icons/gi";
 import { IoDiamond } from "react-icons/io5";
 import { LuWheat } from "react-icons/lu";
@@ -216,6 +223,9 @@ export function MeetingProgramSection({
   });
   // Alterações preparadas pelo usuário (clique nas partes); só persistem no Salvar.
   const [pending, setPending] = useState<Record<string, StagedChange>>({});
+  // Esboço do fim de semana também encena antes de salvar (mesmo modelo mental).
+  const [pendingOutlineId, setPendingOutlineId] = useState<string | null>(null);
+  const [outlineSearch, setOutlineSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
@@ -223,9 +233,6 @@ export function MeetingProgramSection({
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayPart | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
-  const [initializedKey, setInitializedKey] = useState<string | null>(null);
-  const autoSaveKeyRef = useRef<string | null>(null);
-  const syncKeyRef = useRef<string | null>(null);
 
   const songMap = useMemo(() => new Map(songs.map((s) => [s.number, s.theme])), [songs]);
   // Seleção inteligente e totalmente automática: encontra exatamente a semana
@@ -244,11 +251,19 @@ export function MeetingProgramSection({
   const article = articleIndex != null ? (articles[articleIndex] ?? null) : null;
 
   // Discurso sem default: começa vazio ("Nenhum") e só assume valor pelo
-  // programa salvo da semana.
+  // programa salvo da semana. A escolha encenada prevalece até o Salvar.
+  const effectiveOutlineId = pendingOutlineId ?? outlineId;
   const outline = useMemo(
-    () => outlines.find((o) => o.id === outlineId) ?? null,
-    [outlines, outlineId],
+    () => outlines.find((o) => o.id === effectiveOutlineId) ?? null,
+    [outlines, effectiveOutlineId],
   );
+  const filteredOutlines = useMemo(() => {
+    const term = outlineSearch.trim().toLowerCase();
+    if (!term) return outlines;
+    return outlines.filter(
+      (o) => String(o.number).includes(term) || o.theme.toLowerCase().includes(term),
+    );
+  }, [outlines, outlineSearch]);
 
   // Cabeçalho da lista: dia da semana | nome da reunião + leitura semanal.
   const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
@@ -294,11 +309,11 @@ export function MeetingProgramSection({
         // semana sem programa, sem carregar escolha de outra semana).
         setOutlineId(result?.program.outlineId ?? "");
         setPending({});
-        setInitializedKey(`${kind}:${weekStart}`);
+        setPendingOutlineId(null);
+        setOutlineSearch("");
       } catch {
         if (!cancelled) {
           setSaved(null);
-          setInitializedKey(`${kind}:${weekStart}`);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -310,125 +325,135 @@ export function MeetingProgramSection({
     };
   }, [kind, weekStart]);
 
-  // Geração automática: sem botão Gerar — o programa da semana se materializa
-  // sozinho (upsert não-destrutivo) quando há conteúdo e ainda não foi salvo.
-  useEffect(() => {
-    if (!canManage || template.length === 0 || loading) return;
-    if (programId) return;
-    if (initializedKey !== `${kind}:${weekStart}`) return;
-    const key = `${kind}:${weekStart}`;
-    if (autoSaveKeyRef.current === key) return;
-    autoSaveKeyRef.current = key;
-    void (async () => {
-      setSaving(true);
-      setError(null);
-      const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
-      const result = await saveMeetingProgram(
-        kind,
-        weekStart,
-        date,
-        template.map((t) => ({
-          partKey: t.key,
-          section: t.section,
-          title: t.title,
-          subtitle: t.subtitle ?? "",
-          startTime: t.startTime,
-          durationMinutes: t.durationMinutes,
-          songNumber: t.songNumber ?? null,
-          songTheme: t.songTheme ?? "",
-          classroom: "A" as const,
-          study: "",
-          source: "",
-          notes: "",
-          speakerCongregation: "",
-        })),
-        kind === "weekend" ? (outline?.id ?? null) : null,
-        { exceptionType: "", exceptionLabel: "" },
-      );
-      if (!result.ok) {
-        setError(result.error ?? es.errorGuardar);
-        setSaving(false);
-        return;
-      }
-      const fresh = await getMeetingProgram(kind, weekStart);
-      setSaved(fresh?.assignments ?? null);
-      setProgramId(fresh?.program.id ?? result.programId ?? null);
-      setSaving(false);
-    })();
-  }, [canManage, template, programId, loading, initializedKey, kind, weekStart, outline]);
+  // Leitura estrita: ver nunca escreve. Criação e sincronização do modelo
+  // exigem ação explícita do organizador (botões abaixo).
+  function buildTemplatePayload() {
+    const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
+    return {
+      date,
+      parts: template.map((t) => ({
+        partKey: t.key,
+        section: t.section,
+        title: t.title,
+        subtitle: t.subtitle ?? "",
+        startTime: t.startTime,
+        durationMinutes: t.durationMinutes,
+        songNumber: t.songNumber ?? null,
+        songTheme: t.songTheme ?? "",
+        classroom: "A" as const,
+        study: "",
+        source: "",
+        notes: "",
+        speakerCongregation: "",
+      })),
+      outlineId: kind === "weekend" ? (outline?.id ?? null) : null,
+    };
+  }
 
-  // Sincronização do modelo: programas salvos antes de uma mudança no modelo
-  // (ex.: nova parte "president", conselheiros removidos) ganham as partes
-  // novas e perdem as removidas via upsert não-destrutivo, preservando as
-  // designações e a exceção. Sem isso as partes novas ficam com id "tpl-*
-  // e o modal de designação não abre (caso do Presidente).
-  useEffect(() => {
-    if (!canManage || template.length === 0 || loading) return;
-    if (!programId || !saved) return;
-    if (initializedKey !== `${kind}:${weekStart}`) return;
-    const templateKeys = [...template.map((t) => t.key)].sort().join("|");
-    const savedKeys = [...saved.map((s) => s.partKey)].sort().join("|");
-    if (templateKeys === savedKeys) return;
-    const key = `sync:${kind}:${weekStart}:${templateKeys}`;
-    if (syncKeyRef.current === key) return;
-    syncKeyRef.current = key;
-    void (async () => {
-      setSaving(true);
-      setError(null);
-      const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
-      const result = await saveMeetingProgram(
-        kind,
-        weekStart,
-        date,
-        template.map((t) => ({
-          partKey: t.key,
-          section: t.section,
-          title: t.title,
-          subtitle: t.subtitle ?? "",
-          startTime: t.startTime,
-          durationMinutes: t.durationMinutes,
-          songNumber: t.songNumber ?? null,
-          songTheme: t.songTheme ?? "",
-          classroom: "A" as const,
-          study: "",
-          source: "",
-          notes: "",
-          speakerCongregation: "",
-        })),
-        kind === "weekend" ? (outline?.id ?? null) : null,
-        {
-          exceptionType: programException.exceptionType as
-            | ""
-            | "no_meeting"
-            | "circuit_visit"
-            | "convention"
-            | "virtual_convention"
-            | "special",
-          exceptionLabel: programException.exceptionLabel,
-        },
-      );
-      if (!result.ok) {
-        setError(result.error ?? es.errorSincronizar);
-        setSaving(false);
-        return;
-      }
-      const fresh = await getMeetingProgram(kind, weekStart);
-      setSaved(fresh?.assignments ?? null);
-      setProgramId(fresh?.program.id ?? result.programId ?? null);
+  /** Cria o programa da semana a partir do modelo (upsert não-destrutivo). */
+  async function handleCreateProgram() {
+    if (!canManage || template.length === 0 || saving) return;
+    setSaving(true);
+    setError(null);
+    setJustSaved(false);
+    const payload = buildTemplatePayload();
+    const result = await saveMeetingProgram(
+      kind,
+      weekStart,
+      payload.date,
+      payload.parts,
+      payload.outlineId,
+      { exceptionType: "", exceptionLabel: "" },
+    );
+    if (!result.ok) {
+      setError(result.error ?? es.errorGuardar);
       setSaving(false);
-    })();
-  }, [
-    canManage,
-    template,
-    programId,
-    saved,
-    loading,
-    initializedKey,
-    kind,
-    weekStart,
-    outline,
-    programException,
-  ]);
+      return;
+    }
+    setOutlineId(pendingOutlineId ?? outlineId);
+    setPendingOutlineId(null);
+    await refresh();
+    setSaving(false);
+  }
+
+  // Programas salvos antes de uma mudança no modelo (ex.: nova parte
+  // "president") ganham as partes novas via upsert não-destrutivo, preservando
+  // designações e exceção — mas só com confirmação explícita.
+  const templateKeys = useMemo(
+    () =>
+      template
+        .map((t) => t.key)
+        .sort()
+        .join("|"),
+    [template],
+  );
+  const savedKeys = useMemo(
+    () =>
+      (saved ?? [])
+        .map((s) => s.partKey)
+        .sort()
+        .join("|"),
+    [saved],
+  );
+  const modelSyncAvailable =
+    canManage &&
+    programId !== null &&
+    template.length > 0 &&
+    saved !== null &&
+    templateKeys !== savedKeys;
+
+  /** Sincroniza o programa com o modelo atual, sem perder designações. */
+  async function handleSyncModel() {
+    if (!canManage || !programId || template.length === 0 || saving) return;
+    setSaving(true);
+    setError(null);
+    const payload = buildTemplatePayload();
+    const result = await saveMeetingProgram(
+      kind,
+      weekStart,
+      payload.date,
+      payload.parts,
+      payload.outlineId,
+      {
+        exceptionType: programException.exceptionType as
+          | ""
+          | "no_meeting"
+          | "circuit_visit"
+          | "convention"
+          | "virtual_convention"
+          | "special",
+        exceptionLabel: programException.exceptionLabel,
+      },
+    );
+    if (!result.ok) {
+      setError(result.error ?? es.errorSincronizar);
+      setSaving(false);
+      return;
+    }
+    await refresh();
+    setSaving(false);
+  }
+
+  /** Trocar de reunião/semana com pendências pede confirmação (nada se perde em silêncio). */
+  function confirmNavigate(): boolean {
+    if (dirtyIds.size === 0 && pendingOutlineId === null) return true;
+    return window.confirm(es.descartarCambioSemana);
+  }
+
+  function handleKindChange(next: "midweek" | "weekend") {
+    if (next === kind || !confirmNavigate()) return;
+    setKind(next);
+  }
+
+  function handleWeekStep(delta: number) {
+    if (!confirmNavigate()) return;
+    setWeekOffset((offset) => offset + delta);
+  }
+
+  function handleGoToday() {
+    if (!confirmNavigate()) return;
+    setWeekOffset(0);
+  }
 
   const displayParts: DisplayPart[] = useMemo(() => {
     // Sobrepõe as alterações preparadas (staged) sobre o valor salvo.
@@ -498,6 +523,7 @@ export function MeetingProgramSection({
   }, [saved, template, pending]);
 
   const dirtyIds = useMemo(() => new Set(Object.keys(pending)), [pending]);
+  const dirtyCount = dirtyIds.size + (pendingOutlineId !== null ? 1 : 0);
 
   // Resumo legível do que vai salvar ("Oración → García"), sem jargão de ids.
   const dirtySummary = useMemo(() => {
@@ -508,9 +534,13 @@ export function MeetingProgramSection({
         change.personName || (change.songNumber ? `Canción ${change.songNumber}` : "") || "—";
       return `${part?.title ?? id} → ${name}`;
     });
+    if (pendingOutlineId !== null) {
+      const staged = outlines.find((o) => o.id === pendingOutlineId) ?? null;
+      items.unshift(`${es.esboco} → ${staged ? `${staged.number} — ${staged.theme}` : es.nenhum}`);
+    }
     if (items.length <= 2) return items.join(" · ");
     return `${items.slice(0, 2).join(" · ")} · +${items.length - 2} más`;
-  }, [pending, displayParts]);
+  }, [pending, pendingOutlineId, outlines, displayParts]);
 
   function handleStage(assignmentId: string, change: StagedChange) {
     setPending((previous) => ({
@@ -521,12 +551,29 @@ export function MeetingProgramSection({
 
   async function handleSaveAll() {
     const entries = Object.entries(pending);
+    const total = entries.length + (pendingOutlineId !== null ? 1 : 0);
     setSaving(true);
-    setSaveProgress({ done: 0, total: entries.length });
+    setSaveProgress({ done: 0, total });
     setJustSaved(false);
     setError(null);
     try {
       let done = 0;
+      // O esboço encenado salva junto (mesmo modelo mental das pessoas).
+      if (pendingOutlineId !== null) {
+        const staged = outlines.find((o) => o.id === pendingOutlineId) ?? null;
+        const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
+        if (!talk) throw new Error(es.errorGuardar);
+        const title = staged ? `${staged.theme} (${staged.number})` : "Discurso público";
+        const outlineResult = await updateMeetingAssignmentDetails({
+          assignmentId: talk.id,
+          title,
+        });
+        if (!outlineResult.ok) throw new Error(outlineResult.error ?? es.errorGuardar);
+        setOutlineId(pendingOutlineId);
+        setPendingOutlineId(null);
+        done += 1;
+        setSaveProgress({ done, total });
+      }
       for (const [assignmentId, change] of entries) {
         if (change.speakerName !== undefined) {
           const result = await updateMeetingAssignmentDetails({
@@ -578,22 +625,15 @@ export function MeetingProgramSection({
 
   function handleCancelAll() {
     setPending({});
+    setPendingOutlineId(null);
     setError(null);
   }
 
-  /** Troca do esboço do discurso público: atualiza o modelo e o título salvo. */
-  async function handleOutlineChange(id: string) {
-    setOutlineId(id);
-    const outline = outlines.find((o) => o.id === id) ?? null;
-    const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
-    if (!talk || !canManage) return;
-    const title = outline ? `${outline.theme} (${outline.number})` : "Discurso público";
-    const result = await updateMeetingAssignmentDetails({ assignmentId: talk.id, title });
-    if (!result.ok) {
-      setError(result.error ?? es.errorGuardar);
-      return;
-    }
-    await refresh();
+  /** Escolha do esboço encena como o resto: só persiste no Salvar. */
+  function handleOutlineSelect(id: string) {
+    if (!canManage || saving) return;
+    setError(null);
+    setPendingOutlineId(id === outlineId ? null : id);
   }
 
   async function refresh() {
@@ -631,45 +671,113 @@ export function MeetingProgramSection({
     return new Map(displayPartsWithSections.map((part) => [part.id, describePart(part)]));
   }, [displayPartsWithSections]);
 
+  /** "N/M asignadas": o que falta grita no header, não em 15 linhas iguais. */
+  const assignmentProgress = useMemo(() => {
+    // Só partes designáveis entram no progresso (mesma regra da
+    // interatividade, sem o bloqueio de `saving` para o número não piscar).
+    const countable = (part: DisplayPart): boolean =>
+      canManage &&
+      programId !== null &&
+      !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
+      !(kind === "midweek" && part.key === "opening-song");
+    let assigned = 0;
+    let total = 0;
+    for (const part of displayPartsWithSections) {
+      if (!countable(part)) continue;
+      total += 1;
+      const display = partDisplay.get(part.id);
+      if (display && (display.line1 !== "—" || display.line2 !== "")) assigned += 1;
+    }
+    return { assigned, total };
+  }, [displayPartsWithSections, partDisplay, canManage, programId, kind]);
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => setKind("midweek")}
-          className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "midweek" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
-        >
-          {es.entreSemana}
-        </button>
-        <button
-          type="button"
-          onClick={() => setKind("weekend")}
-          className={`h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${kind === "weekend" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
-        >
-          {es.finSemana}
-        </button>
-      </div>
+      <fieldset className="flex rounded-full bg-secondary p-1">
+        <legend className="sr-only">{es.tipoReunion}</legend>
+        {(
+          [
+            { value: "midweek", label: es.entreSemana },
+            { value: "weekend", label: es.finSemana },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={kind === option.value}
+            onClick={() => handleKindChange(option.value)}
+            className={`h-8 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+              kind === option.value
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </fieldset>
 
       {kind === "weekend" && canManage && (
-        <div className="flex flex-col gap-1">
-          <label className="flex items-center gap-2 rounded-xl border border-input bg-background p-2">
-            <span className="shrink-0 pl-1 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
+        <div className="flex flex-col gap-2 rounded-xl border border-input bg-background p-2">
+          <div className="flex items-center justify-between gap-2 pl-1">
+            <span className="shrink-0 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
               {es.esboco}
             </span>
-            <select
-              value={outlineId}
-              disabled={saving}
-              onChange={(event) => void handleOutlineChange(event.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring disabled:opacity-50"
-            >
-              <option value="">{es.nenhum}</option>
-              {outlines.map((outline) => (
-                <option key={outline.id} value={outline.id}>
-                  {outline.number} — {outline.theme}
-                </option>
-              ))}
-            </select>
-          </label>
+            <span className="min-w-0 flex-1 truncate text-right text-sm font-medium">
+              {outline ? `${outline.number} — ${outline.theme}` : es.nenhum}
+              {pendingOutlineId !== null && (
+                <span
+                  aria-hidden
+                  className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-warning"
+                >
+                  <span className="sr-only">{es.sinGuardar}</span>
+                </span>
+              )}
+            </span>
+          </div>
+          <input
+            value={outlineSearch}
+            onChange={(event) => setOutlineSearch(event.target.value)}
+            placeholder={es.buscarEsbozo}
+            aria-label={es.buscarEsbozo}
+            maxLength={60}
+            disabled={saving}
+            className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring disabled:opacity-50"
+          />
+          <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
+            <li>
+              <button
+                type="button"
+                aria-pressed={effectiveOutlineId === ""}
+                onClick={() => handleOutlineSelect("")}
+                disabled={saving}
+                className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
+                  effectiveOutlineId === "" ? "bg-accent/10 ring-1 ring-accent" : ""
+                }`}
+              >
+                {es.nenhum}
+              </button>
+            </li>
+            {filteredOutlines.slice(0, 20).map((option) => (
+              <li key={option.id}>
+                <button
+                  type="button"
+                  aria-pressed={effectiveOutlineId === option.id}
+                  onClick={() => handleOutlineSelect(option.id)}
+                  disabled={saving}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
+                    effectiveOutlineId === option.id ? "bg-accent/10 ring-1 ring-accent" : ""
+                  }`}
+                >
+                  <span className="w-12 shrink-0 font-semibold">{option.number}</span>
+                  <span className="min-w-0 flex-1 truncate">{option.theme}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {outlineSearch.trim() !== "" && filteredOutlines.length === 0 && (
+            <p className="px-1 text-xs text-muted-foreground">{es.ningunRegistro}</p>
+          )}
           {outlines.length === 0 && (
             <p className="px-1 text-xs text-muted-foreground">
               {es.importarBosquejosHint}{" "}
@@ -684,7 +792,7 @@ export function MeetingProgramSection({
       <div className="flex items-center gap-3">
         <button
           type="button"
-          onClick={() => setWeekOffset((o) => o - 1)}
+          onClick={() => handleWeekStep(-1)}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           aria-label={es.semanaAnterior}
         >
@@ -704,7 +812,7 @@ export function MeetingProgramSection({
         {weekOffset !== 0 && (
           <button
             type="button"
-            onClick={() => setWeekOffset(0)}
+            onClick={handleGoToday}
             className="h-11 shrink-0 rounded-full px-4 font-display text-sm font-medium uppercase tracking-wider text-accent transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           >
             {es.hoy}
@@ -712,7 +820,7 @@ export function MeetingProgramSection({
         )}
         <button
           type="button"
-          onClick={() => setWeekOffset((o) => o + 1)}
+          onClick={() => handleWeekStep(1)}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
           aria-label={es.semanaSiguiente}
         >
@@ -725,6 +833,16 @@ export function MeetingProgramSection({
           {error}
         </p>
       )}
+      {modelSyncAvailable && !loading && (
+        <div role="status" className="rounded-xl border border-warning/30 bg-warning-soft p-3">
+          <p className="text-sm text-warning">{es.modeloCambiado}</p>
+          <div className="mt-2">
+            <Button size="sm" disabled={saving} onClick={() => void handleSyncModel()}>
+              {saving ? es.guardando : es.sincronizar}
+            </Button>
+          </div>
+        </div>
+      )}
       {saving && !programId && (
         <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
       )}
@@ -732,11 +850,35 @@ export function MeetingProgramSection({
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{es.cargandoPrograma}</p>
+      ) : programId === null ? (
+        <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
+          <div className="flex flex-col gap-2 px-0 py-4">
+            <p className="text-sm font-medium text-session-fg">{es.programaNoEncontrado}</p>
+            {canManage && template.length > 0 && (
+              <div>
+                <Button disabled={saving} onClick={() => void handleCreateProgram()}>
+                  {saving ? es.guardandoPrograma : es.crearProgramaSemana}
+                </Button>
+              </div>
+            )}
+            {template.length === 0 && (
+              <>
+                <p className="text-sm text-session-mute">{es.importarGuiaHint}</p>
+                {canManage && <JwpubImportButton />}
+              </>
+            )}
+          </div>
+        </Card>
       ) : (
         <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
-          <p className="px-0 pb-2 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
-            {meetingDayName} | {meetingTitle}
-          </p>
+          <div className="flex items-baseline justify-between gap-2 px-0 pb-2">
+            <p className="font-display text-sm font-medium uppercase tracking-widest text-session-mute">
+              {meetingDayName} | {meetingTitle}
+            </p>
+            <p className="shrink-0 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
+              {assignmentProgress.assigned}/{assignmentProgress.total} {es.asignadas}
+            </p>
+          </div>
           <div className="flex flex-col divide-y divide-session-line">
             {displayPartsWithSections.map((part, index) => {
               const meta = sectionMetaOf(part.section);
@@ -789,7 +931,12 @@ export function MeetingProgramSection({
                     )}
                     {showNames && (
                       <span className="mt-0.5 block text-right">
-                        <span className="block truncate text-sm font-semibold text-session-fg">
+                        {/* Só a falta grita: vaga acionável em acento, designada em voz neutra. */}
+                        <span
+                          className={`block truncate text-sm font-semibold ${
+                            hasAssignee || !interactive ? "text-session-fg" : "text-accent"
+                          }`}
+                        >
                           {hasAssignee ? display.line1 : es.sinAsignar}
                         </span>
                         {display.line2 && (
@@ -852,19 +999,17 @@ export function MeetingProgramSection({
           {displayParts.length === 0 && (
             <div className="flex flex-col gap-2 px-0 py-4">
               <p className="text-sm font-medium text-session-fg">{es.programaNoEncontrado}</p>
-              <p className="text-sm text-session-mute">{es.importarGuiaHint}</p>
-              {canManage && <JwpubImportButton />}
             </div>
           )}
         </Card>
       )}
 
-      {canManage && dirtyIds.size > 0 && (
+      {canManage && dirtyCount > 0 && (
         <div className="fixed inset-x-0 bottom-[76px] z-30 mx-auto w-full max-w-md px-4 sm:max-w-xl">
           <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
             <p className="truncate text-sm">
               <span className="font-semibold">
-                {dirtyIds.size} {es.sinGuardar}:
+                {dirtyCount} {es.sinGuardar}:
               </span>{" "}
               <span className="text-muted-foreground">{dirtySummary}</span>
             </p>
@@ -875,7 +1020,7 @@ export function MeetingProgramSection({
             )}
             <div className="mt-2 flex gap-2">
               <Button disabled={saving} onClick={() => void handleSaveAll()} className="flex-1">
-                {saving ? es.guardando : `${es.guardarCambios} (${dirtyIds.size})`}
+                {saving ? es.guardando : `${es.guardarCambios} (${dirtyCount})`}
               </Button>
               <Button
                 variant="outline"
@@ -896,21 +1041,33 @@ export function MeetingProgramSection({
       )}
 
       {programId && (
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPdfOpen(true)}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-accent px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
-          >
-            {es.crearPdf}
-          </button>
-          <a
-            href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-            className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
-          >
-            {es.descargarICal}
-          </a>
-        </div>
+        <details className="group rounded-2xl border border-input bg-background">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-3 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+            <span className="font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              {es.exportar}
+            </span>
+            <FaChevronDown
+              aria-hidden
+              size={14}
+              className="shrink-0 text-muted-foreground motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:group-open:rotate-180"
+            />
+          </summary>
+          <div className="flex gap-2 px-3 pb-3">
+            <button
+              type="button"
+              onClick={() => setPdfOpen(true)}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            >
+              {es.crearPdf}
+            </button>
+            <a
+              href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
+              className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
+            >
+              {es.descargarICal}
+            </a>
+          </div>
+        </details>
       )}
       {pdfOpen && (
         <PdfExportModal
