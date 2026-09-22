@@ -18,6 +18,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "200MB",
     },
+    // Barris react-icons/* viram imports por ícone: menos JS por rota.
+    optimizePackageImports: ["react-icons"],
   },
 };
 

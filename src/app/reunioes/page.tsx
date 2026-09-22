@@ -8,15 +8,14 @@ import {
 } from "@/features/meeting-content/application/queries";
 import { listWatchtowerIssues } from "@/features/meeting-content/application/watchtower-queries";
 import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
-import { ContentSection } from "@/features/meeting-content/presentation/ContentSection";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
-import { OutsideSpeakersClient } from "@/features/meetings/presentation/OutsideSpeakers-client";
+import { ReunioesSecondaryTabs } from "@/features/meetings/presentation/ReunioesSecondaryTabs-client";
 import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
+import { CardSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
@@ -148,28 +147,18 @@ export default async function ReunioesPage({
         </Suspense>
       )}
 
-      {tab === "oradores" && (
-        <Suspense fallback={<CardSkeleton />}>
-          <OutsideSpeakersClient
-            initialSpeakers={speakers}
-            initialOutlines={outlines.map((o) => ({ number: o.number, theme: o.theme }))}
-            systemCongregation={meetingScheduleData.congregationName}
-            canManage={canManage}
-          />
-        </Suspense>
-      )}
-
-      {tab === "conteudo" && (
-        <Suspense fallback={<TableSkeleton rows={8} />}>
-          <ContentSection
-            initialSongs={songs}
-            initialOutlines={outlines}
-            initialIssues={issues}
-            initialWorkbooks={workbooks}
-            counts={counts}
-            canManage={canManage}
-          />
-        </Suspense>
+      {tab !== "reunioes" && (
+        <ReunioesSecondaryTabs
+          tab={tab}
+          songs={songs}
+          outlines={outlines}
+          issues={issues}
+          workbooks={workbooks}
+          counts={counts}
+          speakers={speakers}
+          systemCongregation={meetingScheduleData.congregationName}
+          canManage={canManage}
+        />
       )}
     </main>
   );

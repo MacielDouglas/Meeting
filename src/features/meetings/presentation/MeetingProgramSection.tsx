@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
 import {
@@ -13,7 +14,16 @@ import {
 import { GiSheep } from "react-icons/gi";
 import { IoDiamond } from "react-icons/io5";
 import { LuWheat } from "react-icons/lu";
-import { JwpubImportButton } from "@/features/meeting-content/presentation/JwpubImportButton-client";
+
+// Importação .jwpub (Atalaya/Guia) só no estado vazio: fora do bundle inicial.
+const JwpubImportButton = dynamic(
+  () =>
+    import("@/features/meeting-content/presentation/JwpubImportButton-client").then(
+      (module) => module.JwpubImportButton,
+    ),
+  { ssr: false },
+);
+
 import {
   saveMeetingProgram,
   updateMeetingAssignment,
@@ -791,8 +801,8 @@ export function MeetingProgramSection({
           </div>
         </Card>
       ) : (
-        <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
-          <div className="flex items-baseline justify-between gap-2 px-0 pb-2">
+        <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
+          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-session-line bg-session px-0 py-2">
             <p className="font-display text-sm font-medium uppercase tracking-widest text-session-mute">
               {meetingDayName} | {meetingTitle}
             </p>
