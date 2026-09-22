@@ -8,9 +8,6 @@ interface WeekViewProps {
 export function WeekView({ schedule }: WeekViewProps) {
   return (
     <section aria-label="Programa semanal" className="flex flex-col gap-3">
-      <p className="text-sm text-muted-foreground">
-        Semana: {schedule.weekStart} — {schedule.weekEnd}
-      </p>
       <MeetingCard meeting={schedule.midweek} title="Reunión entre semana" badge="Entre semana" />
       <MeetingCard
         meeting={schedule.weekend}

@@ -23,6 +23,7 @@ export interface MyWeekMeeting {
   title: string;
   date: string;
   time: string;
+  location: string;
   isNext: boolean;
   parts: MyWeekPart[];
   cleaning: MyWeekCleaning[];
@@ -41,6 +42,54 @@ export function formatShortDay(isoDate: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
   if (!match) return isoDate;
   return `${match[3]}/${match[2]}`;
+}
+
+const WEEKDAY_ES = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+] as const;
+
+/** "AAAA-MM-DD" -> dia da semana em espanhol ("jueves"); inválida volta intacta. */
+export function formatWeekday(isoDate: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
+  if (!match) return isoDate;
+  // Meio-dia local: evita deriva de fuso na virada do dia.
+  const dt = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12);
+  return WEEKDAY_ES[dt.getDay()] ?? isoDate;
+}
+
+/** Dias inteiros de hoje (ISO) até a data; passado vale 0. */
+export function daysUntil(isoDate: string, todayISO: string): number {
+  const toDays = (iso: string): number | null => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+    if (!match) return null;
+    return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])) / 86400000;
+  };
+  const target = toDays(isoDate);
+  const today = toDays(todayISO);
+  if (target == null || today == null) return 0;
+  return Math.max(0, Math.round(target - today));
+}
+
+/** Etiqueta completa de urgência: "Hoy" | "Mañana" | "En N días". */
+export function urgencyLabel(isoDate: string, todayISO: string): string {
+  const days = daysUntil(isoDate, todayISO);
+  if (days <= 0) return "Hoy";
+  if (days === 1) return "Mañana";
+  return `En ${days} días`;
+}
+
+/** Resumo da carga da pessoa: "Sin asignación" | "Limpieza" | "N partes" + "· limpieza". */
+export function assignmentSummary(partCount: number, cleaningCount: number): string {
+  if (partCount === 0 && cleaningCount === 0) return "Sin asignación";
+  if (partCount === 0) return "Limpieza";
+  const parts = partCount === 1 ? "1 parte" : `${partCount} partes`;
+  return cleaningCount > 0 ? `${parts} · limpieza` : parts;
 }
 
 /** Papel do segundo nome na linha de designação (leitor só nos estudos). */

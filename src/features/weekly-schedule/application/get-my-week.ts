@@ -66,8 +66,8 @@ interface ProgramAssignment {
 interface ScheduleLike {
   weekStart: string;
   weekEnd: string;
-  midweek: { date: string; time: string };
-  weekend: { date: string; time: string };
+  midweek: { date: string; time: string; location: string };
+  weekend: { date: string; time: string; location: string };
 }
 
 function orderMeetings(
@@ -83,12 +83,14 @@ function orderMeetings(
     title: string,
     date: string,
     time: string,
+    location: string,
     assignments: ProgramAssignment[] | null,
   ): MyWeekMeeting => ({
     kind,
     title,
     date,
     time,
+    location,
     isNext: kind === nextKind,
     parts: (assignments ?? [])
       .filter((a) => personId != null && (a.personId === personId || a.helperPersonId === personId))
@@ -110,6 +112,7 @@ function orderMeetings(
     "Reunión entre semana",
     schedule.midweek.date,
     schedule.midweek.time,
+    schedule.midweek.location,
     midweekAssignments,
   );
   const weekend = build(
@@ -117,6 +120,7 @@ function orderMeetings(
     "Reunión de fin de semana",
     schedule.weekend.date,
     schedule.weekend.time,
+    schedule.weekend.location,
     weekendAssignments,
   );
   return nextKind === "midweek" ? [midweek, weekend] : [weekend, midweek];

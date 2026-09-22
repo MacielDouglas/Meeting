@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  assignmentSummary,
+  daysUntil,
   displayPartTitle,
   formatShortDay,
+  formatWeekday,
   groupPartsBySection,
   helperRoleOf,
   type MyWeekPart,
+  urgencyLabel,
 } from "@/features/weekly-schedule/domain/my-week";
 
 function part(overrides: Partial<MyWeekPart> = {}): MyWeekPart {
@@ -41,6 +45,29 @@ describe("my-week", () => {
     );
     expect(displayPartTitle({ title: "Canción 12", songNumber: 12 })).toBe("Canción 12");
     expect(displayPartTitle({ title: "Haga revisitas", songNumber: null })).toBe("Haga revisitas");
+  });
+
+  it("nomeia o dia da semana em espanhol", () => {
+    expect(formatWeekday("2026-09-24")).toBe("jueves");
+    expect(formatWeekday("2026-09-27")).toBe("domingo");
+    expect(formatWeekday("invalida")).toBe("invalida");
+  });
+
+  it("calcula urgência em dias inteiros", () => {
+    expect(daysUntil("2026-09-24", "2026-09-24")).toBe(0);
+    expect(daysUntil("2026-09-20", "2026-09-24")).toBe(0);
+    expect(daysUntil("2026-09-27", "2026-09-24")).toBe(3);
+    expect(urgencyLabel("2026-09-24", "2026-09-24")).toBe("Hoy");
+    expect(urgencyLabel("2026-09-25", "2026-09-24")).toBe("Mañana");
+    expect(urgencyLabel("2026-09-27", "2026-09-24")).toBe("En 3 días");
+  });
+
+  it("resume a carga da pessoa em mensagem completa", () => {
+    expect(assignmentSummary(0, 0)).toBe("Sin asignación");
+    expect(assignmentSummary(1, 0)).toBe("1 parte");
+    expect(assignmentSummary(2, 0)).toBe("2 partes");
+    expect(assignmentSummary(2, 1)).toBe("2 partes · limpieza");
+    expect(assignmentSummary(0, 1)).toBe("Limpieza");
   });
 
   it("agrupa partes por seção em ordem de aparição", () => {

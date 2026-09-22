@@ -232,6 +232,7 @@ export const es = {
   confirmado: "Confirmado",
   archivado: "Archivado",
   verPrograma: "Ver programa",
+  verProgramaCompleto: "Ver programa completo",
   ningunTipoLimpieza: "Ningún tipo de limpieza activado. Actívalo en Configuración › Limpieza.",
   avisosSorteo: "Avisos del sorteo (revisa antes de confirmar)",
   // Conteúdo
