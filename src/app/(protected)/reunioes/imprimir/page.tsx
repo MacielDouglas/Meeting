@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getCurrentUser } from "@/features/auth/application/session";
 import {
   getMeetingProgram,
   type MeetingAssignmentItem,
@@ -39,9 +37,6 @@ interface ImprimirPageProps {
 }
 
 export default async function ImprimirPage({ searchParams }: ImprimirPageProps) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-
   const params = (await searchParams) ?? {};
   const kind = params.kind === "weekend" ? "weekend" : "midweek";
   const weekStart = isValidWeek(params.week) ? params.week : currentMonday();

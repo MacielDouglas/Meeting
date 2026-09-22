@@ -34,13 +34,12 @@ export default async function ReunioesPage({
   searchParams?: Promise<{ tab?: string; reuniao?: string }>;
 }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
 
   const params = (await searchParams) ?? {};
   if (params.tab === "designacoes") redirect("/designacoes");
   const tab: ReunioesTab =
     params.tab === "conteudo" || params.tab === "oradores" ? params.tab : "reunioes";
-  const canManage = user.role === "owner" || user.role === "admin";
+  const canManage = user?.role === "owner" || user?.role === "admin";
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
   const needsOutlines = needsMeetings || tab === "oradores";
   const [schedule, songs, outlines, counts, issues, workbooks, meetingScheduleData, speakers] =

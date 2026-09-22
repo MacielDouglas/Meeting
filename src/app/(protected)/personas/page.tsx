@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listPersons, listUsersWithRoles } from "@/features/people/application/queries";
@@ -33,11 +32,10 @@ async function UserListSection({
 
 export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
 
   const { tab } = await searchParams;
   const activeTab = tab === "usuarios" ? "usuarios" : "personas";
-  const canCreate = user.role === "owner" || user.role === "admin";
+  const canCreate = user?.role === "owner" || user?.role === "admin";
 
   return (
     <main className="flex flex-col gap-4">
@@ -66,7 +64,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
         {activeTab === "personas" ? (
           <PersonListSection canCreate={canCreate} />
         ) : (
-          <UserListSection currentUserId={user.id} isOwner={user.role === "owner"} />
+          <UserListSection currentUserId={user?.id ?? ""} isOwner={user?.role === "owner"} />
         )}
       </Suspense>
     </main>
