@@ -181,7 +181,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
 
       <div
         className={cn(
-          "mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5",
+          "mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
           isMatchDay ? "bg-accent text-accent-ink" : "bg-secondary",
         )}
       >

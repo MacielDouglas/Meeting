@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Suspense } from "react";
+import { type CSSProperties, Suspense } from "react";
 import { FaBookOpen, FaMeetup, FaUserGroup, FaWifi } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { ScheduleCacheWriter } from "@/features/offline/ScheduleCacheWriter";
@@ -27,10 +27,10 @@ const HIGHLIGHTS = [
 function PublicLanding() {
   return (
     <main className="mx-auto flex min-h-[85dvh] w-full max-w-md flex-col items-center justify-center gap-6 px-6 py-16 text-center">
-      <span className="grid h-24 w-24 place-items-center rounded-[28px] bg-accent text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)]">
+      <span className="grid h-24 w-24 place-items-center rounded-[28px] bg-accent text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards]">
         <FaMeetup aria-hidden size={56} />
       </span>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:80ms]">
         <h1 className="font-display text-6xl font-semibold uppercase leading-none tracking-wide">
           Meeting
         </h1>
@@ -38,22 +38,23 @@ function PublicLanding() {
           {es.appDescription}
         </p>
       </div>
-      <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+      <p className="max-w-sm text-sm leading-relaxed text-muted-foreground motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:140ms]">
         Qué parte, quién sirve y cuándo: el programa de la semana en segundos, en el teléfono,
         incluso sin conexión.
       </p>
       <ul className="flex w-full flex-col gap-2">
-        {HIGHLIGHTS.map((item) => (
+        {HIGHLIGHTS.map((item, index) => (
           <li
             key={item.label}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-card-foreground"
+            style={{ "--home-delay": `${200 + index * 60}ms` } as CSSProperties}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-card-foreground motion-safe:animate-[home-rise_.5s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:var(--home-delay)]"
           >
             <item.icon aria-hidden size={18} className="shrink-0 text-accent" />
             {item.label}
           </li>
         ))}
       </ul>
-      <GoogleLoginButton />
+      <GoogleLoginButton className="motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:380ms]" />
     </main>
   );
 }

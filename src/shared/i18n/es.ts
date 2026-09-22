@@ -11,6 +11,7 @@ export const es = {
   signInWithGoogle: "Iniciar sesión con Google",
   signInTitle: "Iniciar sesión",
   signOut: "Cerrar sesión",
+  errorLogin: "No se pudo iniciar sesión con Google. Revisa tu conexión e inténtalo de nuevo.",
   signInDescription: "Usa tu cuenta de Google para ver el programa.",
   backToHome: "Volver al inicio",
   offlineMessage: "Sin conexión. Mostrando la última información guardada.",

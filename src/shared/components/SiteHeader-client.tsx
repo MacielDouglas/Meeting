@@ -146,6 +146,9 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
       <div className="ml-auto flex items-center gap-2">
         <button
           type="button"
+          // Tema é valor client-only (classe do <html> via theme-init.js):
+          // o server sempre chuta "light"; o client assume sem remendar.
+          suppressHydrationWarning
           aria-label={theme === "dark" ? es.switchToLight : es.switchToDark}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="grid h-11 w-11 place-items-center rounded-full border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"

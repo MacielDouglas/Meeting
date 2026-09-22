@@ -32,33 +32,45 @@ function GoogleMark({ className }: { className?: string }) {
 /** Ilha client mínima: botão de login social (Google) da landing pública. */
 export function GoogleLoginButton({ className }: { className?: string }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSignIn() {
     if (isLoading) return;
     setIsLoading(true);
+    setError(null);
     try {
-      await authClient.signIn.social({ provider: "google", callbackURL: "/" });
-    } finally {
+      // Sucesso = redirect ao Google: mantém o loading até sair da página.
+      const result = await authClient.signIn.social({ provider: "google", callbackURL: "/" });
+      if (result?.error) {
+        setError(es.errorLogin);
+        setIsLoading(false);
+      }
+    } catch {
+      setError(es.errorLogin);
       setIsLoading(false);
     }
   }
 
   return (
-    <button
-      type="button"
-      disabled={isLoading}
-      onClick={() => void handleSignIn()}
-      className={cn(
-        "flex h-14 w-full items-center justify-center gap-3 rounded-full bg-accent px-6 font-display text-lg font-semibold uppercase tracking-wider text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] disabled:opacity-70",
-        className,
+    <div className={cn("flex w-full flex-col gap-2", className)}>
+      <button
+        type="button"
+        disabled={isLoading}
+        onClick={() => void handleSignIn()}
+        className="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-accent px-6 font-display text-lg font-semibold uppercase tracking-wider text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] disabled:opacity-70"
+      >
+        {isLoading ? (
+          <FaMeetup aria-hidden size={22} className="animate-pulse" />
+        ) : (
+          <GoogleMark className="h-6 w-6 shrink-0 rounded-full bg-white p-0.5" />
+        )}
+        {isLoading ? "Cargando…" : es.signInWithGoogle}
+      </button>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
       )}
-    >
-      {isLoading ? (
-        <FaMeetup aria-hidden size={22} className="animate-pulse" />
-      ) : (
-        <GoogleMark className="h-6 w-6 shrink-0 rounded-full bg-white p-0.5" />
-      )}
-      {isLoading ? "Cargando…" : es.signInWithGoogle}
-    </button>
+    </div>
   );
 }
