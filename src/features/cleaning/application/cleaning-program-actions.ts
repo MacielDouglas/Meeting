@@ -274,7 +274,7 @@ export async function createCleaningProgram(
     return { ok: false, error: "Não foi possível salvar o programa. Tente novamente." };
   }
 
-  revalidatePath("/reunioes");
+  revalidatePath("/designacoes");
   return {
     ok: true,
     programId,
@@ -356,7 +356,7 @@ export async function updateCleaningAssignment(
     return { ok: false, error: "Não foi possível atualizar. Tente novamente." };
   }
 
-  revalidatePath("/reunioes");
+  revalidatePath("/designacoes");
   return { ok: true };
 }
 
@@ -389,7 +389,7 @@ export async function deleteCleaningDay(programId: string, date: string): Promis
     return { ok: false, error: "Não foi possível excluir o dia. Tente novamente." };
   }
 
-  revalidatePath("/reunioes");
+  revalidatePath("/designacoes");
   return { ok: true };
 }
 
@@ -402,7 +402,7 @@ export async function deleteCleaningProgram(programId: string): Promise<UpdateRe
   await db.delete(cleaningAssignments).where(eq(cleaningAssignments.programId, programId));
   await db.delete(cleaningPrograms).where(eq(cleaningPrograms.id, programId));
 
-  revalidatePath("/reunioes");
+  revalidatePath("/designacoes");
   return { ok: true };
 }
 
@@ -420,6 +420,6 @@ export async function updateProgramStatus(
     .set({ status, updatedAt: new Date() })
     .where(eq(cleaningPrograms.id, programId));
 
-  revalidatePath("/reunioes");
+  revalidatePath("/designacoes");
   return { ok: true };
 }

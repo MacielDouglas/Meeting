@@ -1,8 +1,6 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
-import { listCleaningConfig } from "@/features/cleaning/application/queries";
-import { CleaningDesignationSection } from "@/features/cleaning/presentation/CleaningDesignationSection";
 import {
   getContentCounts,
   listOutlines,
@@ -14,24 +12,19 @@ import { ContentSection } from "@/features/meeting-content/presentation/ContentS
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
 import { OutsideSpeakersClient } from "@/features/meetings/presentation/OutsideSpeakers-client";
-import {
-  getMeetingSchedule,
-  listScheduleExceptions,
-  listSpecialEvents,
-} from "@/features/settings/application/queries";
+import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { CalendarSkeleton, CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
+import { CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
 
-type ReunioesTab = "reunioes" | "designacoes" | "conteudo" | "oradores";
+type ReunioesTab = "reunioes" | "conteudo" | "oradores";
 
 const TABS: { value: ReunioesTab; label: string }[] = [
   { value: "reunioes", label: es.tabReuniones },
-  { value: "designacoes", label: es.tabDesignaciones },
   { value: "conteudo", label: es.tabContenido },
   { value: "oradores", label: es.tabOradores },
 ];
@@ -45,55 +38,40 @@ export default async function ReunioesPage({
   if (!user) redirect("/sign-in");
 
   const params = (await searchParams) ?? {};
+  if (params.tab === "designacoes") redirect("/designacoes");
   const tab: ReunioesTab =
-    params.tab === "designacoes" || params.tab === "conteudo" || params.tab === "oradores"
-      ? params.tab
-      : "reunioes";
+    params.tab === "conteudo" || params.tab === "oradores" ? params.tab : "reunioes";
   const canManage = user.role === "owner" || user.role === "admin";
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
   const needsOutlines = needsMeetings || tab === "oradores";
-  const [
-    schedule,
-    songs,
-    outlines,
-    counts,
-    issues,
-    workbooks,
-    cleaningConfig,
-    specialEventsList,
-    exceptionsList,
-    meetingScheduleData,
-    speakers,
-  ] = await Promise.all([
-    getWeeklySchedule(),
-    needsMeetings ? listSongs() : Promise.resolve([]),
-    needsOutlines ? listOutlines() : Promise.resolve([]),
-    tab === "conteudo"
-      ? getContentCounts()
-      : Promise.resolve({
-          songsEs: 0,
-          songsPt: 0,
-          songsEn: 0,
-          outlinesEs: 0,
-          outlinesPt: 0,
-          outlinesEn: 0,
-        }),
-    needsMeetings ? listWatchtowerIssues() : Promise.resolve([]),
-    needsMeetings ? listWorkbookIssues() : Promise.resolve([]),
-    tab === "designacoes" ? listCleaningConfig() : Promise.resolve([]),
-    tab === "designacoes" ? listSpecialEvents() : Promise.resolve([]),
-    tab === "designacoes" ? listScheduleExceptions() : Promise.resolve([]),
-    needsMeetings || tab === "designacoes" || tab === "oradores"
-      ? getMeetingSchedule()
-      : Promise.resolve({
-          congregationName: "",
-          midweekDay: 2 as const,
-          midweekTime: "19:30",
-          weekendDay: 0 as const,
-          weekendTime: "10:00",
-        }),
-    tab === "oradores" ? listOutsideSpeakers() : Promise.resolve([]),
-  ]);
+  const [schedule, songs, outlines, counts, issues, workbooks, meetingScheduleData, speakers] =
+    await Promise.all([
+      getWeeklySchedule(),
+      needsMeetings ? listSongs() : Promise.resolve([]),
+      needsOutlines ? listOutlines() : Promise.resolve([]),
+      tab === "conteudo"
+        ? getContentCounts()
+        : Promise.resolve({
+            songsEs: 0,
+            songsPt: 0,
+            songsEn: 0,
+            outlinesEs: 0,
+            outlinesPt: 0,
+            outlinesEn: 0,
+          }),
+      needsMeetings ? listWatchtowerIssues() : Promise.resolve([]),
+      needsMeetings ? listWorkbookIssues() : Promise.resolve([]),
+      needsMeetings || tab === "oradores"
+        ? getMeetingSchedule()
+        : Promise.resolve({
+            congregationName: "",
+            midweekDay: 2 as const,
+            midweekTime: "19:30",
+            weekendDay: 0 as const,
+            weekendTime: "10:00",
+          }),
+      tab === "oradores" ? listOutsideSpeakers() : Promise.resolve([]),
+    ]);
 
   return (
     <main className="flex flex-col gap-4 pb-28">
@@ -161,17 +139,6 @@ export default async function ReunioesPage({
             initialWeekStart={schedule.weekStart}
             initialKind={selectInitialKind(todayLocalISO(), schedule.midweek.date)}
             congregationName={meetingScheduleData.congregationName}
-          />
-        </Suspense>
-      )}
-
-      {tab === "designacoes" && (
-        <Suspense fallback={<CalendarSkeleton />}>
-          <CleaningDesignationSection
-            cleaningConfig={cleaningConfig}
-            specialEvents={specialEventsList}
-            scheduleExceptions={exceptionsList}
-            meetingSchedule={meetingScheduleData}
           />
         </Suspense>
       )}

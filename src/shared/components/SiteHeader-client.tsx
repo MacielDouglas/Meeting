@@ -7,6 +7,7 @@ import { FaMeetup } from "react-icons/fa";
 import {
   FaBars,
   FaBookOpen,
+  FaBroom,
   FaGear,
   FaHouse,
   FaMoon,
@@ -67,9 +68,15 @@ export function SiteHeader({ showSettings, isAuthed }: SiteHeaderProps) {
     { href: "/", label: es.home, icon: FaHouse, match: (path: string) => path === "/" },
     {
       href: "/reunioes",
-      label: "Reuniões",
+      label: es.tabReuniones,
       icon: FaBookOpen,
       match: (path: string) => path.startsWith("/reunioes"),
+    },
+    {
+      href: "/designacoes",
+      label: es.tabDesignaciones,
+      icon: FaBroom,
+      match: (path: string) => path.startsWith("/designacoes"),
     },
     {
       href: "/personas",
