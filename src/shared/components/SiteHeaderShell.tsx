@@ -6,10 +6,11 @@ import { SiteHeader } from "@/shared/components/SiteHeader-client";
 /** Shell server: busca sessão + congregação e entrega só primitivos à ilha client. */
 async function SiteHeaderData() {
   const [user, schedule] = await Promise.all([getCurrentUser(), getMeetingSchedule()]);
+  if (!user) return null;
   return (
     <SiteHeader
       showSettings={user?.role === "owner"}
-      isAuthed={user != null}
+      isAuthed
       congregationName={schedule.congregationName}
     />
   );

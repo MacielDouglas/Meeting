@@ -10,6 +10,7 @@ export const es = {
   noAssignments: "Aún no hay designaciones para esta reunión.",
   signInWithGoogle: "Iniciar sesión con Google",
   signInTitle: "Iniciar sesión",
+  signOut: "Cerrar sesión",
   signInDescription: "Usa tu cuenta de Google para ver el programa.",
   backToHome: "Volver al inicio",
   offlineMessage: "Sin conexión. Mostrando la última información guardada.",

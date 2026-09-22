@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaMeetup } from "react-icons/fa";
 import {
@@ -11,11 +11,13 @@ import {
   FaGear,
   FaHouse,
   FaMoon,
+  FaRightFromBracket,
   FaRightToBracket,
   FaSun,
   FaUserGroup,
   FaXmark,
 } from "react-icons/fa6";
+import { authClient } from "@/features/auth/presentation/auth-client";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -43,8 +45,23 @@ interface SiteHeaderProps {
  */
 export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [theme, setTheme] = useState<Theme>(initialTheme);
+
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    setMenuOpen(false);
+    try {
+      await authClient.signOut();
+    } finally {
+      setSigningOut(false);
+      router.push("/");
+      router.refresh();
+    }
+  }
 
   useEffect(() => {
     const root = document.documentElement;
@@ -174,6 +191,19 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
                 </li>
               );
             })}
+            {isAuthed && (
+              <li>
+                <button
+                  type="button"
+                  disabled={signingOut}
+                  onClick={() => void handleSignOut()}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-display text-base font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+                >
+                  <FaRightFromBracket aria-hidden size={18} />
+                  {es.signOut}
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
       )}

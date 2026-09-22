@@ -5,6 +5,7 @@ import { BottomNav } from "@/shared/components/BottomNav";
 /** Shell server: busca role e entrega só `showSettings` (boolean) à ilha client. */
 async function BottomNavData() {
   const user = await getCurrentUser();
+  if (!user) return null;
   return <BottomNav showSettings={user?.role === "owner"} />;
 }
 
