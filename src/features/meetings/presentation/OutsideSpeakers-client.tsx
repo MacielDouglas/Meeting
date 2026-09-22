@@ -199,7 +199,8 @@ export function OutsideSpeakersClient({
               <input
                 value={form.name}
                 onChange={(e) => setForm((previous) => ({ ...previous, name: e.target.value }))}
-                placeholder={es.nombreOrador}
+                placeholder={es.nombreOradorLabel}
+                aria-label={es.nombreOradorLabel}
                 maxLength={160}
                 className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
               />
@@ -209,7 +210,8 @@ export function OutsideSpeakersClient({
                   onChange={(e) =>
                     setForm((previous) => ({ ...previous, congregation: e.target.value }))
                   }
-                  placeholder={es.congregacion}
+                  placeholder={es.congregacionLabel}
+                  aria-label={es.congregacionLabel}
                   maxLength={160}
                   list="speaker-congregations"
                   className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
@@ -223,6 +225,7 @@ export function OutsideSpeakersClient({
                   value={form.phone}
                   onChange={(e) => setForm((previous) => ({ ...previous, phone: e.target.value }))}
                   placeholder={es.telefonoOpcional}
+                  aria-label={es.telefonoLabel}
                   maxLength={40}
                   className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
                 />
@@ -249,7 +252,7 @@ export function OutsideSpeakersClient({
       )}
 
       {speakersQuery.isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{es.cargandoOradores}</p>
       ) : (
         <div className="flex flex-col gap-4">
           {groups.map((group) => (
@@ -283,9 +286,10 @@ export function OutsideSpeakersClient({
                           <button
                             type="button"
                             onClick={() => startEdit(speaker)}
+                            aria-label={`${es.editarLabel} a ${speaker.name}`}
                             className="rounded-lg px-2 py-1 font-display text-xs font-medium uppercase tracking-wider text-accent"
                           >
-                            Editar
+                            {es.editarLabel}
                           </button>
                           <button
                             type="button"
@@ -304,7 +308,10 @@ export function OutsideSpeakersClient({
             </section>
           ))}
           {speakers.length === 0 && (
-            <p className="text-sm text-muted-foreground">{es.ningunOrador}</p>
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium">{es.ningunOrador}</p>
+              {canManage && <p className="text-sm text-muted-foreground">{es.anadePrimerOrador}</p>}
+            </div>
           )}
         </div>
       )}

@@ -24,15 +24,16 @@ import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { CalendarSkeleton, CardSkeleton, TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
+import { es } from "@/shared/i18n/es";
 import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
 
 type ReunioesTab = "reunioes" | "designacoes" | "conteudo" | "oradores";
 
 const TABS: { value: ReunioesTab; label: string }[] = [
-  { value: "reunioes", label: "Reuniões" },
-  { value: "designacoes", label: "Designações" },
-  { value: "conteudo", label: "Conteúdo" },
-  { value: "oradores", label: "Oradores" },
+  { value: "reunioes", label: es.tabReuniones },
+  { value: "designacoes", label: es.tabDesignaciones },
+  { value: "conteudo", label: es.tabContenido },
+  { value: "oradores", label: es.tabOradores },
 ];
 
 export default async function ReunioesPage({
@@ -97,7 +98,7 @@ export default async function ReunioesPage({
   return (
     <main className="flex flex-col gap-4 pb-28">
       <PageHeader
-        title="Reuniões"
+        title={es.tabReuniones}
         meta={`${formatDateBR(schedule.weekStart)} — ${formatDateBR(schedule.weekEnd)}`}
       />
 
@@ -113,7 +114,7 @@ export default async function ReunioesPage({
         <TabNav
           param="tab"
           defaultValue="reunioes"
-          ariaLabel="Seções de reuniões"
+          ariaLabel={es.seccionesReuniones}
           items={TABS.map((item) => ({
             value: item.value,
             label: item.label,

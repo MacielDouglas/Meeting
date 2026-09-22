@@ -385,6 +385,7 @@ export function MeetingAssignModal({
                     onChange={(e) => setSongNumber(e.target.value)}
                     inputMode="numeric"
                     placeholder={es.numCancion}
+                    aria-label={es.numCancion}
                     className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring"
                   />
                   <button
@@ -506,6 +507,7 @@ export function MeetingAssignModal({
                   value={titularSearchInput}
                   onChange={(e) => setTitularSearchInput(e.target.value)}
                   placeholder={`Buscar ${labels.main.toLowerCase()}…`}
+                  aria-label={`Buscar ${labels.main.toLowerCase()}`}
                   maxLength={60}
                   className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
                 />
@@ -526,7 +528,7 @@ export function MeetingAssignModal({
                   </button>
                 </div>
                 {titularQuery.isPending ? (
-                  <p className="text-sm text-muted-foreground">Cargando…</p>
+                  <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
                 ) : titularQuery.isError ? (
                   <p role="alert" className="text-sm text-danger">
                     {es.errorCargarPersonas}
@@ -599,11 +601,12 @@ export function MeetingAssignModal({
                   value={helperSearchInput}
                   onChange={(e) => setHelperSearchInput(e.target.value)}
                   placeholder={`Buscar ${labels.helper.toLowerCase()}…`}
+                  aria-label={`Buscar ${labels.helper.toLowerCase()}`}
                   maxLength={60}
                   className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
                 />
                 {helperQuery.isPending ? (
-                  <p className="text-sm text-muted-foreground">Cargando…</p>
+                  <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
                 ) : helperQuery.isError ? (
                   <p role="alert" className="text-sm text-danger">
                     {es.errorCargarPersonas}
@@ -668,7 +671,7 @@ export function MeetingAssignModal({
                   {es.volver}
                 </button>
               )}
-              <AlertDialogCancel className="mt-0 flex-1">Cancelar</AlertDialogCancel>
+              <AlertDialogCancel className="mt-0 flex-1">{es.cancel}</AlertDialogCancel>
               <button
                 type="button"
                 disabled={!staged}

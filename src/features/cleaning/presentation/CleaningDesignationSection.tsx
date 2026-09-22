@@ -18,6 +18,7 @@ import type {
 import type { MeetingSchedule } from "@/features/settings/domain/settings";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 import { MonthlyCalendar } from "./MonthlyCalendar";
 import { ProgramDetail } from "./ProgramDetail";
 
@@ -29,9 +30,9 @@ interface CleaningDesignationSectionProps {
 }
 
 const CLEANING_TYPE_LABELS: Record<string, string> = {
-  per_meeting: "Limpeza a cada reunião",
-  weekly: "Limpeza Semanal",
-  general: "Limpeza Geral",
+  per_meeting: "Limpieza en cada reunión",
+  weekly: "Limpieza semanal",
+  general: "Limpieza general",
 };
 
 function toISODateInput(d: Date): string {
@@ -205,9 +206,7 @@ export function CleaningDesignationSection({
 
   function handleDateClick(date: string) {
     if (programDates.has(date)) {
-      setErrorMsg(
-        `Já foi criada tabela para aquela semana (${date}). Edite a tabela existente em vez de criar outra.`,
-      );
+      setErrorMsg(`${date}: ${es.tablaDuplicada}`);
       return;
     }
     setErrorMsg(null);
@@ -246,18 +245,18 @@ export function CleaningDesignationSection({
     let dates: string[];
     if (selectedType === "per_meeting") {
       if (!rangeStart || !rangeEnd) {
-        setErrorMsg("Informe as datas inicial e final.");
+        setErrorMsg(es.informaFechas);
         setCreating(false);
         return;
       }
       if (rangeStart > rangeEnd) {
-        setErrorMsg("A data inicial deve ser anterior à data final.");
+        setErrorMsg(es.fechaInicioAnterior);
         setCreating(false);
         return;
       }
       dates = rangeMeetingDays.map((d) => d.date);
       if (dates.length === 0) {
-        setErrorMsg("Nenhum dia de reunião encontrado no período selecionado.");
+        setErrorMsg(es.ningunDiaReunion);
         setCreating(false);
         return;
       }
@@ -266,23 +265,21 @@ export function CleaningDesignationSection({
         const conflict = rangeOverlapPrograms[0];
         setErrorMsg(
           conflict
-            ? `Já foi criada tabela para aquela semana (${conflict.startDate} — ${conflict.endDate}). Edite a tabela existente em vez de criar outra.`
-            : `Já foi criada tabela para ${overlap.length} dia(s) do período escolhido. Ajuste o período ou edite a tabela existente.`,
+            ? `${conflict.startDate} — ${conflict.endDate}: ${es.tablaDuplicada}`
+            : `${es.tablaDuplicada}`,
         );
         setCreating(false);
         return;
       }
     } else {
       if (selectedDates.size === 0) {
-        setErrorMsg("Selecione ao menos um dia no calendário.");
+        setErrorMsg(es.seleccionaDia);
         setCreating(false);
         return;
       }
       const overlap = [...selectedDates].filter((d) => programDates.has(d));
       if (overlap.length > 0) {
-        setErrorMsg(
-          `Já foi criada tabela para aquela semana (${overlap.sort()[0]}). Edite a tabela existente em vez de criar outra.`,
-        );
+        setErrorMsg(`${overlap.sort()[0]}: ${es.tablaDuplicada}`);
         setCreating(false);
         return;
       }
@@ -292,12 +289,14 @@ export function CleaningDesignationSection({
     const result = await createCleaningProgram(selectedType, dates);
 
     if (result.ok) {
-      setStatusMsg(`Programa criado com ${result.assignmentCount ?? 0} designações.`);
+      setStatusMsg(
+        `${es.programaLimpiezaCreado} (${result.assignmentCount ?? 0} ${es.designacionesLabel}).`,
+      );
       setResultMessages(result.messages ?? []);
       setSelectedDates(new Set());
       await loadPrograms();
     } else {
-      setErrorMsg(result.error ?? "Erro ao criar programa.");
+      setErrorMsg(result.error ?? es.errorGuardar);
     }
     setCreating(false);
   }
@@ -337,9 +336,7 @@ export function CleaningDesignationSection({
 
       {enabledTypes.length === 0 && (
         <Card className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">
-            Nenhum tipo de limpeza ativado. Ative na aba Configurações &gt; Limpeza.
-          </p>
+          <p className="text-sm text-muted-foreground">{es.ningunTipoLimpieza}</p>
         </Card>
       )}
 
@@ -347,10 +344,10 @@ export function CleaningDesignationSection({
         <>
           {selectedType === "per_meeting" && (
             <Card className="flex flex-col gap-3 p-4">
-              <p className="text-sm font-medium">Período da limpeza</p>
+              <p className="text-sm font-medium">{es.periodoLimpieza}</p>
               <div className="flex gap-3">
                 <label className="flex flex-1 flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">Data inicial</span>
+                  <span className="text-xs text-muted-foreground">{es.fechaInicio}</span>
                   <input
                     type="date"
                     value={rangeStart}
@@ -359,7 +356,7 @@ export function CleaningDesignationSection({
                   />
                 </label>
                 <label className="flex flex-1 flex-col gap-1">
-                  <span className="text-xs text-muted-foreground">Data final</span>
+                  <span className="text-xs text-muted-foreground">{es.fechaFinal}</span>
                   <input
                     type="date"
                     value={rangeEnd}
@@ -370,7 +367,7 @@ export function CleaningDesignationSection({
               </div>
               {rangeStart && rangeEnd && rangeStart <= rangeEnd && (
                 <p className="text-xs text-muted-foreground">
-                  {rangeMeetingDays.length} dia(s) de reunião no período
+                  {rangeMeetingDays.length} {es.diasReunionEnPeriodo}
                 </p>
               )}
               {rangeOverlapDates.length > 0 && (
@@ -378,11 +375,9 @@ export function CleaningDesignationSection({
                   role="alert"
                   className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
                 >
-                  Já foi criada tabela para aquela semana
                   {rangeOverlapPrograms[0]
-                    ? ` (${rangeOverlapPrograms[0].startDate} — ${rangeOverlapPrograms[0].endDate})`
-                    : ""}
-                  . Edite a tabela existente em vez de criar outra.
+                    ? `${rangeOverlapPrograms[0].startDate} — ${rangeOverlapPrograms[0].endDate}: ${es.tablaDuplicada}`
+                    : es.tablaDuplicada}
                 </div>
               )}
             </Card>
@@ -402,15 +397,16 @@ export function CleaningDesignationSection({
           )}
 
           {selectedType !== "per_meeting" && selectedCount > 0 && (
-            <p className="text-sm text-muted-foreground">{selectedCount} dia(s) selecionado(s)</p>
+            <p className="text-sm text-muted-foreground">
+              {selectedCount} {es.diasSeleccionados}
+            </p>
           )}
           {selectedType !== "per_meeting" && duplicateSelectedDates.length > 0 && (
             <div
               role="alert"
               className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
             >
-              Já foi criada tabela para aquela semana ({duplicateSelectedDates.sort()[0]}). Edite a
-              tabela existente em vez de criar outra.
+              {duplicateSelectedDates.sort()[0]}: {es.tablaDuplicada}
             </div>
           )}
 
@@ -422,9 +418,7 @@ export function CleaningDesignationSection({
           {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
           {resultMessages.length > 0 && (
             <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
-              <p className="mb-1 text-xs font-semibold text-warning">
-                Avisos do sorteio (revise antes de confirmar)
-              </p>
+              <p className="mb-1 text-xs font-semibold text-warning">{es.avisosSorteo}</p>
               {resultMessages.map((msg) => (
                 <p key={`${msg.date}-${msg.message}`} className="text-xs text-warning">
                   {msg.date}: {msg.message}
@@ -442,7 +436,7 @@ export function CleaningDesignationSection({
             }
             onClick={() => void handleCreate()}
           >
-            {creating ? "Criando..." : "Criar Programa de Limpeza"}
+            {creating ? es.creandoPrograma : es.crearProgramaLimpieza}
           </Button>
         </>
       )}
@@ -450,7 +444,7 @@ export function CleaningDesignationSection({
       {viewingProgram && (
         <div className="flex flex-col gap-3">
           <Button variant="outline" onClick={() => setViewingProgram(null)}>
-            ← Voltar ao calendário
+            ← {es.volverCalendario}
           </Button>
           <ProgramDetail
             program={viewingProgram.program}
@@ -482,7 +476,7 @@ export function CleaningDesignationSection({
 
       {!viewingProgram && programs.length > 0 && (
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-semibold">Programas existentes</p>
+          <p className="text-sm font-semibold">{es.programasExistentes}</p>
           {programs.map((program) => (
             <Card key={program.id} className="flex items-center justify-between gap-2 p-3">
               <div>
@@ -490,7 +484,7 @@ export function CleaningDesignationSection({
                   {program.startDate} — {program.endDate}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {program.assignmentCount} designações ·{" "}
+                  {program.assignmentCount} {es.designacionesLabel} ·{" "}
                   <span
                     className={
                       program.status === "confirmed"
@@ -501,15 +495,15 @@ export function CleaningDesignationSection({
                     }
                   >
                     {program.status === "draft"
-                      ? "Rascunho"
+                      ? es.borrador
                       : program.status === "confirmed"
-                        ? "Confirmado"
-                        : "Arquivado"}
+                        ? es.confirmado
+                        : es.archivado}
                   </span>
                 </p>
               </div>
               <Button size="sm" variant="outline" onClick={() => void handleViewProgram(program)}>
-                Ver
+                {es.verPrograma}
               </Button>
             </Card>
           ))}

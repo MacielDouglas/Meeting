@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { es } from "@/shared/i18n/es";
 import { PersonSelectModal } from "./PersonSelectModal";
 
 interface ProgramDetailProps {
@@ -76,7 +77,7 @@ export function ProgramDetail({
       if (!grouped.has(dateStr)) {
         const dayOfWeek = current.getUTCDay();
         if (dayOfWeek === 2 || dayOfWeek === 0) {
-          messages.push({ date: dateStr, message: "Sem limpeza programada" });
+          messages.push({ date: dateStr, message: "Sin limpieza programada" });
         }
       }
       current.setUTCDate(current.getUTCDate() + 1);
@@ -105,7 +106,7 @@ export function ProgramDetail({
     if (result.ok) {
       onRefresh();
     } else {
-      setDayError(result.error ?? "Não foi possível excluir o dia.");
+      setDayError(result.error ?? "No se pudo eliminar el día. Inténtalo de nuevo.");
     }
     setDeletingDay(null);
   }
@@ -135,7 +136,7 @@ export function ProgramDetail({
             {program.startDate} — {program.endDate}
           </p>
           <p className="text-xs text-muted-foreground">
-            {assignments.length} designações ·{" "}
+            {assignments.length} {es.designacionesLabel} ·{" "}
             <span
               className={
                 program.status === "confirmed"
@@ -146,10 +147,10 @@ export function ProgramDetail({
               }
             >
               {program.status === "draft"
-                ? "Rascunho"
+                ? es.borrador
                 : program.status === "confirmed"
-                  ? "Confirmado"
-                  : "Arquivado"}
+                  ? es.confirmado
+                  : es.archivado}
             </span>
           </p>
         </div>
@@ -160,6 +161,7 @@ export function ProgramDetail({
               variant="outline"
               onClick={() => void handleStatusChange("confirmed")}
               title="Confirmar programa"
+              aria-label="Confirmar programa"
             >
               <FaCheck size={12} />
             </Button>
@@ -169,7 +171,8 @@ export function ProgramDetail({
               size="sm"
               variant="outline"
               onClick={() => void handleStatusChange("archived")}
-              title="Arquivar programa"
+              title="Archivar programa"
+              aria-label="Archivar programa"
             >
               <FaArchive size={12} />
             </Button>
@@ -178,7 +181,8 @@ export function ProgramDetail({
               size="sm"
               variant="outline"
               onClick={() => void handleStatusChange("confirmed")}
-              title="Reabrir programa arquivado"
+              title="Reabrir programa archivado"
+              aria-label="Reabrir programa archivado"
             >
               <FaCheck size={12} />
             </Button>
@@ -188,7 +192,8 @@ export function ProgramDetail({
             variant="outline"
             className="text-danger"
             onClick={() => setConfirmDelete(true)}
-            title="Excluir programa"
+            title="Eliminar programa"
+            aria-label="Eliminar programa"
           >
             <FaTrash size={12} />
           </Button>
@@ -212,9 +217,9 @@ export function ProgramDetail({
                   disabled={deletingDay === date}
                   onClick={() => void handleDeleteDay(date)}
                   className="text-xs text-danger hover:underline disabled:opacity-50"
-                  title={`Excluir dia ${date}`}
+                  title={`Eliminar el día ${date}`}
                 >
-                  {deletingDay === date ? "Excluindo…" : "Excluir dia"}
+                  {deletingDay === date ? "Eliminando…" : "Eliminar día"}
                 </button>
               )}
             </div>
@@ -232,10 +237,10 @@ export function ProgramDetail({
                     </span>
                     <span className="flex-1 truncate">
                       {assignment.personName || (
-                        <em className="text-muted-foreground">Sem designação</em>
+                        <em className="text-muted-foreground">Sin designación</em>
                       )}
                       {assignment.isFamily && (
-                        <span className="ml-1 text-xs text-warning">(família)</span>
+                        <span className="ml-1 text-xs text-warning">(familia)</span>
                       )}
                     </span>
                     {canEdit && (
@@ -243,7 +248,8 @@ export function ProgramDetail({
                         type="button"
                         onClick={() => setEditingAssignment(assignment)}
                         className="shrink-0 text-muted-foreground hover:text-foreground"
-                        title="Alterar pessoa"
+                        title="Cambiar persona"
+                        aria-label={`Cambiar persona en ${assignment.sectorName}`}
                       >
                         <FaPen size={12} />
                       </button>
@@ -258,7 +264,7 @@ export function ProgramDetail({
 
       {messages.length > 0 && (
         <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
-          <p className="mb-1 text-xs font-semibold text-warning">Observações</p>
+          <p className="mb-1 text-xs font-semibold text-warning">Observaciones</p>
           {messages.map((msg) => (
             <p key={msg.date} className="text-xs text-warning">
               {msg.date}: {msg.message}
@@ -292,20 +298,20 @@ export function ProgramDetail({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir programa</AlertDialogTitle>
+              <AlertDialogTitle>Eliminar programa</AlertDialogTitle>
               <AlertDialogDescription>
-                Deseja excluir este programa e todas as {assignments.length} designações? Esta ação
-                não pode ser desfeita.
+                ¿Eliminar este programa y las {assignments.length} {es.designacionesLabel}? Esta
+                acción no se puede deshacer.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel disabled={deleting}>{es.cancel}</AlertDialogCancel>
               <Button
                 className="bg-danger text-danger-ink"
                 disabled={deleting}
                 onClick={() => void handleDelete()}
               >
-                {deleting ? "Excluindo..." : "Excluir"}
+                {deleting ? "Eliminando…" : es.eliminar}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

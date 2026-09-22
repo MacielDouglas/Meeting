@@ -24,11 +24,12 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 
 const SECTION_LABELS: Record<string, string> = {
-  "TREASURES FROM GODS WORD": "Tesouros da Palavra de Deus",
-  "APPLY YOURSELF TO THE FIELD MINISTRY": "Ministério de Campo",
-  "LIVING AS CHRISTIANS": "Vida Cristã",
+  "TREASURES FROM GODS WORD": "Tesoros de la Palabra de Dios",
+  "APPLY YOURSELF TO THE FIELD MINISTRY": "Ministerio del Campo",
+  "LIVING AS CHRISTIANS": "Vida Cristiana",
 };
 
 function SongText({ text, theme }: { text: string | undefined; theme: string | null }) {
@@ -115,10 +116,10 @@ export function WorkbookImportModal({
         content,
       });
       if (result.ok) {
-        onSaved(`Edição ${inspected.symbol} salva com ${weeks.length} semanas.`);
+        onSaved(`Edición ${inspected.symbol} guardada con ${weeks.length} semanas.`);
         onClose();
       } else {
-        setSaveError(result.error ?? "Falha ao salvar.");
+        setSaveError(result.error ?? es.errorGuardar);
       }
     } finally {
       setSaving(false);
@@ -141,8 +142,8 @@ export function WorkbookImportModal({
         </AlertDialogHeader>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
-            Este conteúdo ({inspected.symbol}, {weeks.length} semanas) já existe no banco de dados.
-            Deseja substituir?
+            Este contenido ({inspected.symbol}, {weeks.length} semanas) {es.yaExisteSubstituir}.{" "}
+            {es.deseaSubstituir}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -162,9 +163,9 @@ export function WorkbookImportModal({
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <AlertDialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : inspected.hadExisting ? "Substituir" : "Salvar"}
+            {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
           </Button>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -184,17 +185,17 @@ function WeekDetailModal({ week, onClose }: { week: WorkbookContentWeek; onClose
         <AlertDialogHeader>
           <AlertDialogTitle>{week.week}</AlertDialogTitle>
           <AlertDialogDescription>
-            {meeting.BibleReading ?? "Sem leitura semanal"}
+            {meeting.BibleReading ?? "Sin lectura semanal"}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex flex-col gap-3">
           <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
-            <p className="text-xs font-medium text-muted-foreground">Cânticos</p>
+            <p className="text-xs font-medium text-muted-foreground">{es.canticos}</p>
             <p>
               Inicial: <SongText text={meeting.song?.[0]?.openingSong} theme={null} />
             </p>
             <p>
-              Meio: <SongText text={meeting.song?.[0]?.middleSong} theme={null} />
+              Intermedia: <SongText text={meeting.song?.[0]?.middleSong} theme={null} />
             </p>
             <p>
               Final: <SongText text={meeting.song?.[0]?.closingSong} theme={null} />
@@ -202,20 +203,20 @@ function WeekDetailModal({ week, onClose }: { week: WorkbookContentWeek; onClose
           </div>
           {meeting.openingComments && (
             <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
-              <p className="text-xs font-medium text-muted-foreground">Abertura</p>
+              <p className="text-xs font-medium text-muted-foreground">Palabras de introducción</p>
               <p>{meeting.openingComments}</p>
             </div>
           )}
           <MeetingSections meeting={meeting} />
           {meeting.concludingComments && (
             <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
-              <p className="text-xs font-medium text-muted-foreground">Conclusão</p>
+              <p className="text-xs font-medium text-muted-foreground">Palabras de conclusión</p>
               <p>{meeting.concludingComments}</p>
             </div>
           )}
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Fechar</AlertDialogCancel>
+          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -239,7 +240,9 @@ export function WorkbookSection({
     <div className="flex flex-col gap-3">
       {initial.length === 0 && (
         <Card className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">Nenhuma edição importada.</p>
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay ediciones importadas. Usa “Importar .jwpub” para añadir la Guía.
+          </p>
         </Card>
       )}
       {initial.map((issue) => (
@@ -253,7 +256,7 @@ export function WorkbookSection({
               <button
                 type="button"
                 onClick={() => setDeleteTarget(issue)}
-                aria-label={`Apagar edição ${issue.symbol}`}
+                aria-label={`${es.eliminar} la edición ${issue.symbol}`}
                 className="rounded-lg p-2 text-danger"
               >
                 <FaTrashAlt aria-hidden size={18} />
@@ -293,10 +296,12 @@ export function WorkbookSection({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Apagar edição</AlertDialogTitle>
+              <AlertDialogTitle>
+                {es.eliminar} la edición {deleteTarget.symbol}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Deseja apagar {deleteTarget.symbol} ({deleteTarget.name})? As semanas e partes serão
-                apagadas junto. Esta ação não pode ser desfeita.
+                ¿Eliminar {deleteTarget.symbol} ({deleteTarget.name})? Las semanas y las partes se
+                eliminarán también. Esta acción no se puede deshacer.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col sm:flex-row">
@@ -308,9 +313,9 @@ export function WorkbookSection({
                   );
                 }}
               >
-                Confirmar
+                {es.confirmarExclusion}
               </Button>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

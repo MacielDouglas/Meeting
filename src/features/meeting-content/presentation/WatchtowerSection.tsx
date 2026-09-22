@@ -24,6 +24,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 
 function SongLine({
   label,
@@ -40,7 +41,7 @@ function SongLine({
   return (
     <p className="text-xs text-muted-foreground">
       {label}: {number}
-      {theme ? <> — {theme}</> : <> (tema não importado — importe o sjj em {language})</>}
+      {theme ? <> — {theme}</> : <> (tema no importado — importa el cancionero en {language})</>}
     </p>
   );
 }
@@ -69,10 +70,10 @@ export function WatchtowerImportModal({
         articles: inspected.articles,
       });
       if (result.ok) {
-        onSaved(`Edição ${inspected.symbol} salva com ${result.total} artigos.`);
+        onSaved(`Edición ${inspected.symbol} guardada con ${result.total} artículos.`);
         onClose();
       } else {
-        setSaveError(result.error ?? "Falha ao salvar.");
+        setSaveError(result.error ?? es.errorGuardar);
       }
     } finally {
       setSaving(false);
@@ -92,13 +93,13 @@ export function WatchtowerImportModal({
             {inspected.symbol} · {inspected.name}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {inspected.articles?.length ?? 0} artigos de estudo
+            {inspected.articles?.length ?? 0} artículos de estudio
           </AlertDialogDescription>
         </AlertDialogHeader>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
-            Este conteúdo ({inspected.symbol}, {inspected.articles?.length ?? 0} artigos) já existe
-            no banco de dados. Deseja substituir?
+            Este contenido ({inspected.symbol}, {inspected.articles?.length ?? 0} artículos){" "}
+            {es.yaExisteSubstituir}. {es.deseaSubstituir}
           </p>
         ) : (
           <ul className="flex flex-col gap-2">
@@ -107,7 +108,7 @@ export function WatchtowerImportModal({
                 <p className="text-xs font-medium text-muted-foreground">{article.weekLabel}</p>
                 <p className="font-semibold">{article.title}</p>
                 <p className="text-xs text-muted-foreground">
-                  Cânticos: {article.openingSong ?? "—"} → {article.closingSong ?? "—"}
+                  Cánticos: {article.openingSong ?? "—"} → {article.closingSong ?? "—"}
                 </p>
               </li>
             ))}
@@ -116,9 +117,9 @@ export function WatchtowerImportModal({
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <AlertDialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : inspected.hadExisting ? "Substituir" : "Salvar"}
+            {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
           </Button>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -142,7 +143,9 @@ export function WatchtowerSection({
     <div className="flex flex-col gap-3">
       {initial.length === 0 && (
         <Card className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">Nenhuma edição importada.</p>
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay ediciones importadas. Usa “Importar .jwpub” para añadir la Atalaya.
+          </p>
         </Card>
       )}
       {initial.map((issue) => (
@@ -156,7 +159,7 @@ export function WatchtowerSection({
               <button
                 type="button"
                 onClick={() => setDeleteTarget(issue)}
-                aria-label={`Apagar edição ${issue.symbol}`}
+                aria-label={`${es.eliminar} la edición ${issue.symbol}`}
                 className="rounded-lg p-2 text-danger"
               >
                 <FaTrashAlt aria-hidden size={18} />
@@ -175,13 +178,13 @@ export function WatchtowerSection({
                   <p className="text-sm font-semibold">{article.title}</p>
                   <div className="mt-1">
                     <SongLine
-                      label="Cântico inicial"
+                      label="Cántico inicial"
                       number={article.openingSong}
                       theme={article.openingSongTheme}
                       language={issue.language.toUpperCase()}
                     />
                     <SongLine
-                      label="Cântico final"
+                      label="Cántico final"
                       number={article.closingSong}
                       theme={article.closingSongTheme}
                       language={issue.language.toUpperCase()}
@@ -215,10 +218,12 @@ export function WatchtowerSection({
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Apagar edição</AlertDialogTitle>
+              <AlertDialogTitle>
+                {es.eliminar} la edición {deleteTarget.symbol}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                Deseja apagar {deleteTarget.symbol} ({deleteTarget.name})? Os artigos serão apagados
-                junto. Esta ação não pode ser desfeita.
+                ¿Eliminar {deleteTarget.symbol} ({deleteTarget.name})? Los artículos se eliminarán
+                también. Esta acción no se puede deshacer.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex-col sm:flex-row">
@@ -230,9 +235,9 @@ export function WatchtowerSection({
                   );
                 }}
               >
-                Confirmar
+                {es.confirmarExclusion}
               </Button>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -282,7 +287,7 @@ function ArticleModal({
       if (result.ok) {
         setEditing(false);
       } else {
-        setFormError(result.error ?? "Falha ao salvar.");
+        setFormError(result.error ?? es.errorGuardar);
       }
     } finally {
       setSaving(false);
@@ -310,7 +315,7 @@ function ArticleModal({
           <form onSubmit={(event) => void handleSave(event)} className="flex flex-col gap-2">
             {formError && <p className="text-sm text-danger">{formError}</p>}
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">Semana</span>
+              <span className="text-muted-foreground">{es.weekLabel}</span>
               <input
                 value={weekLabel}
                 onChange={(event) => setWeekLabel(event.target.value)}
@@ -320,7 +325,7 @@ function ArticleModal({
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">Título</span>
+              <span className="text-muted-foreground">{es.eventTitle}</span>
               <input
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
@@ -331,7 +336,7 @@ function ArticleModal({
             </label>
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-muted-foreground">Cântico inicial</span>
+                <span className="text-muted-foreground">Cántico inicial</span>
                 <input
                   type="number"
                   min={1}
@@ -342,7 +347,7 @@ function ArticleModal({
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-muted-foreground">Cântico final</span>
+                <span className="text-muted-foreground">Cántico final</span>
                 <input
                   type="number"
                   min={1}
@@ -355,27 +360,27 @@ function ArticleModal({
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button type="submit" size="sm" disabled={saving}>
-                {saving ? "Salvando…" : "Salvar"}
+                {saving ? es.guardando : es.save}
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={() => setEditing(false)}>
-                Cancelar
+                {es.cancel}
               </Button>
             </div>
           </form>
         ) : confirmingDelete ? (
           <p className="text-sm">
-            Deletar o estudo “{article.title}”? Esta ação não pode ser desfeita.
+            ¿Eliminar el estudio “{article.title}”? Esta acción no se puede deshacer.
           </p>
         ) : (
           <div className="flex flex-col gap-1">
             <SongLine
-              label="Cântico inicial"
+              label="Cántico inicial"
               number={article.openingSong}
               theme={article.openingSongTheme}
               language={issue.language.toUpperCase()}
             />
             <SongLine
-              label="Cântico final"
+              label="Cántico final"
               number={article.closingSong}
               theme={article.closingSongTheme}
               language={issue.language.toUpperCase()}
@@ -386,13 +391,13 @@ function ArticleModal({
           {canManage && !editing && !confirmingDelete && (
             <>
               <Button variant="outline" onClick={() => setEditing(true)}>
-                Editar
+                {es.editarLabel}
               </Button>
               <Button
                 className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
               >
-                Deletar
+                {es.eliminar}
               </Button>
             </>
           )}
@@ -401,15 +406,15 @@ function ArticleModal({
               className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
-              Confirmar exclusão
+              {es.confirmarExclusion}
             </Button>
           )}
           {confirmingDelete ? (
             <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
-              Voltar
+              {es.volver}
             </Button>
           ) : (
-            !editing && <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            !editing && <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
           )}
         </AlertDialogFooter>
       </AlertDialogContent>

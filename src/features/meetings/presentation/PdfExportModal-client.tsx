@@ -287,7 +287,7 @@ export function PdfExportModal({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel className="mt-0 flex-1">Cancelar</AlertDialogCancel>
+          <AlertDialogCancel className="mt-0 flex-1">{es.cancel}</AlertDialogCancel>
           <Button
             disabled={!rangeStart || generating}
             onClick={() => void handleGenerate()}

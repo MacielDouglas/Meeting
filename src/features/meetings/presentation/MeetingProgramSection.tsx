@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { IconType } from "react-icons";
 import { FaBookOpen, FaChevronLeft, FaChevronRight, FaClock, FaMicrophone } from "react-icons/fa";
@@ -650,24 +651,34 @@ export function MeetingProgramSection({
       </div>
 
       {kind === "weekend" && canManage && (
-        <label className="flex items-center gap-2 rounded-xl border border-input bg-background p-2">
-          <span className="shrink-0 pl-1 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
-            {es.esboco}
-          </span>
-          <select
-            value={outlineId}
-            disabled={saving}
-            onChange={(event) => void handleOutlineChange(event.target.value)}
-            className="h-11 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring disabled:opacity-50"
-          >
-            <option value="">{es.nenhum}</option>
-            {outlines.map((outline) => (
-              <option key={outline.id} value={outline.id}>
-                {outline.number} — {outline.theme}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-col gap-1">
+          <label className="flex items-center gap-2 rounded-xl border border-input bg-background p-2">
+            <span className="shrink-0 pl-1 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
+              {es.esboco}
+            </span>
+            <select
+              value={outlineId}
+              disabled={saving}
+              onChange={(event) => void handleOutlineChange(event.target.value)}
+              className="h-11 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring disabled:opacity-50"
+            >
+              <option value="">{es.nenhum}</option>
+              {outlines.map((outline) => (
+                <option key={outline.id} value={outline.id}>
+                  {outline.number} — {outline.theme}
+                </option>
+              ))}
+            </select>
+          </label>
+          {outlines.length === 0 && (
+            <p className="px-1 text-xs text-muted-foreground">
+              {es.importarBosquejosHint}{" "}
+              <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
+                {es.verContenido}
+              </Link>
+            </p>
+          )}
+        </div>
       )}
 
       <div className="flex items-center gap-3">
@@ -675,7 +686,7 @@ export function MeetingProgramSection({
           type="button"
           onClick={() => setWeekOffset((o) => o - 1)}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
-          aria-label="Semana anterior"
+          aria-label={es.semanaAnterior}
         >
           <FaChevronLeft size={16} />
         </button>
@@ -703,7 +714,7 @@ export function MeetingProgramSection({
           type="button"
           onClick={() => setWeekOffset((o) => o + 1)}
           className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
-          aria-label="Próxima semana"
+          aria-label={es.semanaSiguiente}
         >
           <FaChevronRight size={16} />
         </button>
@@ -720,7 +731,7 @@ export function MeetingProgramSection({
       {!canManage && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Cargando el programa…</p>
+        <p className="text-sm text-muted-foreground">{es.cargandoPrograma}</p>
       ) : (
         <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
           <p className="px-0 pb-2 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
@@ -821,7 +832,7 @@ export function MeetingProgramSection({
                     <button
                       type="button"
                       onClick={() => setEditing(part)}
-                      aria-label={`Asignar ${display.title}`}
+                      aria-label={`${es.asignar} ${display.title}`}
                       className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover active:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
                     >
                       {rowContent}
@@ -840,7 +851,8 @@ export function MeetingProgramSection({
           </div>
           {displayParts.length === 0 && (
             <div className="flex flex-col gap-2 px-0 py-4">
-              <p className="text-sm text-session-mute">{es.programaNoEncontrado}</p>
+              <p className="text-sm font-medium text-session-fg">{es.programaNoEncontrado}</p>
+              <p className="text-sm text-session-mute">{es.importarGuiaHint}</p>
               {canManage && <JwpubImportButton />}
             </div>
           )}

@@ -38,11 +38,12 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 
 const LANGUAGES: { value: ContentLanguage; label: string }[] = [
-  { value: "es", label: "Español (_S)" },
-  { value: "pt", label: "Português (_T)" },
-  { value: "en", label: "English (_E)" },
+  { value: "es", label: "Español" },
+  { value: "pt", label: "Português" },
+  { value: "en", label: "English" },
 ];
 
 function LanguageBadge({ language }: { language: ContentLanguage }) {
@@ -55,13 +56,13 @@ function LanguageBadge({ language }: { language: ContentLanguage }) {
 }
 
 function kindLabel(kind: "songs" | "outlines"): string {
-  return kind === "songs" ? "Cânticos" : "Esboços de discursos";
+  return kind === "songs" ? es.canticos : es.bosquejosDiscursos;
 }
 
 function languageLabel(language: ContentLanguage): string {
-  if (language === "es") return "Espanhol";
-  if (language === "pt") return "Português";
-  return "Inglês";
+  if (language === "es") return "Español";
+  if (language === "pt") return "Portugués";
+  return "Inglés";
 }
 
 type SmartInspected = Extract<AnyInspectResult, { ok: true }>;
@@ -110,11 +111,11 @@ function ImportModal({
       });
       if (result.ok) {
         onSaved(
-          `Salvo: ${result.total} itens (${kindLabel(inspected.kind)} · ${languageLabel(inspected.language)}). Novos: ${result.inserted}, atualizados: ${result.updated}.`,
+          `Guardado: ${result.total} elementos (${kindLabel(inspected.kind)} · ${languageLabel(inspected.language)}). Nuevos: ${result.inserted}, actualizados: ${result.updated}.`,
         );
         onClose();
       } else {
-        setSaveError(result.error ?? "Falha ao salvar.");
+        setSaveError(result.error ?? es.errorGuardar);
       }
     } finally {
       setSaving(false);
@@ -134,14 +135,12 @@ function ImportModal({
         </h2>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
-            Este conteúdo ({kindLabel(inspected.kind).toLowerCase()}, {items.length} itens,{" "}
-            {languageLabel(inspected.language).toLowerCase()}) já existe no banco de dados (
-            {inspected.existingCount} registros). Deseja substituir?
+            Este contenido ({kindLabel(inspected.kind).toLowerCase()}, {items.length} elementos,{" "}
+            {languageLabel(inspected.language).toLowerCase()}) {es.yaExisteSubstituir} (
+            {inspected.existingCount} registros). {es.deseaSubstituir}
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
-            Revise o conteúdo e edite antes de salvar, se precisar.
-          </p>
+          <p className="text-sm text-muted-foreground">{es.revisarContenido}</p>
         )}
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
         <ul className="flex flex-1 flex-col gap-1 overflow-y-auto">
@@ -157,7 +156,7 @@ function ImportModal({
                 required
                 value={item.number}
                 onChange={(event) => updateItem(item.key, "number", event.target.value)}
-                aria-label={`Número do cântico ${item.number}`}
+                aria-label={`${es.numeroLabel} ${item.number}`}
                 className="h-8 w-16 shrink-0 rounded bg-background px-2 text-sm outline-none"
               />
               <input
@@ -165,13 +164,13 @@ function ImportModal({
                 onChange={(event) => updateItem(item.key, "theme", event.target.value)}
                 required
                 maxLength={200}
-                aria-label={`Tema do item ${item.number}`}
+                aria-label={`${es.temaLabel} del elemento ${item.number}`}
                 className="h-8 min-w-0 flex-1 rounded bg-background px-2 text-sm outline-none"
               />
               <button
                 type="button"
                 onClick={() => removeItem(item.key)}
-                aria-label={`Remover item ${item.number}`}
+                aria-label={`${es.eliminar} el elemento ${item.number}`}
                 className="shrink-0 text-xs font-medium text-danger"
               >
                 X
@@ -181,10 +180,10 @@ function ImportModal({
         </ul>
         <div className="flex gap-2">
           <Button disabled={saving || items.length === 0} onClick={() => void handleSave()}>
-            {saving ? "Salvando…" : inspected.hadExisting ? "Substituir" : "Salvar"}
+            {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
+            {es.cancel}
           </Button>
         </div>
       </div>
@@ -228,10 +227,10 @@ function SmartImportCard({
 
   return (
     <Card className="flex flex-col gap-3">
-      <CardTitle>Conteúdo das reuniões</CardTitle>
+      <CardTitle>{es.contenidoReuniones}</CardTitle>
       <p className="text-sm text-muted-foreground">
-        Envie qualquer arquivo .jwpub do seu aparelho: cânticos, esboços ou Sentinela. O app
-        identifica o tipo e abre a revisão na aba correta.
+        Sube cualquier archivo .jwpub de tu dispositivo: cánticos, bosquejos o Atalaya. La app
+        identifica el tipo y abre la revisión en la pestaña correcta.
       </p>
       {error && <p className="text-sm text-danger">{error}</p>}
       {status && <p className="text-sm text-success">{status}</p>}
@@ -245,7 +244,7 @@ function SmartImportCard({
       />
       <div>
         <Button disabled={reading} onClick={() => fileRef.current?.click()}>
-          {reading ? "Lendo arquivo…" : "Importar .jwpub"}
+          {reading ? es.leyendoArchivo : es.importarJwpub}
         </Button>
       </div>
     </Card>
@@ -292,7 +291,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
       setTheme("");
       setShowForm(false);
     } else {
-      setFormError(result.error ?? "Falha ao salvar.");
+      setFormError(result.error ?? es.errorGuardar);
     }
   }
 
@@ -306,7 +305,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
     if (result.ok) setEditingId(null);
   }
 
-  const title = kind === "songs" ? "Cânticos" : "Esboços de discursos públicos";
+  const title = kind === "songs" ? es.canticos : es.bosquejosDiscursos;
   const selected = items.find((item) => item.id === selectedId) ?? null;
 
   return (
@@ -320,16 +319,17 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por número ou tema…"
+          placeholder={es.buscarNumeroTema}
+          aria-label={es.buscarNumeroTema}
           className="h-10 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none"
         />
         <select
           value={language}
           onChange={(event) => setLanguage(event.target.value as ContentLanguage | "all")}
           className="h-10 rounded-lg bg-secondary px-2 text-sm outline-none"
-          aria-label="Filtrar por idioma"
+          aria-label={es.filtrarPorIdioma}
         >
-          <option value="all">Todos</option>
+          <option value="all">{es.todosIdiomas}</option>
           {LANGUAGES.map((option) => (
             <option key={option.value} value={option.value}>
               {option.value.toUpperCase()}
@@ -356,7 +356,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
           </li>
         ))}
         {filtered.length === 0 && (
-          <li className="text-sm text-muted-foreground">Nenhum registro encontrado.</li>
+          <li className="text-sm text-muted-foreground">{es.ningunRegistro}</li>
         )}
       </ul>
       {selected && (
@@ -390,7 +390,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
             {formError && <p className="text-sm text-danger">{formError}</p>}
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-muted-foreground">Número</span>
+                <span className="text-muted-foreground">{es.numeroLabel}</span>
                 <input
                   type="number"
                   min={1}
@@ -402,7 +402,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
-                <span className="text-muted-foreground">Idioma</span>
+                <span className="text-muted-foreground">{es.idiomaLabel}</span>
                 <select
                   value={formLanguage}
                   onChange={(event) => setFormLanguage(event.target.value as ContentLanguage)}
@@ -417,7 +417,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
               </label>
             </div>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">Tema</span>
+              <span className="text-muted-foreground">{es.temaLabel}</span>
               <input
                 value={theme}
                 onChange={(event) => setTheme(event.target.value)}
@@ -427,27 +427,31 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
               />
             </label>
             <div className="flex gap-2">
-              <Button type="submit">Adicionar</Button>
+              <Button type="submit">Añadir</Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                Cancelar
+                {es.cancel}
               </Button>
             </div>
           </form>
         ) : (
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setShowForm(true)}>
-              + Adicionar manual
+              + {es.anadirManual}
             </Button>
             {language !== "all" && (
               <Button
                 variant="outline"
                 onClick={() => {
-                  if (window.confirm(`Apagar todos (${title} · ${language.toUpperCase()})?`)) {
+                  if (
+                    window.confirm(
+                      `¿Borrar todos los elementos (${title} · ${language.toUpperCase()})? Esta acción no se puede deshacer.`,
+                    )
+                  ) {
                     void deleteAllByLanguage({ kind, language });
                   }
                 }}
               >
-                Apagar todos ({language.toUpperCase()})
+                {es.apagarTodos} ({language.toUpperCase()})
               </Button>
             )}
           </div>
@@ -478,7 +482,7 @@ function EntryModal({
   onClose: () => void;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const singular = kind === "songs" ? "Cântico" : "Esboço";
+  const singular = kind === "songs" ? es.canticoSingular : es.bosquejoSingular;
 
   async function handleDelete() {
     const result = await deleteItem({ kind, id: item.id });
@@ -498,15 +502,15 @@ function EntryModal({
             {singular} {item.number}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {item.language === "es" ? "Espanhol" : item.language === "pt" ? "Português" : "Inglês"}
+            {item.language === "es" ? "Español" : item.language === "pt" ? "Portugués" : "Inglés"}
           </AlertDialogDescription>
         </AlertDialogHeader>
         {editing ? (
           <EditRow item={item} onCancel={onCancelEdit} onSave={onSaveEdit} />
         ) : confirmingDelete ? (
           <p className="text-sm">
-            Apagar {singular.toLowerCase()} {item.number} (“{item.theme}”)? Esta ação não pode ser
-            desfeita.
+            ¿Eliminar {singular.toLowerCase()} {item.number} (“{item.theme}”)? Esta acción no se
+            puede deshacer.
           </p>
         ) : (
           <p className="text-base">{item.theme}</p>
@@ -515,12 +519,12 @@ function EntryModal({
           {canManage && !editing && !confirmingDelete && (
             <>
               <Button variant="outline" onClick={onStartEdit}>
-                Editar
+                {es.editarLabel}
               </Button>
               <Button
                 className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
-                aria-label={`Apagar ${singular.toLowerCase()} ${item.number}`}
+                aria-label={`${es.eliminar} ${singular.toLowerCase()} ${item.number}`}
               >
                 <FaTrashAlt aria-hidden size={16} />
               </Button>
@@ -531,15 +535,15 @@ function EntryModal({
               className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
-              Confirmar exclusão
+              {es.confirmarExclusion}
             </Button>
           )}
           {confirmingDelete ? (
             <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
-              Voltar
+              {es.volver}
             </Button>
           ) : (
-            !editing && <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            !editing && <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
           )}
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -568,7 +572,7 @@ function EditRow({
     >
       <div className="flex flex-col gap-2">
         <label className="flex w-1/4 flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Número</span>
+          <span className="text-muted-foreground">{es.numeroLabel}</span>
           <input
             type="number"
             min={1}
@@ -580,7 +584,7 @@ function EditRow({
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Tema</span>
+          <span className="text-muted-foreground">{es.temaLabel}</span>
           <input
             value={theme}
             onChange={(event) => setTheme(event.target.value)}
@@ -592,10 +596,10 @@ function EditRow({
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="submit" size="sm">
-          Salvar
+          {es.save}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={onCancel}>
-          Cancelar
+          {es.cancel}
         </Button>
       </div>
     </form>
@@ -605,10 +609,10 @@ function EditRow({
 type ContentSubTab = "sentinela" | "apostila" | "esbocos" | "canticos";
 
 const SUBTABS: { value: ContentSubTab; label: string }[] = [
-  { value: "sentinela", label: "Sentinela" },
-  { value: "apostila", label: "Apostila" },
-  { value: "esbocos", label: "Esboços" },
-  { value: "canticos", label: "Cânticos" },
+  { value: "sentinela", label: "Atalaya" },
+  { value: "apostila", label: "Guía" },
+  { value: "esbocos", label: "Bosquejos" },
+  { value: "canticos", label: "Cánticos" },
 ];
 
 export function ContentSection({
@@ -683,13 +687,11 @@ export function ContentSection({
       {subTab === "canticos" && (
         <>
           <Card className="flex flex-col gap-1">
-            <CardTitle>Conteúdo salvo</CardTitle>
+            <CardTitle>{es.contenidoGuardado}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Cânticos — ES: {counts.songsEs} · PT: {counts.songsPt} · EN: {counts.songsEn}
+              {es.canticos} — ES: {counts.songsEs} · PT: {counts.songsPt} · EN: {counts.songsEn}
             </p>
-            {!canManage && (
-              <p className="text-sm text-muted-foreground">Você tem acesso de visualização.</p>
-            )}
+            {!canManage && <p className="text-sm text-muted-foreground">{es.accesoSoloVista}</p>}
           </Card>
           <EntryList kind="songs" items={initialSongs} canManage={canManage} />
         </>
@@ -698,13 +700,12 @@ export function ContentSection({
       {subTab === "esbocos" && (
         <>
           <Card className="flex flex-col gap-1">
-            <CardTitle>Conteúdo salvo</CardTitle>
+            <CardTitle>{es.contenidoGuardado}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Esboços — ES: {counts.outlinesEs} · PT: {counts.outlinesPt} · EN: {counts.outlinesEn}
+              {es.bosquejosDiscursos} — ES: {counts.outlinesEs} · PT: {counts.outlinesPt} · EN:{" "}
+              {counts.outlinesEn}
             </p>
-            {!canManage && (
-              <p className="text-sm text-muted-foreground">Você tem acesso de visualização.</p>
-            )}
+            {!canManage && <p className="text-sm text-muted-foreground">{es.accesoSoloVista}</p>}
           </Card>
           <EntryList kind="outlines" items={initialOutlines} canManage={canManage} />
         </>
