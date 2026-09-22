@@ -12,6 +12,7 @@ export default defineConfig({
     "./src/features/meeting-content/infrastructure/meeting-content-schema.ts",
     "./src/features/meetings/infrastructure/meeting-schema.ts",
     "./src/features/meetings/infrastructure/outside-speaker-schema.ts",
+    "./src/features/meeting-duties/infrastructure/duty-schema.ts",
   ],
   out: "./drizzle",
   dialect: "postgresql",
