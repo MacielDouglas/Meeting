@@ -91,7 +91,7 @@ export function SpeakerTalkFields({ talks, outlines, onChange }: SpeakerTalkFiel
       <button
         type="button"
         onClick={() => talks.length < 20 && onChange([...talks, newTalkDraft()])}
-        className="self-start rounded-full bg-secondary px-3 py-1.5 font-display text-xs font-medium uppercase tracking-wider text-muted-foreground"
+        className="self-start rounded-lg bg-secondary px-3 py-1.5 font-display text-xs font-medium text-muted-foreground"
       >
         + {es.anadirDiscurso}
       </button>

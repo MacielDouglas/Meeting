@@ -104,21 +104,21 @@ function mondayOf(offsetWeeks: number): string {
 }
 
 const MES_CORTO = [
-  "ENE",
-  "FEB",
-  "MAR",
-  "ABR",
-  "MAY",
-  "JUN",
-  "JUL",
-  "AGO",
-  "SEP",
-  "OCT",
-  "NOV",
-  "DIC",
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
 ];
 
-/** Intervalo da semana em display atlético: "12 – 18 ENE" ou "28 ENE – 3 FEB". */
+/** Intervalo da semana: "12 – 18 ene" ou "28 ene – 3 feb". */
 function formatWeekRange(weekStart: string): string {
   const end = addDays(weekStart, 6);
   const [, sm, sd] = weekStart.split("-").map(Number);
@@ -271,7 +271,7 @@ export function MeetingProgramSection({
   // Cabeçalho da lista: dia da semana | nome da reunião + leitura semanal.
   const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
   const meetingDayName = WEEKDAY_NAMES[meetingDay] ?? "";
-  const meetingTitle = kind === "midweek" ? "REUNIÓN DE ENTRE SEMANA" : "REUNIÓN DEL FIN DE SEMANA";
+  const meetingTitle = kind === "midweek" ? "Reunión de entre semana" : "Reunión del fin de semana";
   const weekBibleReading = useMemo(() => {
     const index = findWorkbookWeekIndex(workbooks, weekStart);
     const matched = index != null ? workbooks[index] : null;
@@ -696,7 +696,7 @@ export function MeetingProgramSection({
 
   return (
     <div className="flex flex-col gap-3">
-      <fieldset className="flex rounded-full bg-secondary p-1">
+      <fieldset className="flex rounded-xl bg-secondary p-1">
         <legend className="sr-only">{es.tipoReunion}</legend>
         {(
           [
@@ -709,7 +709,7 @@ export function MeetingProgramSection({
             type="button"
             aria-pressed={kind === option.value}
             onClick={() => handleKindChange(option.value)}
-            className={`h-8 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            className={`h-8 flex-1 rounded-lg font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               kind === option.value
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -724,18 +724,18 @@ export function MeetingProgramSection({
         <button
           type="button"
           onClick={() => handleWeekStep(-1)}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaAnterior}
         >
           <FaChevronLeft size={16} />
         </button>
         <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
-          <p className="truncate font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+          <p className="truncate font-display text-2xl font-semibold leading-none tracking-tight">
             {formatWeekRange(weekStart)}
           </p>
-          <p className="truncate font-display text-sm font-medium uppercase tracking-widest text-muted-foreground">
+          <p className="truncate text-sm font-medium text-muted-foreground">
             {kind === "midweek" ? es.entreSemana : es.finSemana} ·{" "}
-            {WEEKDAY_NAMES[kind === "midweek" ? midweekDay : weekendDay]?.slice(0, 3).toUpperCase()}{" "}
+            {WEEKDAY_NAMES[kind === "midweek" ? midweekDay : weekendDay]?.slice(0, 3)}{" "}
             {kind === "midweek" ? midweekTime : weekendTime}
             {weekBibleReading ? ` · ${weekBibleReading}` : ""}
           </p>
@@ -744,7 +744,7 @@ export function MeetingProgramSection({
           <button
             type="button"
             onClick={handleGoToday}
-            className="h-11 shrink-0 rounded-full px-4 font-display text-sm font-medium uppercase tracking-wider text-accent transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            className="h-11 shrink-0 px-2 text-sm font-medium text-accent transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             {es.hoy}
           </button>
@@ -752,7 +752,7 @@ export function MeetingProgramSection({
         <button
           type="button"
           onClick={() => handleWeekStep(1)}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaSiguiente}
         >
           <FaChevronRight size={16} />
@@ -803,10 +803,10 @@ export function MeetingProgramSection({
       ) : (
         <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
           <div className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-session-line bg-session px-0 py-2">
-            <p className="font-display text-sm font-medium uppercase tracking-widest text-session-mute">
-              {meetingDayName} | {meetingTitle}
+            <p className="text-sm font-medium text-session-mute">
+              {meetingDayName} · {meetingTitle}
             </p>
-            <p className="shrink-0 font-display text-sm font-medium uppercase tracking-widest text-session-mute">
+            <p className="shrink-0 text-sm font-medium tabular-nums text-session-mute">
               {assignmentProgress.assigned}/{assignmentProgress.total} {es.asignadas}
             </p>
           </div>
@@ -881,7 +881,7 @@ export function MeetingProgramSection({
                   {interactive ? (
                     <span
                       aria-hidden
-                      className="grid h-7 w-7 shrink-0 place-items-center self-center rounded-full bg-session-chip text-session-faint"
+                      className="grid h-7 w-7 shrink-0 place-items-center self-center rounded-lg bg-session-chip text-session-faint"
                     >
                       <FaChevronRight size={12} />
                     </span>
@@ -899,7 +899,7 @@ export function MeetingProgramSection({
                         <SectionIcon aria-hidden size={30} />
                       </span>
                       <span
-                        className="font-display text-2xl font-semibold uppercase leading-none tracking-wide"
+                        className="font-display text-xl font-semibold leading-tight tracking-tight"
                         style={{ color: meta.color }}
                       >
                         {meta.label}
@@ -911,7 +911,7 @@ export function MeetingProgramSection({
                       type="button"
                       onClick={() => setEditing(part)}
                       aria-label={`${es.asignar} ${display.title}`}
-                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover active:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
+                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
                     >
                       {rowContent}
                     </button>
@@ -974,7 +974,7 @@ export function MeetingProgramSection({
       {programId && (
         <details className="group rounded-2xl border border-input bg-background">
           <summary className="flex cursor-pointer list-none items-center justify-between p-3 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
-            <span className="font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
+            <span className="font-display text-sm font-medium text-muted-foreground">
               {es.exportar}
             </span>
             <FaChevronDown
@@ -987,13 +987,13 @@ export function MeetingProgramSection({
             <button
               type="button"
               onClick={() => setPdfOpen(true)}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.crearPdf}
             </button>
             <a
               href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground"
             >
               {es.descargarICal}
             </a>

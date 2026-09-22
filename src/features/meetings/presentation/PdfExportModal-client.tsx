@@ -204,12 +204,10 @@ export function PdfExportModal({
       <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle className="leading-snug">{es.crearPdf}</AlertDialogTitle>
-          <p className="font-display text-sm font-medium uppercase tracking-widest text-muted-foreground">
-            {es.eligeRango}
-          </p>
+          <p className="font-display text-sm font-medium text-muted-foreground">{es.eligeRango}</p>
         </AlertDialogHeader>
 
-        <fieldset className="flex gap-2">
+        <fieldset className="flex rounded-xl bg-secondary p-1">
           <legend className="sr-only">{es.crearPdf}</legend>
           {(["midweek", "weekend"] as const).map((option) => (
             <button
@@ -221,10 +219,10 @@ export function PdfExportModal({
                 setRangeEnd(null);
               }}
               className={cn(
-                "h-9 flex-1 rounded-full font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+                "h-8 flex-1 rounded-lg font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
                 activeKind === option
-                  ? "bg-accent text-accent-ink"
-                  : "bg-secondary text-muted-foreground",
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
               )}
             >
               {option === "midweek" ? es.entreSemana : es.finSemana}

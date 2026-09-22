@@ -130,14 +130,12 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
       <Link
         href="/"
         aria-label="Meeting"
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-accent text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] transition-transform active:translate-y-px active:shadow-[0_1px_2px_rgb(0_0_0/0.25),0_3px_8px_-4px_rgb(0_0_0/0.35),inset_0_1px_1px_rgb(255_255_255/0.2),inset_0_-2px_4px_rgb(0_0_0/0.3)] focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink shadow-[0_8px_24px_-8px_rgb(0_0_0/0.35)] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <FaMeetup aria-hidden size={26} />
       </Link>
       <div className="flex min-w-0 flex-col">
-        <p className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
-          Meeting
-        </p>
+        <p className="font-display text-2xl font-semibold leading-none tracking-tight">Meeting</p>
         {congregationName.trim() !== "" && (
           <p className="truncate text-xs text-muted-foreground">{congregationName}</p>
         )}
@@ -151,7 +149,7 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
           suppressHydrationWarning
           aria-label={theme === "dark" ? es.switchToLight : es.switchToDark}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="grid h-11 w-11 place-items-center rounded-full border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {theme === "dark" ? <FaSun aria-hidden size={18} /> : <FaMoon aria-hidden size={18} />}
         </button>
@@ -160,7 +158,7 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
           aria-label={menuOpen ? es.closeMenu : es.menu}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
-          className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] sm:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
         >
           {menuOpen ? <FaXmark aria-hidden size={18} /> : <FaBars aria-hidden size={18} />}
         </button>
@@ -182,7 +180,7 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
                     aria-current={active ? "page" : undefined}
                     onClick={() => setMenuOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 font-display text-base font-medium uppercase tracking-wide transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 font-display text-base font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
                       active
                         ? "bg-secondary text-foreground"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground",
@@ -200,7 +198,7 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
                   type="button"
                   disabled={signingOut}
                   onClick={() => void handleSignOut()}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-display text-base font-medium uppercase tracking-wide text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 font-display text-base font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
                 >
                   <FaRightFromBracket aria-hidden size={18} />
                   {es.signOut}

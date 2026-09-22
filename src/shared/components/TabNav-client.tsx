@@ -26,7 +26,7 @@ export function TabNav({ items, param = "tab", defaultValue, ariaLabel }: TabNav
   const active = searchParams.get(param) ?? defaultValue;
 
   return (
-    <nav aria-label={ariaLabel} className="flex gap-2">
+    <nav aria-label={ariaLabel} className="flex gap-1 rounded-xl bg-secondary p-1">
       {items.map((item) => {
         const isActive = active === item.value;
         return (
@@ -36,9 +36,10 @@ export function TabNav({ items, param = "tab", defaultValue, ariaLabel }: TabNav
             prefetch
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex-1 px-3 text-center font-display text-sm font-medium uppercase tracking-wider transition-colors",
-              "h-9 rounded-full leading-9",
-              isActive ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground",
+              "h-8 flex-1 rounded-lg px-3 text-center font-display text-sm font-medium leading-8 transition-colors",
+              isActive
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {item.label}

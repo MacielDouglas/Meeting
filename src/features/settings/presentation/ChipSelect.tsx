@@ -31,7 +31,7 @@ export function ChipSelect<T extends string>({
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
             className={cn(
-              "rounded-full border px-3 py-2 font-display text-sm font-medium uppercase tracking-wider transition-colors",
+              "rounded-lg border px-3 py-2 font-display text-sm font-medium transition-colors",
               value === option.value
                 ? "border-transparent bg-accent text-accent-ink"
                 : "border-input text-foreground",

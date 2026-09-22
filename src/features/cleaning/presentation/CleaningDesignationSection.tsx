@@ -312,7 +312,7 @@ export function CleaningDesignationSection({
   return (
     <div className="flex flex-col gap-4">
       {enabledTypes.length > 0 && (
-        <div className="flex gap-2">
+        <div className="flex rounded-xl bg-secondary p-1">
           {enabledTypes.map((type) => (
             <button
               key={type.key}
@@ -322,10 +322,10 @@ export function CleaningDesignationSection({
                 setSelectedDates(new Set());
                 setViewingProgram(null);
               }}
-              className={`h-9 flex-1 rounded-full px-2 font-display text-sm font-medium uppercase tracking-wider transition-colors ${
+              className={`h-8 flex-1 rounded-lg px-2 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
                 selectedType === type.key
-                  ? "bg-accent text-accent-ink"
-                  : "bg-secondary text-muted-foreground"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {CLEANING_TYPE_LABELS[type.key] ?? type.key}

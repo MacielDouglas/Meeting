@@ -24,9 +24,9 @@ export function PageHeaderSkeleton({ lines = 2 }: { lines?: 1 | 2 }) {
 
 export function TabNavSkeleton({ tabs = 3 }: { tabs?: number }) {
   return (
-    <div className="flex gap-2" aria-hidden>
+    <div className="flex gap-1 rounded-xl bg-secondary p-1" aria-hidden>
       {skeletonIds("tab", tabs).map((item) => (
-        <Pulse key={item.id} className="h-9 flex-1 rounded-full" />
+        <Pulse key={item.id} className="h-8 flex-1 rounded-lg" />
       ))}
     </div>
   );
@@ -84,7 +84,7 @@ export function CardSkeleton() {
 export function CalendarSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-hidden>
-      <Pulse className="h-9 w-full rounded-full" />
+      <Pulse className="h-9 w-full rounded-xl" />
       <Pulse className="h-64 w-full rounded-xl" />
     </div>
   );

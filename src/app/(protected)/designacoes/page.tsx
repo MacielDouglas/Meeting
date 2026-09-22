@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { getCurrentUser } from "@/features/auth/application/session";
 import { listCleaningConfig } from "@/features/cleaning/application/queries";
 import { CleaningDesignationSection } from "@/features/cleaning/presentation/CleaningDesignationSection";
 import {
@@ -11,6 +13,9 @@ import { CalendarSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
 
 export default async function DesignacoesPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
   const [cleaningConfig, specialEventsList, exceptionsList, meetingScheduleData] =
     await Promise.all([
       listCleaningConfig(),

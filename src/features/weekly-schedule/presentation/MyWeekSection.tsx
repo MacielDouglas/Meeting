@@ -86,8 +86,8 @@ function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
           {groups.map((group) => (
             <div key={group.section || "general"}>
               {group.section && (
-                <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground first:mt-0">
-                  {group.section}
+                <p className="mt-2 text-xs font-semibold capitalize tracking-tight text-muted-foreground first:mt-0">
+                  {group.section.toLowerCase()}
                 </p>
               )}
               <ul className="flex flex-col">
@@ -117,9 +117,7 @@ function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
 
       {hasCleaning && (
         <section aria-label="Limpieza">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Limpieza
-          </p>
+          <p className="text-xs font-semibold text-muted-foreground">Limpieza</p>
           <ul className="flex flex-col">
             {meeting.cleaning.map((item) => (
               <li
@@ -145,7 +143,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
       <details className="group rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
           <span className="min-w-0">
-            <span className="block font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+            <span className="block font-display text-xl font-semibold leading-tight tracking-tight">
               {meeting.title}
             </span>
             <span className="mt-1 block break-words text-sm text-muted-foreground">
@@ -167,13 +165,13 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
     );
   }
 
-  // Dia de prova: o único momento em que o volt acende na home.
+  // Dia da sessão: o herói acende em azul no dia.
   const isMatchDay = daysUntil(meeting.date, today) === 0;
 
   return (
     <Card className={cn("p-4", meeting.isNext && "ring-2 ring-accent")}>
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+        <h2 className="font-display text-xl font-semibold leading-tight tracking-tight">
           {meeting.title}
         </h2>
         {meeting.isNext && <Badge>{isMatchDay ? es.hoy : "Próxima"}</Badge>}
@@ -185,7 +183,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
           isMatchDay ? "bg-accent text-accent-ink" : "bg-secondary",
         )}
       >
-        <p className="shrink-0 font-display text-4xl font-semibold uppercase leading-none tracking-wide">
+        <p className="shrink-0 font-display text-4xl font-semibold leading-none tracking-tight">
           {urgencyLabel(meeting.date, today)}
         </p>
         <div className="min-w-0 flex-1">

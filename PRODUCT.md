@@ -50,7 +50,7 @@ Indeciso: metas de adoção, padrão formal de acessibilidade (WCAG), política 
 - Voz e idioma vinculantes: espanhol da UI em `src/shared/i18n/es.ts`.
 - Compromisso de verdade: só conteúdo real importado; sem depoimentos, estatísticas ou estudos de caso inventados.
 - Ativos existentes: `public/icons/`, `favicon.ico`, `manifest.ts`, `.jwpub` em `jwpub/`, algoritmo documentado em `docs/cleaning-algorithm.md`.
-- Mundo visual (decisão do usuário, seed 48f97b0b): linguagem inspirada no Nike Run Club, sensação de app mobile nativo — preto volt no escuro, papel tinta no claro, acento volt elétrico, display condensado esportivo, energia atlética sem gamificação. Cores das seções TheocBase e layout de impressão preservados como verdade de domínio.
+- Mundo visual (decisão do usuário): linguagem inspirada no app My BMW, sensação premium de aplicativo nativo — preto profundo no escuro, branco no claro, azul funcional #1C69D4, tipografia nativa do sistema em caixa normal, precisão calma sem gamificação. Cores das seções TheocBase e layout de impressão preservados como verdade de domínio.
 
 Sem direção estética vinculante registrada nesta fase — mundo visual fica para new-work/document.
 

@@ -10,9 +10,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  default: "bg-accent text-accent-ink active:scale-[0.98]",
-  secondary: "bg-secondary text-secondary-foreground active:scale-[0.98]",
-  outline: "border border-input bg-background active:scale-[0.98]",
+  default: "bg-accent text-accent-ink",
+  secondary: "bg-secondary text-secondary-foreground",
+  outline: "border border-input bg-background",
   ghost: "text-foreground",
 };
 
@@ -33,7 +33,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex w-full items-center justify-center gap-2 rounded-full font-display text-base font-medium uppercase tracking-wider transition-colors",
+        "inline-flex w-full items-center justify-center gap-2 rounded-xl font-display text-base font-medium transition-colors",
         "focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
         "sm:w-auto",
         VARIANTS[variant],

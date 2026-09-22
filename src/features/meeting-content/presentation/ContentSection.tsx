@@ -49,7 +49,7 @@ const LANGUAGES: { value: ContentLanguage; label: string }[] = [
 function LanguageBadge({ language }: { language: ContentLanguage }) {
   const label = language === "es" ? "ES" : language === "pt" ? "PT" : "EN";
   return (
-    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
+    <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
       {label}
     </span>
   );
@@ -674,7 +674,7 @@ export function ContentSection({
             type="button"
             aria-pressed={subTab === item.value}
             onClick={() => setSubTab(item.value)}
-            className={`-mb-px border-b-2 px-1 pb-2 font-display text-sm font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            className={`-mb-px border-b-2 px-1 pb-2 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               subTab === item.value
                 ? "border-accent text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"

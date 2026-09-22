@@ -166,7 +166,7 @@ export function PublicTalkPicker({
             type="button"
             onClick={backFromTalks}
             aria-label={es.volver}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-secondary text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <FaChevronLeft aria-hidden size={14} />
           </button>
@@ -230,7 +230,7 @@ export function PublicTalkPicker({
       )}
       {groups.map((group) => (
         <section key={group.congregation} aria-label={group.congregation}>
-          <h3 className="px-1 font-display text-sm font-semibold uppercase tracking-wider text-accent">
+          <h3 className="px-1 font-display text-sm font-semibold tracking-tight text-accent">
             {group.congregation}
           </h3>
           <ul className="flex flex-col gap-1">

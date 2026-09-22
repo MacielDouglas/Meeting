@@ -265,9 +265,7 @@ export function MeetingAssignModal({
         <AlertDialogHeader>
           <AlertDialogTitle className="leading-snug">{title}</AlertDialogTitle>
           {subtitle && (
-            <p className="font-display text-sm font-medium uppercase tracking-widest text-muted-foreground">
-              {subtitle}
-            </p>
+            <p className="font-display text-sm font-medium text-muted-foreground">{subtitle}</p>
           )}
         </AlertDialogHeader>
         {(currentPersonName || currentHelperName) && (
@@ -290,7 +288,7 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={handleSongStage}
-                className="h-11 rounded-full bg-secondary px-5 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="h-11 rounded-xl bg-secondary px-5 font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {es.definir}
               </button>
@@ -316,7 +314,7 @@ export function MeetingAssignModal({
                 key={option}
                 type="button"
                 onClick={() => handleClassroomStage(option)}
-                className={`h-11 w-12 rounded-full text-xs font-semibold ${room === option ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-11 w-12 rounded-lg text-xs font-semibold ${room === option ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
               >
                 {option}
               </button>
@@ -347,13 +345,13 @@ export function MeetingAssignModal({
         {withHelperFlow && (
           <ol className="flex gap-2" aria-label="Etapas de la designación">
             <li
-              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "titular" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-medium ${step === "titular" ? "bg-secondary text-foreground" : "text-muted-foreground"}`}
               aria-current={step === "titular" ? "step" : undefined}
             >
               <span aria-hidden>1</span> {labels.main}
             </li>
             <li
-              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-full text-xs font-medium ${step === "helper" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+              className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-medium ${step === "helper" ? "bg-secondary text-foreground" : "text-muted-foreground"}`}
               aria-current={step === "helper" ? "step" : undefined}
             >
               <span aria-hidden>2</span> {labels.helper}
@@ -371,18 +369,18 @@ export function MeetingAssignModal({
               maxLength={60}
               className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
             />
-            <div className="flex gap-2">
+            <div className="flex rounded-xl bg-secondary p-1">
               <button
                 type="button"
                 onClick={() => setOrderBy("name")}
-                className={`h-9 flex-1 rounded-full font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-8 flex-1 rounded-lg font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {es.ordenAlfabetico}
               </button>
               <button
                 type="button"
                 onClick={() => setOrderBy("rotation")}
-                className={`h-9 flex-1 rounded-full font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-8 flex-1 rounded-lg font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {es.rotacion}
               </button>
@@ -445,7 +443,7 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={handleBackToTitular}
-                className="h-9 shrink-0 rounded-full bg-background px-3 font-display text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+                className="h-9 shrink-0 rounded-lg bg-background px-3 font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {es.cambiar}
               </button>
@@ -500,7 +498,7 @@ export function MeetingAssignModal({
                             {formatLastAssignment(h.lastAssignmentAt)}
                           </span>
                         </span>
-                        <span className="shrink-0 font-display text-xs font-medium uppercase tracking-wider text-accent">
+                        <span className="shrink-0 font-display text-xs font-medium text-accent">
                           {es.elegir}
                         </span>
                       </button>
@@ -523,7 +521,7 @@ export function MeetingAssignModal({
             <button
               type="button"
               onClick={handleBackToTitular}
-              className="flex h-11 flex-1 items-center justify-center gap-1 rounded-full bg-secondary px-3 font-display text-sm font-medium uppercase tracking-wider text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+              className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl bg-secondary px-3 font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               <FaChevronLeft aria-hidden size={12} />
               {es.volver}
@@ -535,7 +533,7 @@ export function MeetingAssignModal({
               type="button"
               disabled={!staged}
               onClick={handleAsignar}
-              className="h-11 flex-1 rounded-full bg-accent px-4 font-display text-sm font-medium uppercase tracking-wider text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+              className="h-11 flex-1 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {es.asignar}
             </button>

@@ -27,14 +27,12 @@ const HIGHLIGHTS = [
 function PublicLanding() {
   return (
     <main className="mx-auto flex min-h-[85dvh] w-full max-w-md flex-col items-center justify-center gap-6 px-6 py-16 text-center">
-      <span className="grid h-24 w-24 place-items-center rounded-[28px] bg-accent text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards]">
+      <span className="grid h-24 w-24 place-items-center rounded-[28px] bg-accent text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards]">
         <FaMeetup aria-hidden size={56} />
       </span>
       <div className="flex flex-col gap-2 motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:80ms]">
-        <h1 className="font-display text-6xl font-semibold uppercase leading-none tracking-wide">
-          Meeting
-        </h1>
-        <p className="font-display text-lg font-medium uppercase tracking-widest text-muted-foreground">
+        <h1 className="font-display text-6xl font-semibold leading-none tracking-tight">Meeting</h1>
+        <p className="font-display text-lg font-medium text-muted-foreground">
           {es.appDescription}
         </p>
       </div>
@@ -77,13 +75,13 @@ export default async function HomePage() {
       <nav aria-label={es.seccionesReuniones} className="flex gap-2">
         <Link
           href="/reunioes"
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-accent px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="flex h-11 flex-1 items-center justify-center rounded-xl bg-accent px-3 text-center font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {es.verProgramaCompleto}
         </Link>
         <Link
           href="/designacoes"
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-secondary px-3 text-center font-display text-sm font-medium uppercase tracking-wider text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+          className="flex h-11 flex-1 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {es.tabDesignaciones}
         </Link>

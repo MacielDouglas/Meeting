@@ -207,7 +207,7 @@ export function PersonSelectModal({
                     <span className="flex-1">
                       {person.firstName} {person.lastName}
                       {person.young && (
-                        <span className="ml-1 rounded-full bg-warning-soft px-1.5 py-0.5 text-xs font-medium text-warning">
+                        <span className="ml-1 rounded-md bg-warning-soft px-1.5 py-0.5 text-xs font-medium text-warning">
                           joven
                         </span>
                       )}

@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Mundo NRC: papel tinta no claro, preto volt no escuro. Volt fixo, acento por tema. */
+/* Mundo My BMW: superfícies neutras nos dois temas, um único azul funcional. */
 :root {
   color-scheme: light;
   --background: #ffffff;
@@ -16,9 +16,8 @@
   --muted-foreground: #63636b;
   --border: #e5e5e1;
   --input: #e5e5e1;
-  --ring: #0b6bcb;
-  --volt: #d8ff00;
-  --accent: #0b6bcb;
+  --ring: #1c69d4;
+  --accent: #1c69d4;
   --accent-ink: #ffffff;
   --success: #12805c;
   --success-soft: #def5e9;
@@ -51,7 +50,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-volt: var(--volt);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-success: var(--success);
@@ -70,7 +68,8 @@
   --color-session-chip: var(--session-chip);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-barlow-condensed);
+  --font-display:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -88,8 +87,8 @@
     --muted-foreground: #a3a3ab;
     --border: #26262b;
     --input: #26262b;
-    --ring: #d8ff00;
-    --accent: #d8ff00;
+    --ring: #7aa7f8;
+    --accent: #7aa7f8;
     --accent-ink: #0a0a0b;
     --success: #3ddc97;
     --success-soft: #0e2e23;
@@ -123,8 +122,8 @@
   --muted-foreground: #a3a3ab;
   --border: #26262b;
   --input: #26262b;
-  --ring: #d8ff00;
-  --accent: #d8ff00;
+  --ring: #7aa7f8;
+  --accent: #7aa7f8;
   --accent-ink: #0a0a0b;
   --success: #3ddc97;
   --success-soft: #0e2e23;
@@ -155,18 +154,13 @@ body {
   color: var(--accent-ink);
 }
 
-/* Emblema de seção com relevo: sombras em camadas + highlights inset
-   funcionam sobre qualquer cor de base (offset e blur, nunca halo). */
+/* Emblema de seção: pastilha plana na cor TheocBase, sem relevo. */
 .section-emblem {
-  box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 10px 20px -8px rgb(0 0 0 / 0.45),
-    inset 0 2px 2px rgb(255 255 255 / 0.35),
-    inset 0 -4px 8px rgb(0 0 0 / 0.28);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
 }
 
 .section-emblem > svg {
-  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.4));
+  filter: none;
 }
 
 /* Aquecimento da home: entrada atlética única (transform + opacity, expo-out).

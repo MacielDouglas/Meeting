@@ -14,7 +14,7 @@ export default function RootError({
   return (
     <main className="flex flex-1 flex-col justify-center gap-4" role="alert">
       <Card className="flex flex-col gap-3">
-        <CardTitle className="font-display text-3xl font-semibold uppercase leading-none tracking-wide">
+        <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
           Algo salió mal
         </CardTitle>
         <CardDescription>

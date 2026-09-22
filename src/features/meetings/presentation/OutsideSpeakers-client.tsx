@@ -168,12 +168,10 @@ export function OutsideSpeakersClient({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-xl font-semibold uppercase tracking-wide">
-          {es.oradoresFuera}
-        </h2>
+        <h2 className="font-display text-xl font-semibold tracking-tight">{es.oradoresFuera}</h2>
         <a
           href="/reunioes/imprimir?view=slips"
-          className="rounded-full bg-secondary px-3 py-1.5 font-display text-xs font-medium uppercase tracking-wider text-muted-foreground"
+          className="rounded-lg bg-secondary px-3 py-1.5 font-display text-xs font-medium text-muted-foreground"
         >
           {es.fichas}
         </a>
@@ -257,7 +255,7 @@ export function OutsideSpeakersClient({
         <div className="flex flex-col gap-4">
           {groups.map((group) => (
             <section key={group.congregation} aria-label={group.congregation}>
-              <h3 className="flex items-center gap-2 font-display text-lg font-semibold uppercase tracking-wide text-accent">
+              <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-accent">
                 {group.congregation}
                 {group.isSystem && <Badge>{es.sistema}</Badge>}
               </h3>
@@ -287,7 +285,7 @@ export function OutsideSpeakersClient({
                             type="button"
                             onClick={() => startEdit(speaker)}
                             aria-label={`${es.editarLabel} a ${speaker.name}`}
-                            className="rounded-lg px-2 py-1 font-display text-xs font-medium uppercase tracking-wider text-accent"
+                            className="rounded-lg px-2 py-1 font-display text-xs font-medium text-accent"
                           >
                             {es.editarLabel}
                           </button>
@@ -295,7 +293,7 @@ export function OutsideSpeakersClient({
                             type="button"
                             disabled={deleteMutation.isPending}
                             onClick={() => deleteMutation.mutate(speaker.id)}
-                            className="rounded-lg px-2 py-1 font-display text-xs font-medium uppercase tracking-wider text-danger"
+                            className="rounded-lg px-2 py-1 font-display text-xs font-medium text-danger"
                           >
                             {es.eliminar}
                           </button>

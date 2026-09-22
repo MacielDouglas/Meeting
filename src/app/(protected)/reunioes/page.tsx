@@ -34,6 +34,7 @@ export default async function ReunioesPage({
   searchParams?: Promise<{ tab?: string; reuniao?: string }>;
 }) {
   const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
 
   const params = (await searchParams) ?? {};
   if (params.tab === "designacoes") redirect("/designacoes");
@@ -80,10 +81,10 @@ export default async function ReunioesPage({
 
       <Suspense
         fallback={
-          <div className="flex gap-2" aria-hidden>
-            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
-            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
-            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
+          <div className="flex gap-1 rounded-xl bg-secondary p-1" aria-hidden>
+            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
+            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
+            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
           </div>
         }
       >

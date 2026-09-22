@@ -57,7 +57,7 @@ export function GoogleLoginButton({ className }: { className?: string }) {
         type="button"
         disabled={isLoading}
         onClick={() => void handleSignIn()}
-        className="flex h-14 w-full items-center justify-center gap-3 rounded-full bg-accent px-6 font-display text-lg font-semibold uppercase tracking-wider text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98] disabled:opacity-70"
+        className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-accent px-6 font-display text-lg font-semibold text-accent-ink shadow-[0_12px_32px_-12px_rgb(0_0_0/0.45)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-70"
       >
         {isLoading ? (
           <FaMeetup aria-hidden size={22} className="animate-pulse" />

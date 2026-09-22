@@ -38,7 +38,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
           <Link
             href="/personas/nueva"
             aria-label={es.newPerson}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink transition-transform focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.98]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <FaUserPlus aria-hidden size={20} />
           </Link>
