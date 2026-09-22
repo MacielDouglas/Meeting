@@ -105,7 +105,12 @@ export default async function ReunioesPage({
         <Suspense fallback={<CardSkeleton />}>
           <MeetingProgramSection
             songs={songs.map((s) => ({ number: s.number, theme: s.theme }))}
-            outlines={outlines.map((o) => ({ id: o.id, number: o.number, theme: o.theme }))}
+            outlines={outlines.map((o) => ({
+              id: o.id,
+              number: o.number,
+              theme: o.theme,
+              language: o.language,
+            }))}
             workbooks={
               workbooks.map((w) => ({
                 label: w.weeks[0]?.week ?? w.name,

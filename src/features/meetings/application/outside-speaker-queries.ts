@@ -73,21 +73,3 @@ export async function listOutsideSpeakers(): Promise<OutsideSpeakerItem[]> {
     };
   });
 }
-
-/** Busca de oradores por número, nome ou congregação (designação de fim de semana). */
-export async function searchOutsideSpeakers(query: string): Promise<OutsideSpeakerItem[]> {
-  const normalized = query.trim().toLowerCase();
-  if (normalized.length < 2) return [];
-  const numeric = /^\d+$/.test(normalized) ? Number(normalized) : null;
-  const speakers = await listOutsideSpeakers();
-  return speakers
-    .filter((speaker) => {
-      if (numeric !== null && speaker.talks.some((talk) => talk.talkNumber === numeric)) {
-        return true;
-      }
-      if (speaker.name.toLowerCase().includes(normalized)) return true;
-      if (speaker.congregation.toLowerCase().includes(normalized)) return true;
-      return speaker.talks.some((talk) => talk.talkTheme.toLowerCase().includes(normalized));
-    })
-    .slice(0, 20);
-}

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
 import {
@@ -50,6 +49,7 @@ interface OutlineOption {
   id: string;
   number: number;
   theme: string;
+  language: string;
 }
 interface WorkbookOption {
   label: string;
@@ -224,8 +224,8 @@ export function MeetingProgramSection({
   // Alterações preparadas pelo usuário (clique nas partes); só persistem no Salvar.
   const [pending, setPending] = useState<Record<string, StagedChange>>({});
   // Esboço do fim de semana também encena antes de salvar (mesmo modelo mental).
+  // A escolha nasce no modal do discurso público; o topo não seleciona mais.
   const [pendingOutlineId, setPendingOutlineId] = useState<string | null>(null);
-  const [outlineSearch, setOutlineSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
@@ -257,13 +257,6 @@ export function MeetingProgramSection({
     () => outlines.find((o) => o.id === effectiveOutlineId) ?? null,
     [outlines, effectiveOutlineId],
   );
-  const filteredOutlines = useMemo(() => {
-    const term = outlineSearch.trim().toLowerCase();
-    if (!term) return outlines;
-    return outlines.filter(
-      (o) => String(o.number).includes(term) || o.theme.toLowerCase().includes(term),
-    );
-  }, [outlines, outlineSearch]);
 
   // Cabeçalho da lista: dia da semana | nome da reunião + leitura semanal.
   const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
@@ -310,7 +303,6 @@ export function MeetingProgramSection({
         setOutlineId(result?.program.outlineId ?? "");
         setPending({});
         setPendingOutlineId(null);
-        setOutlineSearch("");
       } catch {
         if (!cancelled) {
           setSaved(null);
@@ -629,10 +621,11 @@ export function MeetingProgramSection({
     setError(null);
   }
 
-  /** Escolha do esboço encena como o resto: só persiste no Salvar. */
-  function handleOutlineSelect(id: string) {
-    if (!canManage || saving) return;
-    setError(null);
+  /**
+   * Confirmação do modal do discurso: mesma escolha vale para título salvo e
+   * modelo da semana; sem mudança real, nada encena.
+   */
+  function handlePublicTalkOutline(id: string) {
     setPendingOutlineId(id === outlineId ? null : id);
   }
 
@@ -716,78 +709,6 @@ export function MeetingProgramSection({
           </button>
         ))}
       </fieldset>
-
-      {kind === "weekend" && canManage && (
-        <div className="flex flex-col gap-2 rounded-xl border border-input bg-background p-2">
-          <div className="flex items-center justify-between gap-2 pl-1">
-            <span className="shrink-0 font-display text-sm font-medium uppercase tracking-wider text-muted-foreground">
-              {es.esboco}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-right text-sm font-medium">
-              {outline ? `${outline.number} — ${outline.theme}` : es.nenhum}
-              {pendingOutlineId !== null && (
-                <span
-                  aria-hidden
-                  className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-warning"
-                >
-                  <span className="sr-only">{es.sinGuardar}</span>
-                </span>
-              )}
-            </span>
-          </div>
-          <input
-            value={outlineSearch}
-            onChange={(event) => setOutlineSearch(event.target.value)}
-            placeholder={es.buscarEsbozo}
-            aria-label={es.buscarEsbozo}
-            maxLength={60}
-            disabled={saving}
-            className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring disabled:opacity-50"
-          />
-          <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto">
-            <li>
-              <button
-                type="button"
-                aria-pressed={effectiveOutlineId === ""}
-                onClick={() => handleOutlineSelect("")}
-                disabled={saving}
-                className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
-                  effectiveOutlineId === "" ? "bg-accent/10 ring-1 ring-accent" : ""
-                }`}
-              >
-                {es.nenhum}
-              </button>
-            </li>
-            {filteredOutlines.slice(0, 20).map((option) => (
-              <li key={option.id}>
-                <button
-                  type="button"
-                  aria-pressed={effectiveOutlineId === option.id}
-                  onClick={() => handleOutlineSelect(option.id)}
-                  disabled={saving}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
-                    effectiveOutlineId === option.id ? "bg-accent/10 ring-1 ring-accent" : ""
-                  }`}
-                >
-                  <span className="w-12 shrink-0 font-semibold">{option.number}</span>
-                  <span className="min-w-0 flex-1 truncate">{option.theme}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-          {outlineSearch.trim() !== "" && filteredOutlines.length === 0 && (
-            <p className="px-1 text-xs text-muted-foreground">{es.ningunRegistro}</p>
-          )}
-          {outlines.length === 0 && (
-            <p className="px-1 text-xs text-muted-foreground">
-              {es.importarBosquejosHint}{" "}
-              <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
-                {es.verContenido}
-              </Link>
-            </p>
-          )}
-        </div>
-      )}
 
       <div className="flex items-center gap-3">
         <button
@@ -1097,13 +1018,27 @@ export function MeetingProgramSection({
           }
           partKey={editing.key}
           classroom={editing.classroom}
-          speakerCongregation={editing.speakerCongregation}
           songs={songs}
-          outlines={outlines.map((o) => ({ number: o.number, theme: o.theme }))}
+          outlines={outlines.map((o) => ({
+            id: o.id,
+            number: o.number,
+            theme: o.theme,
+            language: o.language,
+          }))}
+          systemCongregation={congregationName}
+          startTime={editing.startTime}
+          durationMinutes={editing.durationMinutes}
           currentPersonName={editing.personName ?? ""}
           currentHelperName={editing.helperPersonName ?? editing.helperName ?? ""}
           onClose={() => setEditing(null)}
           onStage={(change) => handleStage(editing.id, change)}
+          onOutlineStage={(id) => {
+            if (id === null) {
+              setPendingOutlineId(null);
+              return;
+            }
+            handlePublicTalkOutline(id);
+          }}
         />
       )}
     </div>

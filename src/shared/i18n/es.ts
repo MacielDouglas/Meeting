@@ -173,6 +173,11 @@ export const es = {
   sistema: "Sistema",
   anadirDiscurso: "Añadir discurso",
   buscarOrador: "Buscar orador (n.º, nombre o congregación)",
+  sinOradorCoincide:
+    "Ningún orador coincide con la búsqueda. Revisa el número, el nombre o la congregación.",
+  elegirDiscurso: "Elegir discurso",
+  duracion: "Duración",
+  registrarOradoresHint: "Registra oradores y sus discursos en la pestaña Oradores.",
   guardarYAsignar: "Guardar y asignar",
   esboco: "Bosquejo",
   nenhum: "Ninguno",
