@@ -33,13 +33,15 @@ function initialTheme(): Theme {
 interface SiteHeaderProps {
   showSettings: boolean;
   isAuthed: boolean;
+  congregationName: string;
 }
 
 /**
  * Ilha client mínima: menu mobile, alternador de tema e estado ativo.
- * O shell server entrega só `showSettings`/`isAuthed` (booleanos).
+ * O shell server entrega só primitivos (`showSettings`/`isAuthed` e o nome
+ * da congregação).
  */
-export function SiteHeader({ showSettings, isAuthed }: SiteHeaderProps) {
+export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(initialTheme);
@@ -110,14 +112,19 @@ export function SiteHeader({ showSettings, isAuthed }: SiteHeaderProps) {
     <header className="relative flex items-center gap-3">
       <Link
         href="/"
-        aria-label={es.appName}
+        aria-label="Meeting"
         className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-accent text-accent-ink shadow-[0_1px_2px_rgb(0_0_0/0.25),0_8px_20px_-6px_rgb(0_0_0/0.4),inset_0_1px_1px_rgb(255_255_255/0.3),inset_0_-3px_6px_rgb(0_0_0/0.28)] transition-transform active:translate-y-px active:shadow-[0_1px_2px_rgb(0_0_0/0.25),0_3px_8px_-4px_rgb(0_0_0/0.35),inset_0_1px_1px_rgb(255_255_255/0.2),inset_0_-2px_4px_rgb(0_0_0/0.3)] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         <FaMeetup aria-hidden size={26} />
       </Link>
-      <p className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
-        {es.appName}
-      </p>
+      <div className="flex min-w-0 flex-col">
+        <p className="font-display text-2xl font-semibold uppercase leading-none tracking-wide">
+          Meeting
+        </p>
+        {congregationName.trim() !== "" && (
+          <p className="truncate text-xs text-muted-foreground">{congregationName}</p>
+        )}
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
         <button
