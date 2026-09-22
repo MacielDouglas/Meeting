@@ -60,7 +60,7 @@ export function BottomNav({ showSettings }: { showSettings: boolean }) {
               <span
                 className={cn(
                   "grid place-items-center rounded-xl p-2 transition-colors",
-                  active && "bg-accent/10",
+                  active && "bg-secondary",
                 )}
               >
                 <Icon aria-hidden size={20} />

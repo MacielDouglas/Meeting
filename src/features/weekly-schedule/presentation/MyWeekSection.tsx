@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FaCalendarDay, FaChevronDown, FaClock, FaLocationDot } from "react-icons/fa6";
+import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import {
   assignmentSummary,
   daysUntil,
@@ -12,14 +13,14 @@ import {
   type MyWeekMeeting,
   urgencyLabel,
 } from "@/features/weekly-schedule/domain/my-week";
-import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
-import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/utils";
 
 interface MyWeekSectionProps {
   myWeek: MyWeek;
+  /** O usuário pode vincular a si mesmo (owner/admin) ou só pedir ao admin. */
+  canLinkAccount: boolean;
 }
 
 function PartNames({
@@ -86,8 +87,13 @@ function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
           {groups.map((group) => (
             <div key={group.section || "general"}>
               {group.section && (
-                <p className="mt-2 text-xs font-semibold capitalize tracking-tight text-muted-foreground first:mt-0">
-                  {group.section.toLowerCase()}
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold tracking-tight text-muted-foreground first:mt-0">
+                  <span
+                    aria-hidden
+                    className="h-3.5 w-1 shrink-0 rounded-full"
+                    style={{ backgroundColor: sectionMetaOf(group.section).color }}
+                  />
+                  {sectionMetaOf(group.section).label}
                 </p>
               )}
               <ul className="flex flex-col">
@@ -148,7 +154,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
             </span>
             <span className="mt-1 block break-words text-sm text-muted-foreground">
               {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time} ·{" "}
-              {summary}
+              {meeting.location} · {summary}
             </span>
           </span>
           <FaChevronDown
@@ -170,43 +176,35 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
 
   return (
     <Card className={cn("p-4", meeting.isNext && "ring-2 ring-accent")}>
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="font-display text-xl font-semibold leading-tight tracking-tight">
-          {meeting.title}
-        </h2>
-        {meeting.isNext && <Badge>{isMatchDay ? es.hoy : "Próxima"}</Badge>}
-      </div>
-
       <div
         className={cn(
-          "mt-3 flex items-center gap-3 rounded-xl px-3 py-2.5 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
+          "flex flex-col gap-1 rounded-xl px-3 py-2.5 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
           isMatchDay ? "bg-accent text-accent-ink" : "bg-secondary",
         )}
       >
-        <p className="shrink-0 font-display text-4xl font-semibold leading-none tracking-tight">
-          {urgencyLabel(meeting.date, today)}
+        <h2
+          className={cn(
+            "break-words text-xs font-medium",
+            isMatchDay ? "text-accent-ink" : "text-muted-foreground",
+          )}
+        >
+          {meeting.title} · {urgencyLabel(meeting.date, today)}
+        </h2>
+        <p className="break-words font-display text-2xl font-semibold tabular-nums leading-tight tracking-tight">
+          {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time}
         </p>
-        <div className="min-w-0 flex-1">
-          <p className="break-words text-sm font-semibold">
-            {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time}
-          </p>
-          <p
-            className={cn(
-              "break-words text-xs",
-              isMatchDay ? "text-accent-ink" : "text-muted-foreground",
-            )}
-          >
-            {meeting.location}
-          </p>
-          <p
-            className={cn(
-              "break-words text-xs",
-              isMatchDay ? "text-accent-ink" : "text-muted-foreground",
-            )}
-          >
-            {summary}
-          </p>
-        </div>
+        <p
+          className={cn(
+            "flex items-center gap-1.5 break-words text-sm",
+            isMatchDay ? "text-accent-ink" : "text-muted-foreground",
+          )}
+        >
+          <FaLocationDot aria-hidden className="shrink-0" />
+          <span>
+            <span className="sr-only">Lugar: </span>
+            {meeting.location} · {summary}
+          </span>
+        </p>
       </div>
 
       <MeetingSections meeting={meeting} />
@@ -214,7 +212,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
   );
 }
 
-export function MyWeekSection({ myWeek }: MyWeekSectionProps) {
+export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
   const today = todayLocalISO();
   const weekOff =
     myWeek.personName != null &&
@@ -223,14 +221,20 @@ export function MyWeekSection({ myWeek }: MyWeekSectionProps) {
   return (
     <section aria-label="Mi semana" className="flex flex-col gap-3">
       {myWeek.personName ? (
-        <p className="text-sm text-muted-foreground">{myWeek.personName}</p>
+        <p className="text-sm text-muted-foreground">
+          Eres <span className="font-medium text-foreground">{myWeek.personName}</span>
+        </p>
       ) : (
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">
             Tu usuario aún no está vinculado a una persona.{" "}
-            <Link href="/personas" className="font-medium text-accent underline">
-              Vincular en Personas
-            </Link>
+            {canLinkAccount ? (
+              <Link href="/personas" className="font-medium text-accent underline">
+                Vincular en Personas
+              </Link>
+            ) : (
+              "Pide a un administrador que lo vincule."
+            )}
           </p>
         </Card>
       )}
@@ -239,7 +243,7 @@ export function MyWeekSection({ myWeek }: MyWeekSectionProps) {
       ))}
       {weekOff && (
         <p className="px-1 text-sm text-muted-foreground">
-          Semana de recuperación: sin asignación. Nos vemos en {venue}.
+          Sin asignación esta semana. Nos vemos en {venue}.
         </p>
       )}
     </section>

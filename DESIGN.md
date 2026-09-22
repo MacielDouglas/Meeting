@@ -115,7 +115,7 @@ Densidade confortável para operar com uma mão: shell estreito centrado, cartõ
 Branco e tinta no claro; preto profundo no escuro. Um único azul funcional, com tinta legível por tema.
 
 ### Primary
-- **Acento** (claro #1c69d4 / escuro #7aa7f8): botões, links de ação, indicadores e foco. Texto sobre acento usa tinta de acento (claro #ffffff / escuro #0a0a0b) — AA nos dois usos.
+- **Azul BMW** (claro #1c69d4 / escuro #7aa7f8): botões, links de ação, indicadores e foco. Texto sobre o azul usa tinta de acento (claro #ffffff / escuro #0a0a0b) — AA nos dois usos.
 - **Fundo** (#ffffff) / **Tinta** (#111113): voz neutra do tema claro.
 - **Pista** (#0a0a0b) / **Superfície** (#141417): fundo e cartão do tema escuro.
 
@@ -175,7 +175,7 @@ Ações são retângulos precisos, superfícies são cartões. Botões e control
 ## Components
 
 ### Buttons
-Retângulos precisos em caixa normal, quietos ao toque.
+Precisos e quietos: retângulos exatos em caixa normal, sem resposta tátil.
 - **Shape:** cantos de 12–14px, altura 44px (36px no sm, 48px no lg).
 - **Primary:** acento sobre tinta de acento.
 - **Hover / Focus:** transição de cor, foco visível com outline duplo deslocado.

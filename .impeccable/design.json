@@ -1,466 +1,346 @@
 {
-  "components": [
-    {
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 20px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 16px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); border: none; border-radius: 999px; cursor: pointer; transition: background 0.2s, transform 0.15s; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:active { transform: scale(0.98); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #0b6bcb); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; pointer-events: none; } @media (min-width: 640px) { .ds-btn-primary { width: auto; } }",
-      "description": "Ação primária: pílula volt em caixa alta condensada, tátil com press 0.98.",
-      "html": "<button class=\"ds-btn-primary\">Guardar horarios</button>",
-      "kind": "button",
-      "name": "Primary Button",
-      "refersTo": "button-primary"
-    },
-    {
-      "css": ".ds-card { background: var(--card, #fff); color: var(--foreground, #111113); border: 1px solid var(--border, #e5e5e1); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06); } .ds-card-title { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; } .ds-card-meta { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; } .ds-card-foot { margin-top: 12px; font-size: 14px; color: var(--muted-foreground, #63636b); }",
-      "description": "Cartão de sessão: título display em caixa alta, numeral de hora e metadados.",
-      "html": "<div class=\"ds-card\"><div style=\"display:flex;justify-content:space-between;gap:12px;align-items:flex-start\"><div><h2 class=\"ds-card-title\">Reuni\u00f3n entre semana</h2></div><span class=\"ds-badge\">Entre semana</span></div><div class=\"ds-card-meta\">Mie 19:30 \u00b7 Sal\u00f3n principal</div><p class=\"ds-card-foot\">6 partes programadas.</p></div>",
-      "kind": "card",
-      "name": "Session Card",
-      "refersTo": "card-sessao"
-    },
-    {
-      "css": ".ds-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 2px 10px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; background: var(--secondary, #f3f3f1); color: var(--secondary-foreground, #17171a); } .ds-badge[data-tone=\"accent\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); }",
-      "description": "Etiqueta de período em pílula condensada; tom acento para estados.",
-      "html": "<span class=\"ds-badge\">Fin de semana</span> <span class=\"ds-badge\" data-tone=\"accent\">Pr\u00f3xima</span>",
-      "kind": "chip",
-      "name": "Badge",
-      "refersTo": "badge-periodo"
-    },
-    {
-      "css": ".ds-tabs { display: flex; gap: 8px; } .ds-tab { flex: 1; height: 36px; line-height: 36px; padding: 0 12px; text-align: center; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 999px; text-decoration: none; background: var(--secondary, #f3f3f1); color: var(--muted-foreground, #63636b); transition: background 0.2s, color 0.2s; } .ds-tab:hover { filter: brightness(0.96); } .ds-tab[data-active=\"true\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); }",
-      "description": "Abas em pílula única; ativa em acento.",
-      "html": "<nav class=\"ds-tabs\"><a class=\"ds-tab\" data-active=\"true\">Reuni\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Designa\u00e7\u00f5es</a><a class=\"ds-tab\" data-active=\"false\">Conte\u00fado</a></nav>",
-      "kind": "nav",
-      "name": "Tab Pill",
-      "refersTo": "aba-ativa"
-    },
-    {
-      "css": ".ds-bottomnav { display: flex; justify-content: space-around; border-top: 1px solid var(--border, #e5e5e1); background: var(--background, #fff); padding-bottom: env(safe-area-inset-bottom); } .ds-bottomnav a { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; text-decoration: none; color: var(--muted-foreground, #63636b); } .ds-bottomnav a[data-active=\"true\"] { color: var(--foreground, #111113); } .ds-bottomnav .ds-ic { display: grid; place-items: center; border-radius: 999px; padding: 6px; } .ds-bottomnav a[data-active=\"true\"] .ds-ic { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); } .ds-bottomnav svg { width: 20px; height: 20px; }",
-      "description": "Navegação inferior com pílula de acento no item ativo.",
-      "html": "<nav class=\"ds-bottomnav\"><a data-active=\"true\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 3l9 8h-3v9h-4v-6H10v6H6v-9H3z\"/></svg></span>Inicio</a><a data-active=\"false\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M4 5h16v14H4z\"/></svg></span>Reuni\u00f5es</a><a data-active=\"false\"><span class=\"ds-ic\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 4-6 8-6s8 2 8 6\"/></svg></span>Personas</a></nav>",
-      "kind": "nav",
-      "name": "Bottom Nav",
-      "refersTo": "button-ghost"
-    },
-    {
-      "css": ".ds-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; } .ds-field label { font-size: 14px; font-weight: 500; color: var(--foreground, #111113); } .ds-field input { height: 44px; width: 100%; max-width: 220px; padding: 0 12px; font-size: 14px; text-align: right; color: var(--foreground, #111113); background: var(--secondary, #f3f3f1); border: 1px solid transparent; border-radius: 8px; outline: none; } .ds-field input:focus { border-color: var(--accent, #0b6bcb); } .ds-field input::placeholder { color: var(--muted-foreground, #63636b); }",
-      "description": "Campo rótulo-esquerda / valor-direita com foco em acento.",
-      "html": "<div class=\"ds-field\"><label>Hora de inicio</label><input value=\"19:30\" /></div>",
-      "kind": "input",
-      "name": "Text Field",
-      "refersTo": "input-field"
-    },
-    {
-      "css": ".ds-switch { position: relative; width: 48px; height: 28px; border-radius: 999px; border: none; cursor: pointer; background: var(--input, #e5e5e1); transition: background 0.2s; } .ds-switch[data-on=\"true\"] { background: var(--accent, #0b6bcb); } .ds-switch span { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 999px; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.2); transition: transform 0.2s; } .ds-switch[data-on=\"true\"] span { transform: translateX(20px); } .ds-switch:focus-visible { outline: 2px solid var(--accent, #0b6bcb); outline-offset: 2px; }",
-      "description": "Interruptor redondo com trilho em acento quando ligado.",
-      "html": "<button class=\"ds-switch\" data-on=\"true\" aria-label=\"Dispon\u00edvel\"><span></span></button>",
-      "kind": "custom",
-      "name": "Switch",
-      "refersTo": "button-ghost"
-    },
-    {
-      "css": ".ds-dialog { width: 100%; max-width: 448px; background: var(--background, #fff); border: 1px solid var(--border, #e5e5e1); border-radius: 16px; padding: 24px; box-shadow: 0 10px 30px rgb(0 0 0 / 0.2); } .ds-dialog h2 { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 24px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1; } .ds-dialog p { margin: 8px 0 0; font-size: 14px; color: var(--muted-foreground, #63636b); } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; } .ds-dialog-danger { height: 40px; padding: 0 20px; border: none; border-radius: 999px; background: var(--danger, #d92d20); color: var(--danger-ink, #fff); font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; } .ds-dialog-danger:hover { filter: brightness(1.05); } .ds-dialog-cancel { height: 40px; padding: 0 20px; border-radius: 999px; border: 1px solid var(--input, #e5e5e1); background: var(--background, #fff); font-size: 14px; font-weight: 500; cursor: pointer; }",
-      "description": "Confirmação com título display e ação de perigo em pílula.",
-      "html": "<div class=\"ds-dialog\"><h2>Eliminar registro?</h2><p>Esta acci\u00f3n no se puede deshacer.</p><div class=\"ds-dialog-actions\"><button class=\"ds-dialog-cancel\">Cancelar</button><button class=\"ds-dialog-danger\">Eliminar</button></div></div>",
-      "kind": "custom",
-      "name": "Confirm Dialog",
-      "refersTo": "card-sessao"
-    },
-    {
-      "css": ".ds-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; } .ds-cal span { display: flex; align-items: center; justify-content: center; height: 36px; font-size: 14px; border-radius: 8px; } .ds-cal span[data-state=\"selected\"] { background: var(--accent, #0b6bcb); color: var(--accent-ink, #fff); font-weight: 600; } .ds-cal span[data-state=\"done\"] { background: var(--success-soft, #def5e9); color: var(--success, #12805c); } .ds-cal span[data-state=\"assembly\"] { background: var(--danger-soft, #fde4e2); color: var(--danger, #d92d20); }",
-      "description": "Dia do calendário com estados semafóricos tokenizados.",
-      "html": "<div class=\"ds-cal\"><span>12</span><span data-state=\"selected\">13</span><span data-state=\"done\">14</span><span data-state=\"assembly\">15</span></div>",
-      "kind": "custom",
-      "name": "Calendar Day",
-      "refersTo": "aba-ativa"
-    }
-  ],
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-22T15:30:00Z",
+  "title": "Design System: Meeting",
   "extensions": {
-    "breakpoints": [{ "name": "sm", "value": "640px" }, { "name": "lg", "value": "1024px" }],
     "colorMeta": {
       "acento": {
-        "canonical": "#d8ff00",
-        "displayName": "Volt / Acento",
-        "note": "Acento por tema: claro #0b6bcb com tinta #ffffff; escuro volt #d8ff00 com tinta #0a0a0b.",
         "role": "primary",
+        "displayName": "Azul BMW",
+        "canonical": "#1c69d4",
         "tonalRamp": [
-          "#0b3d91",
-          "#0b6bcb",
-          "#3d9be9",
-          "#7cc4f5",
-          "#d8ff00",
-          "#e4ff4d",
-          "#f0ff99",
-          "#faffcc"
+          "#0b2c5c",
+          "#103e7d",
+          "#144e9e",
+          "#1c69d4",
+          "#4d8ae0",
+          "#7aa7f8",
+          "#a9c6fa",
+          "#d6e4fd"
         ]
       },
-      "alerta": {
-        "canonical": "#9a6200",
-        "displayName": "Alerta",
-        "note": "Escuro #ffb224 sobre #33230a.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#33230a",
-          "#5c3d00",
-          "#9a6200",
-          "#c98a12",
-          "#ffb224",
-          "#ffcf6b",
-          "#ffe3a3",
-          "#fdeecd"
-        ]
-      },
-      "alerta-suave": {
-        "canonical": "#fdeecd",
-        "displayName": "Alerta Suave",
-        "role": "neutral",
-        "tonalRamp": [
-          "#33230a",
-          "#5c3d00",
-          "#9a6200",
-          "#c98a12",
-          "#ffb224",
-          "#ffcf6b",
-          "#ffe3a3",
-          "#fdeecd"
-        ]
-      },
-      "exito": {
-        "canonical": "#12805c",
-        "displayName": "Êxito",
-        "note": "Escuro #3ddc97 sobre #0e2e23.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0e2e23",
-          "#0f513f",
-          "#12805c",
-          "#22a07a",
-          "#3ddc97",
-          "#86e8bd",
-          "#bff0d8",
-          "#def5e9"
-        ]
-      },
-      "exito-suave": {
-        "canonical": "#def5e9",
-        "displayName": "Êxito Suave",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0e2e23",
-          "#0f513f",
-          "#12805c",
-          "#22a07a",
-          "#3ddc97",
-          "#86e8bd",
-          "#bff0d8",
-          "#def5e9"
-        ]
-      },
-      "linha": {
-        "canonical": "#e5e5e1",
-        "displayName": "Linha",
-        "note": "Escuro #26262b.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#26262b",
-          "#3f3f46",
-          "#52525b",
-          "#71717a",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#e5e5e1",
-          "#fafafa"
-        ]
-      },
-      "papel": {
-        "canonical": "#ffffff",
-        "displayName": "Papel",
-        "role": "neutral",
-        "tonalRamp": [
-          "#111113",
-          "#27272a",
-          "#52525b",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#e5e5e1",
-          "#f3f3f1",
-          "#ffffff"
-        ]
-      },
-      "papel-suave": {
-        "canonical": "#f3f3f1",
-        "displayName": "Papel Suave",
-        "note": "Escuro #1c1c20.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#1c1c20",
-          "#3f3f46",
-          "#63636b",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#e5e5e1",
-          "#f3f3f1",
-          "#fafafa"
-        ]
-      },
-      "perigo": {
-        "canonical": "#d92d20",
-        "displayName": "Perigo",
-        "note": "Escuro #f97066 com tinta #0a0a0b; claro com tinta #ffffff.",
+      "acento-escuro": {
         "role": "primary",
+        "displayName": "Azul BMW claro",
+        "canonical": "#7aa7f8",
         "tonalRamp": [
-          "#3a1410",
-          "#7a271a",
-          "#d92d20",
-          "#f04438",
-          "#f97066",
-          "#fda29b",
-          "#fecdca",
-          "#fde4e2"
-        ]
-      },
-      "perigo-suave": {
-        "canonical": "#fde4e2",
-        "displayName": "Perigo Suave",
-        "role": "neutral",
-        "tonalRamp": [
-          "#3a1410",
-          "#7a271a",
-          "#d92d20",
-          "#f04438",
-          "#f97066",
-          "#fda29b",
-          "#fecdca",
-          "#fde4e2"
-        ]
-      },
-      "pista": {
-        "canonical": "#0a0a0b",
-        "displayName": "Pista",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0a0a0b",
-          "#111113",
-          "#141417",
-          "#1c1c20",
-          "#26262b",
-          "#3f3f46",
-          "#71717a",
-          "#a3a3ab"
-        ]
-      },
-      "superficie": {
-        "canonical": "#141417",
-        "displayName": "Superfície Escura",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0a0a0b",
-          "#111113",
-          "#141417",
-          "#1c1c20",
-          "#26262b",
-          "#52525b",
-          "#a1a1aa",
-          "#f5f5f4"
-        ]
-      },
-      "texto-secundario": {
-        "canonical": "#63636b",
-        "displayName": "Texto Secundário",
-        "note": "Escuro #a3a3ab.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#111113",
-          "#27272a",
-          "#3f3f46",
-          "#52525b",
-          "#63636b",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#f3f3f1"
+          "#0b2c5c",
+          "#103e7d",
+          "#144e9e",
+          "#1c69d4",
+          "#4d8ae0",
+          "#7aa7f8",
+          "#a9c6fa",
+          "#d6e4fd"
         ]
       },
       "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta premium",
         "canonical": "#111113",
-        "displayName": "Tinta",
-        "role": "primary",
         "tonalRamp": [
           "#0a0a0b",
           "#111113",
-          "#17171a",
-          "#27272a",
-          "#3f3f46",
-          "#71717a",
-          "#d4d4d8",
-          "#f3f3f1"
-        ]
-      },
-      "tinta-acento": {
-        "canonical": "#ffffff",
-        "displayName": "Tinta de Acento",
-        "note": "Escuro #0a0a0b sobre volt.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0a0a0b",
-          "#3f3f46",
-          "#71717a",
-          "#a1a1aa",
-          "#d4d4d8",
-          "#f3f3f1",
-          "#fafafa",
-          "#ffffff"
-        ]
-      },
-      "tinta-perigo": {
-        "canonical": "#ffffff",
-        "displayName": "Tinta de Perigo",
-        "note": "Escuro #0a0a0b.",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0a0a0b",
-          "#7a271a",
-          "#d92d20",
-          "#f97066",
-          "#fda29b",
-          "#fde4e2",
-          "#fafafa",
-          "#ffffff"
-        ]
-      },
-      "tinta-suave": {
-        "canonical": "#17171a",
-        "displayName": "Tinta Suave",
-        "role": "neutral",
-        "tonalRamp": [
-          "#0a0a0b",
-          "#111113",
-          "#17171a",
-          "#27272a",
+          "#2e2e33",
           "#52525b",
-          "#71717a",
-          "#d4d4d8",
+          "#83838c",
+          "#b5b5bc",
+          "#e5e5e1",
+          "#f5f5f4"
+        ]
+      },
+      "fondo": {
+        "role": "neutral",
+        "displayName": "Branco premium",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#111113",
+          "#2a2a2e",
+          "#52525b",
+          "#83838c",
+          "#b5b5bc",
+          "#d6d6da",
+          "#ececee",
+          "#ffffff"
+        ]
+      },
+      "pista": {
+        "role": "neutral",
+        "displayName": "Preto profundo",
+        "canonical": "#0a0a0b",
+        "tonalRamp": [
+          "#0a0a0b",
+          "#141417",
+          "#1c1c20",
+          "#2e2e33",
+          "#52525b",
+          "#83838c",
+          "#c4c4c9",
+          "#f5f5f4"
+        ]
+      },
+      "papel-suave": {
+        "role": "neutral",
+        "displayName": "Papel suave",
+        "canonical": "#f3f3f1",
+        "tonalRamp": [
+          "#1c1c20",
+          "#2e2e33",
+          "#4a4a51",
+          "#6e6e76",
+          "#9a9aa1",
+          "#c4c4c9",
+          "#e5e5e1",
           "#f3f3f1"
         ]
       },
-      "volt": {
-        "canonical": "#d8ff00",
-        "displayName": "Volt",
-        "role": "primary",
+      "texto-secundario": {
+        "role": "neutral",
+        "displayName": "Cinza secundário",
+        "canonical": "#63636b",
         "tonalRamp": [
-          "#2a3300",
-          "#4d5c00",
-          "#758a00",
-          "#a3bd00",
-          "#d8ff00",
-          "#e4ff4d",
-          "#f0ff99",
-          "#faffcc"
+          "#26262b",
+          "#3a3a40",
+          "#4a4a51",
+          "#63636b",
+          "#83838c",
+          "#a3a3ab",
+          "#c4c4c9",
+          "#e5e5e1"
+        ]
+      },
+      "linha": {
+        "role": "neutral",
+        "displayName": "Linha cabelo",
+        "canonical": "#e5e5e1",
+        "tonalRamp": [
+          "#26262b",
+          "#3a3a40",
+          "#55555c",
+          "#83838c",
+          "#b5b5bc",
+          "#d6d6da",
+          "#e5e5e1",
+          "#f3f3f1"
+        ]
+      },
+      "exito": {
+        "role": "tertiary",
+        "displayName": "Êxito verde",
+        "canonical": "#12805c",
+        "tonalRamp": [
+          "#073526",
+          "#0a4a35",
+          "#0e6346",
+          "#12805c",
+          "#2a9a74",
+          "#54b893",
+          "#8ed4b8",
+          "#def5e9"
+        ]
+      },
+      "alerta": {
+        "role": "tertiary",
+        "displayName": "Alerta âmbar",
+        "canonical": "#9a6200",
+        "tonalRamp": [
+          "#3a2700",
+          "#5c3f00",
+          "#7a5200",
+          "#9a6200",
+          "#b57e1f",
+          "#d29c42",
+          "#e5bd7d",
+          "#fdeecd"
+        ]
+      },
+      "perigo": {
+        "role": "tertiary",
+        "displayName": "Perigo vermelho",
+        "canonical": "#d92d20",
+        "tonalRamp": [
+          "#4a0e08",
+          "#6e130c",
+          "#931a10",
+          "#d92d20",
+          "#e0574b",
+          "#ea847b",
+          "#f2b1ab",
+          "#fde4e2"
         ]
       }
     },
-    "motion": [
-      {
-        "name": "press-tatil",
-        "purpose": "Resposta física ao toque em botões e ações.",
-        "value": "transform scale(0.98) + transition-colors 0.15s"
-      },
-      {
-        "name": "dialogo-entrada",
-        "purpose": "Entrada de diálogo com fade e zoom sutis.",
-        "value": "duration 200ms, fade + zoom 95-100"
-      },
-      {
-        "name": "skeleton-pulso",
-        "purpose": "Pulsação honesta durante carregamento por seção.",
-        "value": "animate-pulse sobre papel suave"
-      }
-    ],
-    "shadows": [
-      {
-        "name": "repouso-cartao",
-        "purpose": "Elevação mínima do cartão sobre o fundo.",
-        "value": "shadow-sm (Tailwind)"
-      },
-      {
-        "name": "marca-3d",
-        "purpose": "Marca volt do header com camadas de offset, blur e highlights inset.",
-        "value": "0 1px 2px rgb(0 0 0/0.25), 0 8px 20px -6px rgb(0 0 0/0.4), inset 0 1px 1px rgb(255 255 255/0.3), inset 0 -3px 6px rgb(0 0 0/0.28)"
-      },
-      {
-        "name": "dialogo",
-        "purpose": "Única elevação alta, sempre modal com overlay.",
-        "value": "shadow-lg + bg-black/60 (Tailwind)"
-      }
-    ],
     "typographyMeta": {
-      "body": { "displayName": "Body", "purpose": "Descrições e metadados em 14px direto." },
       "display": {
         "displayName": "Display",
-        "purpose": "Título da página em Barlow Condensed caixa alta, um por tela."
+        "purpose": "Título da página, um por tela."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Título de cartão de sessão em caixa alta."
+        "purpose": "Título de cartão de sessão e de diálogo."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descrições, metadados e texto de diálogo."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Badges, abas e navegação em condensado caixa alta."
+        "purpose": "Badges, navegação inferior e micro-rótulos em caixa normal."
       }
-    }
-  },
-  "generatedAt": "2026-09-21T12:00:00.000Z",
-  "narrative": {
-    "dos": [
-      "Do abrir toda tela com PageHeader: um display, meta atlética, ações à direita.",
-      "Do reservar o volt/acento para ativo, selecionado e foco.",
-      "Do usar uma única gramática de pílulas para abas, filtros e ordenações.",
-      "Do tokenizar todo estado (êxito, alerta, perigo + suaves).",
-      "Do responder ao toque com active:scale-[0.98] em botões e ações.",
-      "Do preservar faixas TheocBase, layout de impressão e conteúdo real como verdade de domínio."
+    },
+    "shadows": [
+      {
+        "name": "rest-minimo",
+        "value": "0 1px 2px rgb(0 0 0 / 0.05)",
+        "purpose": "Repouso de cartões e pastilhas."
+      },
+      {
+        "name": "dialogo-alto",
+        "value": "0 16px 48px -12px rgb(0 0 0 / 0.35)",
+        "purpose": "Modal sobre overlay escuro."
+      },
+      {
+        "name": "marca-suave",
+        "value": "0 8px 24px -8px rgb(0 0 0 / 0.35)",
+        "purpose": "Marca do header e emblema da landing: elevação única e difusa."
+      },
+      {
+        "name": "login-destaque",
+        "value": "0 12px 32px -12px rgb(0 0 0 / 0.45)",
+        "purpose": "Botão de login da landing."
+      }
     ],
-    "donts": [
-      "Don't usar gradientes de texto, brilhos coloridos ou sombras coloridas.",
-      "Don't pintar grandes superfícies de volt.",
-      "Don't criar cores de acento fora do volt/acento e dos semáforos.",
-      "Don't misturar gramáticas de aba.",
-      "Don't bloquear o shell esperando dados.",
-      "Don't gamificar: sem pontos, competição ou hype.",
-      "Don't inventar conteúdo de programa, depoimentos ou estatísticas."
+    "motion": [
+      {
+        "name": "home-rise",
+        "value": "home-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards",
+        "purpose": "Entrada única da home: opacity + translateY(14px), uma vez, com fill backwards."
+      },
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Transições de estado (cor, disclosure do chevron 300ms)."
+      }
     ],
-    "keyCharacteristics": [
-      "Atlético e legível, nunca administrativo e frio.",
-      "Display condensado em caixa alta; corpo direto e hospitaleiro.",
-      "Volt como sinal, nunca como decoração.",
-      "Mobile-first com sensação nativa, expansível para tablet e desktop."
-    ],
-    "northStar": "Semana de Treino",
-    "overview": "A semana de reuniões programada como uma semana de treino: cada reunião é uma sessão com hora, elenco e partes, legível de relance como um plano de corrida. Títulos condensados em caixa alta marcam o ritmo; o volt elétrico marca só o que está ativo, selecionado ou em foco. Energia atlética nos números e nos cabeçalhos, hospitalidade nos textos — sem gamificação, sem competição, sem hype. Densidade confortável para operar com uma mão: shell estreito centrado, cartões de sessão, abas em pílula com uma única gramática e esqueletos honestos por seção.",
-    "rules": [
+    "breakpoints": [
       {
-        "body": "O volt aparece em ≤10% de qualquer tela, somente em ativo, selecionado ou foco. Sua raridade é o ponto.",
-        "name": "The Volt com Moderação Rule",
-        "section": "colors"
+        "name": "sm",
+        "value": "640px"
       },
       {
-        "body": "Fundos são papel/pista ou superfícies suaves; tinta e volt carregam texto e ação, nunca grandes áreas decorativas.",
-        "name": "The Papel Primeiro Rule",
-        "section": "colors"
-      },
-      {
-        "body": "Um único display por tela; todo o resto desce para headline, body ou label.",
-        "name": "The Um Display Rule",
-        "section": "typography"
-      },
-      {
-        "body": "Caixa alta é reservada ao display e aos rótulos atléticos; corpo e descrições nunca gritam.",
-        "name": "The Caixa Alta com patente Rule",
-        "section": "typography"
-      },
-      {
-        "body": "Superfícies em repouso são planas ou tonais; sombra entra como resposta a elevação, hover ou foco.",
-        "name": "The Sombra É Estado Rule",
-        "section": "elevation"
+        "name": "lg",
+        "value": "1024px"
       }
     ]
   },
-  "schemaVersion": 2,
-  "title": "Design System: Reuniones"
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal: retângulo azul preciso, texto em caixa normal, sem resposta tátil.",
+      "html": "<button class='ds-btn-primary'>Guardar cambios</button>",
+      "css": ".ds-btn-primary { background: #1c69d4; color: #ffffff; padding: 0 20px; height: 44px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: background-color 0.2s; } .ds-btn-primary:hover { background: #185bb4; } .ds-btn-primary:focus-visible { outline: 2px solid #1c69d4; outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.5; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Ação secundária sobre superfície suave.",
+      "html": "<button class='ds-btn-secondary'>Descartar</button>",
+      "css": ".ds-btn-secondary { background: #f3f3f1; color: #17171a; padding: 0 20px; height: 44px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; transition: background-color 0.2s; } .ds-btn-secondary:hover { background: #e7e7e3; } .ds-btn-secondary:focus-visible { outline: 2px solid #1c69d4; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Campo de 44px sobre superfície suave; foco migra a borda para o azul.",
+      "html": "<input class='ds-input' placeholder='Buscar por número o tema' aria-label='Buscar por número o tema' />",
+      "css": ".ds-input { background: #f3f3f1; color: #111113; height: 44px; border: 1px solid transparent; border-radius: 8px; padding: 0 12px; font-size: 0.875rem; width: 100%; outline: none; } .ds-input:focus { border-color: #1c69d4; background: #ffffff; } .ds-input::placeholder { color: #63636b; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-estado",
+      "description": "Estado compacto em azul; variante suave sobre papel-suave.",
+      "html": "<span class='ds-badge'>Próxima</span>",
+      "css": ".ds-badge { background: #1c69d4; color: #ffffff; border-radius: 8px; padding: 2px 10px; font-size: 0.75rem; font-weight: 500; display: inline-flex; align-items: center; }"
+    },
+    {
+      "name": "Session Card",
+      "kind": "card",
+      "refersTo": "card-sessao",
+      "description": "Cartão de sessão: 16px, borda de linha, sombra mínima de repouso.",
+      "html": "<div class='ds-card'><strong>Reunión de entre semana</strong><p>jueves 24 · 19:30 · 9/14 asignadas</p></div>",
+      "css": ".ds-card { background: #ffffff; color: #111113; border: 1px solid #e5e5e1; border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "nav",
+      "refersTo": "controle-segmentado",
+      "description": "Controle segmentado único para abas, filtros e ordenações.",
+      "html": "<div class='ds-segmented'><button aria-pressed='true'>Entre semana</button><button aria-pressed='false'>Fin de semana</button></div>",
+      "css": ".ds-segmented { background: #f3f3f1; border-radius: 12px; padding: 4px; display: flex; gap: 4px; } .ds-segmented button { flex: 1; height: 32px; border: none; border-radius: 8px; background: transparent; color: #63636b; font-size: 0.875rem; font-weight: 500; } .ds-segmented button[aria-pressed='true'] { background: #ffffff; color: #111113; box-shadow: 0 1px 2px rgb(0 0 0 / 0.08); }"
+    },
+    {
+      "name": "Bottom Nav Item",
+      "kind": "nav",
+      "description": "Navegação inferior por ícones com rótulo pequeno; ativo em azul translúcido.",
+      "html": "<a class='ds-nav-item' aria-current='page' href='/reuniones'><span class='ds-nav-icon'><svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4H6.5A2.5 2.5 0 0 0 4 6.5v13z'/><path d='M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5'/></svg></span>Reuniones</a>",
+      "css": ".ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; font-size: 0.75rem; font-weight: 500; color: #63636b; text-decoration: none; } .ds-nav-item .ds-nav-icon { display: grid; place-items: center; padding: 8px; border-radius: 12px; } .ds-nav-item[aria-current='page'] { color: #1c69d4; } .ds-nav-item[aria-current='page'] .ds-nav-icon { background: rgb(28 105 212 / 0.1); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Status do veículo",
+    "overview": "A semana de reuniões tratada como o painel de status de um veículo premium: cada reunião é um cartão de status com hora, elenco e partes, legível com calma e precisão. Títulos em sans nativa sem caixa alta marcam presença sem gritar; o azul funcional marca só ação, seleção e foco. Hospitalidade contida nos textos, precisão alemã nos números — sem gamificação, sem competição, sem hype. Densidade confortável para operar com uma mão: shell estreito centrado, cartões de sessão, controle segmentado único e esqueletos honestos por seção. A verdade do programa continua intocável — data, conteúdo e designado primeiro.",
+    "keyCharacteristics": [
+      "Premium e contido, nunca administrativo e frio, nunca esportivo e alto.",
+      "Sans nativa em caixa normal; corpo direto e hospitaleiro.",
+      "Azul como função, nunca como decoração.",
+      "Mobile-first com sensação nativa, expansível para tablet e desktop."
+    ],
+    "rules": [
+      {
+        "name": "The Azul com Função Rule",
+        "body": "O azul aparece em ação, seleção, link e foco. Sua contenção é o ponto.",
+        "section": "colors"
+      },
+      {
+        "name": "The Neutro Primeiro Rule",
+        "body": "Fundos são neutros; cor carrega significado, nunca decoração.",
+        "section": "colors"
+      },
+      {
+        "name": "The Um Display Rule",
+        "body": "Um único display por tela; todo o resto desce para headline, body ou label.",
+        "section": "typography"
+      },
+      {
+        "name": "The Caixa Normal Rule",
+        "body": "Caixa alta não existe no sistema; ênfase vem de peso e tamanho.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sombra É Estado Rule",
+        "body": "Superfícies em repouso são planas ou tonais; sombra entra como resposta a elevação, hover ou foco.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do abrir toda tela com PageHeader: um display, meta, ações à direita.",
+      "Do reservar o azul para ação, seleção, link e foco.",
+      "Do usar controle segmentado único para abas, filtros e ordenações.",
+      "Do tokenizar todo estado (êxito, alerta, perigo + suaves); nada de literais fora do sistema.",
+      "Do preservar seções TheocBase, layout de impressão e conteúdo real como verdade de domínio."
+    ],
+    "donts": [
+      "Don't usar gradientes de texto, brilhos coloridos ou sombras coloridas.",
+      "Don't usar caixa alta — o sistema fala em caixa normal.",
+      "Don't criar cores de acento fora do azul e dos semáforos.",
+      "Don't misturar gramáticas de seleção (segmentado é o padrão; texto com indicador no sub-nível).",
+      "Don't bloquear o shell esperando dados; cada seção tem seu Suspense e fallback.",
+      "Don't gamificar: sem pontos, competição ou hype — precisão calma, não jogo.",
+      "Don't inventar conteúdo de programa, depoimentos ou estatísticas."
+    ]
+  }
 }
