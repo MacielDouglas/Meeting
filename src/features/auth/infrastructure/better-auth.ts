@@ -1,5 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { organization } from "better-auth/plugins";
+import {
+  invitations,
+  members,
+  organizations,
+} from "@/features/auth/infrastructure/organization-schema";
 import {
   accounts,
   sessions,
@@ -22,8 +28,15 @@ function createAuth() {
         session: sessions,
         account: accounts,
         verification: verifications,
+        organization: organizations,
+        member: members,
+        invitation: invitations,
       },
     }),
+    plugins: [
+      // Organização = congregação (roles owner/admin/member, mesmos do app).
+      organization(),
+    ],
     socialProviders: {
       google: {
         clientId: env.GOOGLE_CLIENT_ID,

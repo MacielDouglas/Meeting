@@ -1,0 +1,11 @@
+CREATE TABLE "organization" ("id" text PRIMARY KEY NOT NULL,"name" text NOT NULL,"slug" text,"logo" text,"metadata" text,"created_at" timestamp DEFAULT now() NOT NULL);--> statement-breakpoint
+CREATE UNIQUE INDEX "organization_slug_unique" ON "organization" USING btree ("slug");--> statement-breakpoint
+CREATE TABLE "member" ("id" text PRIMARY KEY NOT NULL,"organization_id" text NOT NULL,"user_id" text NOT NULL,"role" text DEFAULT 'member' NOT NULL,"created_at" timestamp DEFAULT now() NOT NULL);--> statement-breakpoint
+ALTER TABLE "member" ADD CONSTRAINT "member_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "member" ADD CONSTRAINT "member_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE TABLE "invitation" ("id" text PRIMARY KEY NOT NULL,"organization_id" text NOT NULL,"email" text NOT NULL,"role" text,"status" text DEFAULT 'pending' NOT NULL,"expires_at" timestamp NOT NULL,"inviter_id" text NOT NULL,"created_at" timestamp DEFAULT now() NOT NULL);--> statement-breakpoint
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviter_id_users_id_fk" FOREIGN KEY ("inviter_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE TABLE "join_token" ("id" text PRIMARY KEY NOT NULL,"code" text NOT NULL,"user_id" text NOT NULL,"used_at" timestamp,"expires_at" timestamp NOT NULL,"created_at" timestamp DEFAULT now() NOT NULL,CONSTRAINT "join_token_code_unique" UNIQUE("code"));--> statement-breakpoint
+ALTER TABLE "join_token" ADD CONSTRAINT "join_token_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sessions" ADD COLUMN "active_organization_id" text;--> statement-breakpoint
