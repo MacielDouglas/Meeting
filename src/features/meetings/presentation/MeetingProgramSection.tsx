@@ -695,7 +695,7 @@ export function MeetingProgramSection({
   }, [displayPartsWithSections, partDisplay, canManage, programId, kind]);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="section-stack">
       <fieldset className="flex rounded-xl bg-secondary p-1">
         <legend className="sr-only">{es.tipoReunion}</legend>
         {(
@@ -729,7 +729,7 @@ export function MeetingProgramSection({
         >
           <FaChevronLeft size={16} />
         </button>
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1 py-1">
           <p className="truncate font-display text-2xl font-semibold leading-none tracking-tight">
             {formatWeekRange(weekStart)}
           </p>
@@ -802,7 +802,7 @@ export function MeetingProgramSection({
         </Card>
       ) : (
         <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
-          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-2 border-b border-session-line bg-session px-0 py-2">
+          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-3 border-b border-session-line bg-session px-0 py-3">
             <p className="text-sm font-medium text-session-mute">
               {meetingDayName} · {meetingTitle}
             </p>
@@ -891,7 +891,7 @@ export function MeetingProgramSection({
               return (
                 <div key={`${part.startTime}-${part.title}-${part.id}`}>
                   {part.showSection && (
-                    <div className={`flex items-center gap-3 py-3 ${index === 0 ? "" : "mt-2"}`}>
+                    <div className={`flex items-center gap-3 py-4 ${index === 0 ? "" : "mt-1"}`}>
                       <span
                         className="section-emblem grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
                         style={{ backgroundColor: meta.color }}
@@ -936,7 +936,7 @@ export function MeetingProgramSection({
       )}
 
       {canManage && dirtyCount > 0 && (
-        <div className="fixed inset-x-0 bottom-[76px] z-30 mx-auto w-full max-w-md px-4 sm:max-w-xl">
+        <div className="fixed inset-x-0 bottom-[84px] z-30 mx-auto w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
           <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
             <p className="truncate text-sm">
               <span className="font-semibold">

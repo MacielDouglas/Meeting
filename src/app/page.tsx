@@ -42,13 +42,15 @@ const HIGHLIGHTS = [
 /** Landing pública: sem chrome, sem programa — marca, explicação e login. */
 function PublicLanding() {
   return (
-    <main className="mx-auto flex min-h-[85dvh] w-full max-w-md flex-col items-center justify-center gap-6 px-6 py-16 text-center">
-      <span className="grid h-24 w-24 place-items-center rounded-[28px] bg-accent text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards]">
-        <FaMeetup aria-hidden size={56} />
+    <main className="mx-auto flex min-h-[80dvh] w-full max-w-md flex-col items-center justify-center gap-5 px-2 py-12 text-center sm:py-16">
+      <span className="grid h-20 w-20 place-items-center rounded-[24px] bg-accent text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards]">
+        <FaMeetup aria-hidden size={48} />
       </span>
-      <div className="flex flex-col gap-2 motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:60ms]">
-        <h1 className="font-display text-6xl font-semibold leading-none tracking-tight">Meeting</h1>
-        <p className="font-display text-lg font-medium text-muted-foreground">
+      <div className="flex flex-col motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:60ms]">
+        <h1 className="text-balance font-display text-5xl font-semibold leading-none tracking-tight">
+          Meeting
+        </h1>
+        <p className="mt-2 font-display text-lg font-medium text-muted-foreground">
           {es.appDescription}
         </p>
       </div>
@@ -66,7 +68,9 @@ function PublicLanding() {
           </li>
         ))}
       </ul>
-      <GoogleLoginButton className="motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:180ms]" />
+      <div className="mt-1 w-full motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:180ms]">
+        <GoogleLoginButton />
+      </div>
     </main>
   );
 }
@@ -77,7 +81,7 @@ export default async function HomePage() {
   if (!user) return <PublicLanding />;
 
   return (
-    <main className="flex flex-col gap-4">
+    <main className="page-stack">
       <PageHeader
         title={es.appName}
         description={es.appDescription}
@@ -86,7 +90,13 @@ export default async function HomePage() {
 
       <ScheduleCacheWriter schedule={schedule} />
 
-      <div className="flex flex-col gap-2">
+      <Suspense fallback={<WeekCardsSkeleton />}>
+        <MyWeekLoader
+          userId={user.id}
+          canLinkAccount={user.role === "owner" || user.role === "admin"}
+        />
+      </Suspense>
+      <div className="tight-stack">
         <Link
           href="/reunioes"
           className="flex h-11 items-center justify-center rounded-xl bg-accent px-3 text-center font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -95,17 +105,11 @@ export default async function HomePage() {
         </Link>
         <Link
           href="/designacoes"
-          className="flex h-11 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="flex h-11 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {es.tabDesignaciones}
         </Link>
       </div>
-      <Suspense fallback={<WeekCardsSkeleton />}>
-        <MyWeekLoader
-          userId={user.id}
-          canLinkAccount={user.role === "owner" || user.role === "admin"}
-        />
-      </Suspense>
     </main>
   );
 }

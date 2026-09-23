@@ -1,9 +1,9 @@
-import { FormSkeleton } from "@/shared/components/skeletons";
+import { FormSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
 
 export default function NuevaPersonaLoading() {
   return (
-    <main className="flex flex-col gap-4" aria-busy="true" aria-label="Cargando nueva persona">
-      <div aria-hidden className="h-7 w-40 animate-pulse rounded-lg bg-secondary" />
+    <main className="page-stack" aria-busy="true" aria-label="Cargando nueva persona">
+      <PageHeaderSkeleton lines={1} />
       <FormSkeleton fields={6} />
     </main>
   );

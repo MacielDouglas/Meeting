@@ -12,10 +12,16 @@ async function BottomNavData() {
 function BottomNavFallback() {
   return (
     <div aria-hidden className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background">
-      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-2">
-        <div className="h-14 flex-1 animate-pulse" />
-        <div className="h-14 flex-1 animate-pulse" />
-        <div className="h-14 flex-1 animate-pulse" />
+      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
+        <div className="flex h-14 flex-1 flex-col items-center gap-1 py-2">
+          <div className="h-9 w-12 animate-pulse rounded-xl bg-secondary" />
+        </div>
+        <div className="flex h-14 flex-1 flex-col items-center gap-1 py-2">
+          <div className="h-9 w-12 animate-pulse rounded-xl bg-secondary" />
+        </div>
+        <div className="flex h-14 flex-1 flex-col items-center gap-1 py-2">
+          <div className="h-9 w-12 animate-pulse rounded-xl bg-secondary" />
+        </div>
       </div>
     </div>
   );

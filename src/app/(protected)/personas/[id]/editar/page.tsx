@@ -76,7 +76,7 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
   };
 
   return (
-    <main className="flex flex-col gap-4">
+    <main className="page-stack">
       <PageHeader
         title={getFullName(person)}
         actions={

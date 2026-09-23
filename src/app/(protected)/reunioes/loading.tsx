@@ -2,7 +2,7 @@ import { PageHeaderSkeleton, TableSkeleton, TabNavSkeleton } from "@/shared/comp
 
 export default function ReunioesLoading() {
   return (
-    <main className="flex flex-col gap-4 pb-10" aria-busy="true" aria-label="Cargando reuniones">
+    <main className="page-stack" aria-busy="true" aria-label="Cargando reuniones">
       <PageHeaderSkeleton />
       <TabNavSkeleton tabs={3} />
       <TableSkeleton rows={6} />

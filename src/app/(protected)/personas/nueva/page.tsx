@@ -21,7 +21,7 @@ export default async function NewPersonPage() {
   ]);
 
   return (
-    <main className="flex flex-col gap-4">
+    <main className="page-stack">
       <PageHeader
         title={es.newPerson}
         actions={

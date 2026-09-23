@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/features/auth/application/session";
 import { listPersons, listUsersWithRoles } from "@/features/people/application/queries";
 import { PersonasTabs } from "@/features/people/presentation/PersonasTabs-client";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -24,17 +25,10 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   ]);
 
   return (
-    <main className="flex flex-col gap-4">
+    <main className="page-stack">
       <PageHeader title={es.people} />
 
-      <Suspense
-        fallback={
-          <div className="flex gap-1 rounded-xl bg-secondary p-1" aria-hidden>
-            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
-            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
-          </div>
-        }
-      >
+      <Suspense fallback={<TabNavSkeleton tabs={2} />}>
         <TabNav
           param="tab"
           defaultValue="personas"

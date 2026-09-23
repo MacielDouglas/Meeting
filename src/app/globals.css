@@ -183,17 +183,39 @@ body {
   min-height: 100dvh;
   width: 100%;
   max-width: 28rem;
-  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  padding: 1.25rem 1rem calc(6rem + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 640px) {
   .app-shell {
     max-width: 42rem;
+    padding-top: 1.5rem;
   }
 }
 
 @media (min-width: 1024px) {
   .app-shell {
     max-width: 56rem;
+    padding-top: 2rem;
   }
+}
+
+/* Ritmo vertical padrão das páginas: generoso entre grupos, tight dentro.
+   Uso: <main class="page-stack"> com seções em .section-stack e linhas em .tight-stack. */
+.page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tight-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }

@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Aplica o tema salvo antes da primeira pintura (evita flash claro/escuro). */}
         <script src="/theme-init.js" />
         <QueryProvider>
-          <div className="app-shell flex flex-col gap-3 pb-20">
+          <div className="app-shell flex flex-col gap-6">
             <Suspense fallback={null}>
               <OnlineStatus />
             </Suspense>

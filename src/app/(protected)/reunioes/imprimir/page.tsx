@@ -49,7 +49,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
   if (params.view === "slips") {
     const speakers = await listOutsideSpeakers();
     return (
-      <main className="flex flex-col gap-4 pb-10">
+      <main className="page-stack">
         <div className="print:hidden">
           <PageHeader
             title="Fichas de oradores"
@@ -116,7 +116,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
   }
 
   return (
-    <main className="flex flex-col gap-4 pb-10">
+    <main className="page-stack">
       <div className="print:hidden">
         <PageHeader
           title="Impressão do programa"

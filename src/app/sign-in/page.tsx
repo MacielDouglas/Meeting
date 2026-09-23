@@ -6,15 +6,17 @@ import { es } from "@/shared/i18n/es";
 
 export default function SignInPage() {
   return (
-    <main className="flex flex-1 flex-col justify-center gap-4">
-      <Card className="flex flex-col gap-3">
-        <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
-          {es.signInTitle}
-        </CardTitle>
-        <CardDescription>{es.signInDescription}</CardDescription>
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 py-8">
+      <Card className="flex flex-col gap-4 p-6">
+        <div className="flex flex-col">
+          <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
+            {es.signInTitle}
+          </CardTitle>
+          <CardDescription className="mt-1.5">{es.signInDescription}</CardDescription>
+        </div>
         <SignInButton />
       </Card>
-      <Link href="/">
+      <Link href="/" className="self-start">
         <Button variant="ghost">{es.backToHome}</Button>
       </Link>
     </main>

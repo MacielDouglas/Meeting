@@ -12,15 +12,20 @@ export default function RootError({
   reset: () => void;
 }) {
   return (
-    <main className="flex flex-1 flex-col justify-center gap-4" role="alert">
-      <Card className="flex flex-col gap-3">
-        <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
-          Algo salió mal
-        </CardTitle>
-        <CardDescription>
-          {error.message || "No fue posible cargar esta página. Inténtalo de nuevo."}
-        </CardDescription>
-        <div className="flex gap-2">
+    <main
+      className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 py-8"
+      role="alert"
+    >
+      <Card className="flex flex-col gap-4 p-6">
+        <div className="flex flex-col">
+          <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
+            Algo salió mal
+          </CardTitle>
+          <CardDescription className="mt-1.5">
+            {error.message || "No fue posible cargar esta página. Inténtalo de nuevo."}
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
           <Button onClick={reset}>Reintentar</Button>
           <Link href="/">
             <Button variant="outline">Volver al inicio</Button>

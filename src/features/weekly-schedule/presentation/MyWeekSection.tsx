@@ -43,7 +43,7 @@ function PartNames({
 /** Data, hora e local com rótulos para leitor de tela. */
 function MeetingMeta({ meeting }: { meeting: MyWeekMeeting }) {
   return (
-    <ul className="mt-1 flex flex-col gap-1 text-sm text-muted-foreground">
+    <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground">
       <li className="flex items-center gap-2">
         <FaCalendarDay aria-hidden />
         <span>
@@ -78,10 +78,10 @@ function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
   const hasParts = groups.length > 0;
   const hasCleaning = meeting.cleaning.length > 0;
   if (!hasParts && !hasCleaning) {
-    return <p className="mt-3 text-sm text-muted-foreground">{assignmentSummary(0, 0)}</p>;
+    return <p className="mt-4 text-sm text-muted-foreground">{assignmentSummary(0, 0)}</p>;
   }
   return (
-    <div className="mt-3 flex flex-col gap-3">
+    <div className="mt-4 flex flex-col gap-4">
       {hasParts && (
         <section aria-label="Mis partes">
           {groups.map((group) => (
@@ -175,10 +175,10 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
   const isMatchDay = daysUntil(meeting.date, today) === 0;
 
   return (
-    <Card className={cn("p-4", meeting.isNext && "ring-2 ring-accent")}>
+    <Card className={cn("p-4 sm:p-5", meeting.isNext && "ring-2 ring-accent")}>
       <div
         className={cn(
-          "flex flex-col gap-1 rounded-xl px-3 py-2.5 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
+          "flex flex-col gap-1.5 rounded-xl px-3 py-3 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
           isMatchDay ? "bg-accent text-accent-ink" : "bg-secondary",
         )}
       >
@@ -219,7 +219,7 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
     myWeek.meetings.every((meeting) => meeting.parts.length === 0 && meeting.cleaning.length === 0);
   const venue = myWeek.meetings[0]?.location || "el Salón";
   return (
-    <section aria-label="Mi semana" className="flex flex-col gap-3">
+    <section aria-label="Mi semana" className="section-stack">
       {myWeek.personName ? (
         <p className="text-sm text-muted-foreground">
           Eres <span className="font-medium text-foreground">{myWeek.personName}</span>

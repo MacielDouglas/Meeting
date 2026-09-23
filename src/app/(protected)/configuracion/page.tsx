@@ -10,6 +10,7 @@ import {
 } from "@/features/settings/application/queries";
 import { ConfiguracionTabs } from "@/features/settings/presentation/ConfiguracionTabs-client";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -52,18 +53,10 @@ export default async function ConfiguracionPage({
   ]);
 
   return (
-    <main className="flex flex-col gap-4 pb-10">
+    <main className="page-stack">
       <PageHeader title={es.configuracion} />
 
-      <Suspense
-        fallback={
-          <div className="flex gap-1 rounded-xl bg-secondary p-1" aria-hidden>
-            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
-            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
-            <div className="h-8 flex-1 animate-pulse rounded-lg bg-background" />
-          </div>
-        }
-      >
+      <Suspense fallback={<TabNavSkeleton tabs={3} />}>
         <TabNav
           param="tab"
           defaultValue="reunioes"

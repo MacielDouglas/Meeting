@@ -7,20 +7,26 @@ interface PageHeaderProps {
   actions?: ReactNode;
 }
 
-/** Cabeçalho padrão de todas as telas: display condensado + meta atlética + ações. */
+/** Cabeçalho padrão de todas as telas: display lidera, meta suporta, ações à direita. */
 export function PageHeader({ title, description, meta, actions }: PageHeaderProps) {
   return (
-    <header className="flex items-start justify-between gap-3">
-      <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight">
+    <header className="flex items-start justify-between gap-4 pb-1">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <h1 className="text-balance font-display text-3xl font-semibold leading-tight tracking-tight">
           {title}
         </h1>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {description ? (
+          <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        ) : null}
         {meta ? (
-          <p className="text-sm font-medium tabular-nums text-muted-foreground">{meta}</p>
+          <p className="mt-1.5 text-[13px] font-medium tabular-nums leading-normal text-muted-foreground">
+            {meta}
+          </p>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      {actions ? <div className="flex shrink-0 items-center gap-2 pt-1">{actions}</div> : null}
     </header>
   );
 }

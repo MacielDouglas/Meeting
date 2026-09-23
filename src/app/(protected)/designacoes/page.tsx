@@ -7,6 +7,7 @@ import {
   listSpecialEvents,
 } from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -43,17 +44,10 @@ export default async function DesignacoesPage({
     ]);
 
   return (
-    <main className="flex flex-col gap-4 pb-28">
+    <main className="page-stack">
       <PageHeader title={es.tabDesignaciones} />
 
-      <Suspense
-        fallback={
-          <div className="flex gap-2" aria-hidden>
-            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
-            <div className="h-9 flex-1 animate-pulse rounded-full bg-secondary" />
-          </div>
-        }
-      >
+      <Suspense fallback={<TabNavSkeleton tabs={2} />}>
         <TabNav
           param="secao"
           defaultValue="limpeza"
