@@ -53,8 +53,8 @@ export function BottomNav({ showSettings }: { showSettings: boolean }) {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium",
-                active ? "text-accent" : "text-muted-foreground",
+                "flex flex-1 flex-col items-center gap-1 py-2 text-xs",
+                active ? "font-semibold text-accent" : "font-medium text-muted-foreground",
               )}
             >
               <span

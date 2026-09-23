@@ -219,7 +219,7 @@ function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: strin
         >
           {meeting.title} · {urgencyLabel(meeting.date, today)}
         </h2>
-        <p className="break-words font-display text-2xl font-semibold tabular-nums leading-tight tracking-tight">
+        <p className="break-words font-display text-3xl font-semibold tabular-nums leading-none tracking-tight">
           {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time}
         </p>
         <p

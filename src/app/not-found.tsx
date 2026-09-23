@@ -6,7 +6,7 @@ export default function NotFound() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 py-8">
       <Card className="flex flex-col gap-4 p-6">
-        <CardTitle className="font-display text-3xl font-semibold leading-tight tracking-tight">
+        <CardTitle className="font-display text-4xl font-semibold leading-[1.1] tracking-tight">
           Página no encontrada
         </CardTitle>
         <CardDescription>La página que buscas no existe o fue movida.</CardDescription>

@@ -899,7 +899,7 @@ export function MeetingProgramSection({
                         <SectionIcon aria-hidden size={30} />
                       </span>
                       <span
-                        className="font-display text-xl font-semibold leading-tight tracking-tight"
+                        className="font-display text-2xl font-semibold leading-tight tracking-tight"
                         style={{ color: meta.color }}
                       >
                         {meta.label}

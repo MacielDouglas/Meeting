@@ -36,10 +36,10 @@ export function TabNav({ items, param = "tab", defaultValue, ariaLabel }: TabNav
             prefetch
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "h-8 flex-1 rounded-lg px-3 text-center font-display text-sm font-medium leading-8 transition-colors",
+              "h-8 flex-1 rounded-lg px-3 text-center font-display text-sm leading-8 transition-colors",
               isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
+                ? "bg-background font-semibold text-foreground shadow-sm"
+                : "font-medium text-muted-foreground hover:text-foreground",
             )}
           >
             {item.label}

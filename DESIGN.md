@@ -24,9 +24,9 @@ colors:
 typography:
   display:
     fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
-    fontSize: "1.875rem"
+    fontSize: "2.25rem"
     fontWeight: 600
-    lineHeight: 1.25
+    lineHeight: 1.1
     letterSpacing: "-0.01em"
   headline:
     fontFamily: "ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif"
@@ -146,10 +146,11 @@ Branco e tinta no claro; preto profundo no escuro. Um único azul funcional, com
 **Character:** Sans leve e precisa em caixa normal para tudo; corpo pequeno e direto para operar.
 
 ### Hierarchy
-- **Display** (600, 1.875rem / text-3xl, 1.25, tracking -0.01em): título da página, um por tela (`PageHeader`).
+- **Display** (600, 2.25rem / text-4xl, 1.1, tracking -0.01em): título da página, um por tela (`PageHeader`); herói da landing chega a text-5xl/sm:text-6xl.
 - **Headline** (600, 1.25rem / text-xl, 1.3, tracking -0.01em): título de cartão de sessão e de diálogo.
 - **Body** (400, 0.875rem / text-sm, 1.5): descrições, metadados, texto de diálogo.
-- **Label** (500, 0.75rem / text-xs, 1.4): badges, navegação inferior, micro-rótulos e metas de seção.
+- **Label** (500–600, 0.75rem / text-xs, 1.4): badges, navegação inferior, micro-rótulos e metas de seção; seleção ativa pesa 600.
+- **Meta** (500, 13px tabular): linha de intervalo de datas do `PageHeader`, um degrau intencional entre label e body.
 
 ### Named Rules
 **The Um Display Rule.** Um único display por tela; todo o resto desce para headline, body ou label.
@@ -176,7 +177,7 @@ Ações são retângulos precisos, superfícies são cartões. Botões e control
 
 ### Buttons
 Precisos e quietos: retângulos exatos em caixa normal, sem resposta tátil.
-- **Shape:** cantos de 12–14px, altura 44px (36px no sm, 48px no lg).
+- **Shape:** cantos de 12–14px, altura 44px (36px no sm, 48px no lg); o CTA primário da página lidera em 48px com texto base em semibold.
 - **Primary:** acento sobre tinta de acento.
 - **Hover / Focus:** transição de cor, foco visível com outline duplo deslocado.
 - **Secondary / Ghost / Tertiary:** secundário em papel suave; outline com borda de linha; ghost só texto.
