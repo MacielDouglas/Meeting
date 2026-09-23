@@ -128,8 +128,12 @@ export async function generateDutyRoster(
     return { ok: false, error: "No hay días de reunión en el período elegido." };
   }
 
-  // Conflitos: quem serve no programa sai do sorteio da data (manual libera).
+  // Conflitos por parte do programa (manual libera):
+  // - presidente (entre semana): fora de tudo na data;
+  // - dirigente + leitor do estudo (entre semana: estudo bíblico; fim de
+  //   semana: Atalaya): fora só do microfone volante.
   const excludedByDate = new Map<string, Set<string>>();
+  const micExcludedByDate = new Map<string, Set<string>>();
   const conflictNamesByDate = new Map<string, string[]>();
   const programMissingDates: string[] = [];
   const weeks = [...new Set(meetingDays.map((d) => mondayOfISO(d.date)))];
@@ -144,17 +148,28 @@ export async function generateDutyRoster(
         programMissingDates.push(day.date);
         continue;
       }
-      const ids = new Set<string>();
-      const names: string[] = [];
+      const studyKey = day.kind === "midweek" ? "congregation-study" : "watchtower-study";
+      const all = new Set<string>();
+      const micOnly = new Set<string>();
+      const namesById = new Map<string, string>();
       for (const assignment of program.assignments) {
-        for (const personId of [assignment.personId, assignment.helperPersonId]) {
-          if (personId) ids.add(personId);
+        const people: [string | null, string][] = [
+          [assignment.personId, assignment.personName],
+          [assignment.helperPersonId, assignment.helperPersonName],
+        ];
+        for (const [id, name] of people) {
+          if (!id) continue;
+          if (name) namesById.set(id, name);
+          if (assignment.partKey === "president" && day.kind === "midweek") all.add(id);
+          else if (assignment.partKey === studyKey) micOnly.add(id);
         }
-        if (assignment.personName) names.push(assignment.personName);
-        if (assignment.helperPersonName) names.push(assignment.helperPersonName);
       }
-      excludedByDate.set(day.date, ids);
-      conflictNamesByDate.set(day.date, [...new Set(names)]);
+      excludedByDate.set(day.date, all);
+      micExcludedByDate.set(day.date, micOnly);
+      conflictNamesByDate.set(
+        day.date,
+        [...all, ...micOnly].map((id) => namesById.get(id) ?? "").filter(Boolean),
+      );
     }
   }
 
@@ -165,6 +180,7 @@ export async function generateDutyRoster(
     people.map((p) => ({ id: p.id, name: p.name, sex: p.sex, flags: p.flags })),
     history,
     excludedByDate,
+    micExcludedByDate,
   );
 
   const candidatesByDuty = new Map<DutyKey, DutyCandidate[]>();
@@ -182,21 +198,26 @@ export async function generateDutyRoster(
     programMissingDates: [...new Set(programMissingDates)].sort(),
     draft: draft.map((day) => {
       const excluded = excludedByDate.get(day.date) ?? new Set<string>();
+      const micExcluded = micExcludedByDate.get(day.date) ?? new Set<string>();
       return {
         date: day.date,
         kind: day.kind,
         programConflictNames: conflictNamesByDate.get(day.date) ?? [],
-        slots: day.slots.map((slot) => ({
-          dutyKey: slot.dutyKey,
-          dutyName: slot.dutyName,
-          postLabel: slot.postLabel,
-          side: slot.side,
-          personId: slot.personId,
-          candidates: candidatesByDuty.get(slot.dutyKey) ?? [],
-          conflictIds: (candidatesByDuty.get(slot.dutyKey) ?? [])
-            .filter((c) => excluded.has(c.id))
-            .map((c) => c.id),
-        })),
+        slots: day.slots.map((slot) => {
+          const blocked =
+            slot.dutyKey === "microphone" ? new Set([...excluded, ...micExcluded]) : excluded;
+          return {
+            dutyKey: slot.dutyKey,
+            dutyName: slot.dutyName,
+            postLabel: slot.postLabel,
+            side: slot.side,
+            personId: slot.personId,
+            candidates: candidatesByDuty.get(slot.dutyKey) ?? [],
+            conflictIds: (candidatesByDuty.get(slot.dutyKey) ?? [])
+              .filter((c) => blocked.has(c.id))
+              .map((c) => c.id),
+          };
+        }),
       };
     }),
   };

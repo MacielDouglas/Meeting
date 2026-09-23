@@ -65,12 +65,16 @@ export function buildDutySeats(sectors: DutySectorConfig[]): SeatSpec[] {
     const posts = sector.slots.length > 0 ? sector.slots : [sector.name];
     const totalSeats = sector.peopleCount ?? posts.length;
     if (totalSeats <= 0) continue;
+    // Rótulos únicos por data: repetição ganha sufixo ("Microfone", "Microfone 2").
+    const postUsage = new Map<string, number>();
     for (let seat = 0; seat < totalSeats; seat += 1) {
       const post = posts[seat % posts.length] ?? sector.name;
+      const used = postUsage.get(post) ?? 0;
+      postUsage.set(post, used + 1);
       seats.push({
         dutyKey: sector.key,
         dutyName: sector.name,
-        postLabel: post,
+        postLabel: used === 0 ? post : `${post} ${used + 1}`,
         side: sector.key === "usher" ? (seat % 2 === 0 ? "interno" : "externo") : null,
       });
     }
@@ -83,21 +87,41 @@ interface FairnessState {
   lastDate: Map<string, string>;
 }
 
-function pickFair(candidates: DutyPerson[], state: FairnessState): DutyPerson | null {
-  if (candidates.length === 0) return null;
-  const ordered = [...candidates].sort((a, b) => {
-    const totalDiff = (state.totals.get(a.id) ?? 0) - (state.totals.get(b.id) ?? 0);
-    if (totalDiff !== 0) return totalDiff;
-    const lastDiff = (state.lastDate.get(a.id) ?? "").localeCompare(state.lastDate.get(b.id) ?? "");
-    if (lastDiff !== 0) return lastDiff;
-    return a.name.localeCompare(b.name, "es", { sensitivity: "base" });
-  });
-  return ordered[0] ?? null;
+function scoreOf(person: DutyPerson, state: FairnessState): [number, string] {
+  return [state.totals.get(person.id) ?? 0, state.lastDate.get(person.id) ?? ""];
+}
+
+function compareScore(a: [number, string], b: [number, string]): number {
+  if (a[0] !== b[0]) return a[0] - b[0];
+  if (a[1] !== b[1]) return a[1] < b[1] ? -1 : 1;
+  return 0;
 }
 
 /**
- * Monta o rascunho da escala. `excludedByDate` traz quem serve no programa
- * (fora do sorteio da data, liberado na edição manual).
+ * Totais, depois data mais antiga; empate desempatado por sorteio (ordem
+ * alfabética pura gerava a mesma escala a cada geração sem histórico).
+ */
+function pickFair(candidates: DutyPerson[], state: FairnessState): DutyPerson | null {
+  if (candidates.length === 0) return null;
+  let best = candidates[0];
+  if (!best) return null;
+  let tied: DutyPerson[] = [best];
+  for (const candidate of candidates.slice(1)) {
+    const diff = compareScore(scoreOf(candidate, state), scoreOf(best, state));
+    if (diff < 0) {
+      best = candidate;
+      tied = [candidate];
+    } else if (diff === 0) {
+      tied.push(candidate);
+    }
+  }
+  return tied[Math.floor(Math.random() * tied.length)] ?? null;
+}
+
+/**
+ * Monta o rascunho da escala. `excludedByDate` traz quem sai de tudo na data
+ * (presidente); `micExcludedByDate` traz quem sai só do microfone volante
+ * (dirigente + leitor do estudo). Fora do sorteio, liberado na edição manual.
  */
 export function buildDutyRoster(
   dates: DutyDate[],
@@ -105,6 +129,7 @@ export function buildDutyRoster(
   persons: DutyPerson[],
   history: DutyHistoryEntry[],
   excludedByDate: Map<string, Set<string>>,
+  micExcludedByDate: Map<string, Set<string>> = new Map(),
 ): DutyDateDraft[] {
   const state: FairnessState = { totals: new Map(), lastDate: new Map() };
   for (const entry of history) {
@@ -116,15 +141,24 @@ export function buildDutyRoster(
   return dates.map(({ date, kind }) => {
     const seats = buildDutySeats(sectors);
     const excluded = excludedByDate.get(date) ?? new Set<string>();
+    const micExcluded = micExcludedByDate.get(date) ?? new Set<string>();
+    // Acumular no dia só sem alternativa: evita a mesma pessoa em 2 postos.
+    const usedToday = new Set<string>();
     const slots: DutySlotDraft[] = seats.map((seat) => {
-      const candidates = persons.filter(
+      const eligible = persons.filter(
         (person) =>
-          person.sex === "male" && person.flags[seat.dutyKey] === true && !excluded.has(person.id),
+          person.sex === "male" &&
+          person.flags[seat.dutyKey] === true &&
+          !excluded.has(person.id) &&
+          !(seat.dutyKey === "microphone" && micExcluded.has(person.id)),
       );
+      const fresh = eligible.filter((person) => !usedToday.has(person.id));
+      const candidates = fresh.length > 0 ? fresh : eligible;
       const picked = pickFair(candidates, state);
       if (picked) {
         state.totals.set(picked.id, (state.totals.get(picked.id) ?? 0) + 1);
         state.lastDate.set(picked.id, date);
+        usedToday.add(picked.id);
       }
       return {
         dutyKey: seat.dutyKey,
