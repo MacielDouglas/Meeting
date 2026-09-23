@@ -1,4 +1,5 @@
 import { listPersonCleaningInRange } from "@/features/cleaning/application/cleaning-program-queries";
+import { listPersonDutiesInRange } from "@/features/meeting-duties/application/duty-queries";
 import { getMeetingProgram } from "@/features/meetings/application/meeting-queries";
 import { getPersonByUserId } from "@/features/people/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
@@ -24,15 +25,19 @@ export async function getMyWeek(userId: string, reference: Date = new Date()): P
       weekEnd: schedule.weekEnd,
       personName: null,
       isMale: false,
-      meetings: orderMeetings(schedule, null, null, [], "midweek"),
+      meetings: orderMeetings(schedule, null, null, [], [], "midweek"),
     };
   }
 
   const personName = `${person.firstName} ${person.lastName}`.trim();
-  const [midweekProgram, weekendProgram, cleaning] = await Promise.all([
+  // Apoio En la reunión só existe para homens: economiza a query para os demais.
+  const [midweekProgram, weekendProgram, cleaning, duties] = await Promise.all([
     getMeetingProgram("midweek", schedule.weekStart).catch(() => null),
     getMeetingProgram("weekend", schedule.weekStart).catch(() => null),
     listPersonCleaningInRange(person.id, schedule.weekStart, schedule.weekEnd).catch(() => []),
+    person.sex === "male"
+      ? listPersonDutiesInRange(person.id, schedule.weekStart, schedule.weekEnd).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -45,6 +50,7 @@ export async function getMyWeek(userId: string, reference: Date = new Date()): P
       midweekProgram?.assignments ?? null,
       weekendProgram?.assignments ?? null,
       cleaning,
+      duties,
       selectInitialKind(todayLocalISO(reference), schedule.midweek.date),
       person.id,
     ),
@@ -75,6 +81,7 @@ function orderMeetings(
   midweekAssignments: ProgramAssignment[] | null,
   weekendAssignments: ProgramAssignment[] | null,
   cleaning: { assignmentDate: string; sectorName: string; isFamily: boolean }[],
+  duties: { assignmentDate: string; dutyKey: string; postLabel: string; side: string | null }[],
   nextKind: "midweek" | "weekend",
   personId?: string,
 ): MyWeekMeeting[] {
@@ -105,6 +112,7 @@ function orderMeetings(
         helperPersonName: a.helperPersonName,
       })),
     cleaning: cleaning.filter((c) => c.assignmentDate === date),
+    duties: duties.filter((d) => d.assignmentDate === date),
   });
 
   const midweek = build(

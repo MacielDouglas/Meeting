@@ -27,6 +27,7 @@ interface CleaningDesignationSectionProps {
   specialEvents: SpecialEventItem[];
   scheduleExceptions: ScheduleExceptionItem[];
   meetingSchedule: MeetingSchedule;
+  congregationName?: string;
 }
 
 const CLEANING_TYPE_LABELS: Record<string, string> = {
@@ -61,6 +62,7 @@ export function CleaningDesignationSection({
   specialEvents,
   scheduleExceptions,
   meetingSchedule,
+  congregationName = "",
 }: CleaningDesignationSectionProps) {
   const enabledTypes = cleaningConfig.filter((t) => t.enabled);
   const [selectedType, setSelectedType] = useState<string>(enabledTypes[0]?.key ?? "per_meeting");
@@ -460,6 +462,13 @@ export function CleaningDesignationSection({
                   allowYoung: s.allowYoung,
                 })) ?? []
             }
+            congregationName={congregationName}
+            sectorTasks={Object.fromEntries(
+              (cleaningConfig.find((t) => t.key === selectedType)?.sectors ?? []).map((s) => [
+                s.key ?? s.id,
+                s.task ?? "",
+              ]),
+            )}
             onClose={() => setViewingProgram(null)}
             onDeleted={() => {
               setViewingProgram(null);

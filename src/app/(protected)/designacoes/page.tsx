@@ -32,15 +32,8 @@ export default async function DesignacoesPage({
       needsCleaning ? listCleaningConfig() : Promise.resolve([]),
       needsCleaning ? listSpecialEvents() : Promise.resolve([]),
       needsCleaning ? listScheduleExceptions() : Promise.resolve([]),
-      needsCleaning
-        ? getMeetingSchedule()
-        : Promise.resolve({
-            congregationName: "",
-            midweekDay: 2 as const,
-            midweekTime: "19:30",
-            weekendDay: 0 as const,
-            weekendTime: "10:00",
-          }),
+      // Nome da congregação no cabeçalho do PDF das duas abas.
+      getMeetingSchedule(),
     ]);
 
   return (
@@ -66,6 +59,7 @@ export default async function DesignacoesPage({
         specialEvents={specialEventsList}
         scheduleExceptions={exceptionsList}
         meetingSchedule={meetingScheduleData}
+        congregationName={meetingScheduleData.congregationName}
       />
     </main>
   );

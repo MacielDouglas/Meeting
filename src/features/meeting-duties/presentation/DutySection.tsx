@@ -16,6 +16,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { DownloadDutyPdfButton } from "./DownloadDutyPdfButton-client";
 import { DutyKeyIcon } from "./DutyKeyIcon";
 import { DutyProgramDetail } from "./DutyProgramDetail";
 
@@ -45,7 +46,7 @@ function kindLabel(kind: string): string {
   return kind === "weekend" ? es.finSemana : es.entreSemana;
 }
 
-export function DutySection() {
+export function DutySection({ congregationName = "" }: { congregationName?: string }) {
   const defaultStart = useMemo(() => mondayOfCurrentWeek(), []);
   const [rangeStart, setRangeStart] = useState(defaultStart);
   const [rangeEnd, setRangeEnd] = useState(() => addDaysISO(mondayOfCurrentWeek(), 27));
@@ -85,6 +86,20 @@ export function DutySection() {
   }, [activePrograms]);
 
   const draftDates = useMemo(() => (draft ?? []).map((d) => d.date), [draft]);
+  const draftPdfDays = useMemo(
+    () =>
+      (draft ?? []).map((day) => ({
+        date: day.date,
+        slots: day.slots.map((slot) => ({
+          dutyKey: slot.dutyKey,
+          dutyName: slot.dutyName,
+          side: slot.side,
+          personName:
+            slot.candidates.find((candidate) => candidate.id === slot.personId)?.name ?? es.vacante,
+        })),
+      })),
+    [draft],
+  );
   const overlapDates = useMemo(
     () => draftDates.filter((d) => programDates.has(d)),
     [draftDates, programDates],
@@ -182,6 +197,7 @@ export function DutySection() {
           <DutyProgramDetail
             program={viewingProgram.program}
             assignments={viewingProgram.assignments}
+            congregationName={congregationName}
             onClose={() => setViewingProgram(null)}
             onDeleted={() => {
               setViewingProgram(null);
@@ -332,6 +348,12 @@ export function DutySection() {
                   {es.descartar}
                 </Button>
               </div>
+              <DownloadDutyPdfButton
+                congregationName={congregationName}
+                periodFrom={draft[0]?.date ?? rangeStart}
+                periodTo={draft[draft.length - 1]?.date ?? rangeEnd}
+                days={draftPdfDays}
+              />
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FaCalendarDay, FaChevronDown, FaClock, FaLocationDot } from "react-icons/fa6";
+import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import {
   assignmentSummary,
@@ -14,6 +15,7 @@ import {
   urgencyLabel,
 } from "@/features/weekly-schedule/domain/my-week";
 import { Card } from "@/shared/components/ui/card";
+import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/utils";
 
@@ -68,16 +70,17 @@ function MeetingMeta({ meeting }: { meeting: MyWeekMeeting }) {
 }
 
 /**
- * Partes + limpeza com disclosure progressivo: só rende a seção que tem
- * conteúdo. Sem nada, uma única linha honesta em vez de três vazios.
+ * Partes + limpeza + apoio com disclosure progressivo: só rende a seção que
+ * tem conteúdo. Sem nada, uma única linha honesta em vez de vazios.
  * A seção fixa "En la reunión" foi removida: vazia por padrão, lia-se como
- * erro; designação real aparece em "Mis partes".
+ * erro; designação real aparece em "Mis partes" e no apoio abaixo.
  */
 function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
   const groups = groupPartsBySection(meeting.parts);
   const hasParts = groups.length > 0;
   const hasCleaning = meeting.cleaning.length > 0;
-  if (!hasParts && !hasCleaning) {
+  const hasDuties = meeting.duties.length > 0;
+  if (!hasParts && !hasCleaning && !hasDuties) {
     return <p className="mt-4 text-sm text-muted-foreground">{assignmentSummary(0, 0)}</p>;
   }
   return (
@@ -137,12 +140,38 @@ function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
           </ul>
         </section>
       )}
+
+      {hasDuties && (
+        <section aria-label={es.enLaReunion}>
+          <p className="text-xs font-semibold text-muted-foreground">{es.enLaReunion}</p>
+          <ul className="flex flex-col">
+            {meeting.duties.map((item) => (
+              <li
+                key={`${item.assignmentDate}-${item.dutyKey}-${item.postLabel}-${item.side ?? ""}`}
+                className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
+              >
+                <DutyKeyIcon dutyKey={item.dutyKey} />
+                <span className="font-medium">
+                  {item.postLabel}
+                  {item.side ? (
+                    <span className="font-normal text-muted-foreground"> · {item.side}</span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
 
 function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: string }) {
-  const summary = assignmentSummary(meeting.parts.length, meeting.cleaning.length);
+  const summary = assignmentSummary(
+    meeting.parts.length,
+    meeting.cleaning.length,
+    meeting.duties.length,
+  );
 
   if (!meeting.isNext) {
     return (
@@ -216,7 +245,10 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
   const today = todayLocalISO();
   const weekOff =
     myWeek.personName != null &&
-    myWeek.meetings.every((meeting) => meeting.parts.length === 0 && meeting.cleaning.length === 0);
+    myWeek.meetings.every(
+      (meeting) =>
+        meeting.parts.length === 0 && meeting.cleaning.length === 0 && meeting.duties.length === 0,
+    );
   const venue = myWeek.meetings[0]?.location || "el Salón";
   return (
     <section aria-label="Mi semana" className="section-stack">

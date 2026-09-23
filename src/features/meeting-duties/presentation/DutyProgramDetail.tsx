@@ -14,11 +14,13 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { DownloadDutyPdfButton } from "./DownloadDutyPdfButton-client";
 import { DutyKeyIcon } from "./DutyKeyIcon";
 
 interface DutyProgramDetailProps {
   program: DutyProgramItem;
   assignments: DutyAssignmentItem[];
+  congregationName?: string;
   onClose: () => void;
   onDeleted: () => void;
   onRefresh: () => void;
@@ -93,6 +95,7 @@ function AssignmentRow({
 export function DutyProgramDetail({
   program,
   assignments,
+  congregationName = "",
   onClose,
   onDeleted,
   onRefresh,
@@ -127,6 +130,20 @@ export function DutyProgramDetail({
 
   return (
     <div className="flex flex-col gap-3">
+      <DownloadDutyPdfButton
+        congregationName={congregationName}
+        periodFrom={program.startDate}
+        periodTo={program.endDate}
+        days={sortedDates.map((date) => ({
+          date,
+          slots: (grouped.get(date) ?? []).map((assignment) => ({
+            dutyKey: assignment.dutyKey,
+            dutyName: assignment.dutyName,
+            side: assignment.side,
+            personName: assignment.personName || es.vacante,
+          })),
+        }))}
+      />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold">

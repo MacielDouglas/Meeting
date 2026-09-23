@@ -23,6 +23,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { es } from "@/shared/i18n/es";
+import { DownloadCleaningPdfButton } from "./DownloadCleaningPdfButton-client";
 import { PersonSelectModal } from "./PersonSelectModal";
 
 interface ProgramDetailProps {
@@ -30,6 +31,9 @@ interface ProgramDetailProps {
   assignments: CleaningAssignmentItem[];
   typeKey: string;
   sectors?: { key: string | null; id: string; requiredSex: string; allowYoung: boolean }[];
+  congregationName?: string;
+  /** Tarefas por sectorKey (da config de limpeza). */
+  sectorTasks?: Record<string, string>;
   onClose: () => void;
   onDeleted: () => void;
   onRefresh: () => void;
@@ -45,6 +49,8 @@ export function ProgramDetail({
   assignments,
   typeKey,
   sectors = [],
+  congregationName = "",
+  sectorTasks = {},
   onClose,
   onDeleted,
   onRefresh,
@@ -130,6 +136,19 @@ export function ProgramDetail({
 
   return (
     <div className="flex flex-col gap-3">
+      <DownloadCleaningPdfButton
+        congregationName={congregationName}
+        periodFrom={program.startDate}
+        periodTo={program.endDate}
+        assignments={assignments.map((assignment) => ({
+          assignmentDate: assignment.assignmentDate,
+          sectorKey: assignment.sectorKey,
+          sectorName: assignment.sectorName,
+          personName: assignment.personName || es.vacante,
+          sortOrder: assignment.sortOrder,
+        }))}
+        sectorTasks={sectorTasks}
+      />
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold">

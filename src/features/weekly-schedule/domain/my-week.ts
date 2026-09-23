@@ -18,6 +18,13 @@ export interface MyWeekCleaning {
   isFamily: boolean;
 }
 
+export interface MyWeekDuty {
+  assignmentDate: string;
+  dutyKey: string;
+  postLabel: string;
+  side: string | null;
+}
+
 export interface MyWeekMeeting {
   kind: MeetingKind;
   title: string;
@@ -27,6 +34,7 @@ export interface MyWeekMeeting {
   isNext: boolean;
   parts: MyWeekPart[];
   cleaning: MyWeekCleaning[];
+  duties: MyWeekDuty[];
 }
 
 export interface MyWeek {
@@ -84,12 +92,15 @@ export function urgencyLabel(isoDate: string, todayISO: string): string {
   return `En ${days} días`;
 }
 
-/** Resumo da carga da pessoa: "Sin asignación" | "Limpieza" | "N partes" + "· limpieza". */
-export function assignmentSummary(partCount: number, cleaningCount: number): string {
-  if (partCount === 0 && cleaningCount === 0) return "Sin asignación";
-  if (partCount === 0) return "Limpieza";
-  const parts = partCount === 1 ? "1 parte" : `${partCount} partes`;
-  return cleaningCount > 0 ? `${parts} · limpieza` : parts;
+/** Resumo da carga da pessoa: partes, limpeza e apoio En la reunión. */
+export function assignmentSummary(partCount: number, cleaningCount: number, dutyCount = 0): string {
+  const bits: string[] = [];
+  if (partCount > 0) bits.push(partCount === 1 ? "1 parte" : `${partCount} partes`);
+  if (cleaningCount > 0) bits.push("limpieza");
+  if (dutyCount > 0) bits.push(dutyCount === 1 ? "1 en la reunión" : `${dutyCount} en la reunión`);
+  if (bits.length === 0) return "Sin asignación";
+  if (partCount === 0 && cleaningCount > 0 && dutyCount === 0) return "Limpieza";
+  return bits.join(" · ");
 }
 
 /** Papel do segundo nome na linha de designação (leitor só nos estudos). */

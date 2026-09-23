@@ -32,6 +32,7 @@ interface DesignacoesTabsProps {
   specialEvents: SpecialEventItem[];
   scheduleExceptions: ScheduleExceptionItem[];
   meetingSchedule: MeetingSchedule;
+  congregationName?: string;
 }
 
 export function DesignacoesTabs({
@@ -40,11 +41,12 @@ export function DesignacoesTabs({
   specialEvents,
   scheduleExceptions,
   meetingSchedule,
+  congregationName = "",
 }: DesignacoesTabsProps) {
   if (secao === "reuniao") {
     return (
       <Suspense fallback={<CardSkeleton />}>
-        <DutySection />
+        <DutySection congregationName={congregationName} />
       </Suspense>
     );
   }
@@ -55,6 +57,7 @@ export function DesignacoesTabs({
         specialEvents={specialEvents}
         scheduleExceptions={scheduleExceptions}
         meetingSchedule={meetingSchedule}
+        congregationName={congregationName}
       />
     </Suspense>
   );

@@ -1,7 +1,8 @@
 "use server";
 
-import { desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { designationSectors } from "@/features/designations/infrastructure/designation-schema";
 import {
   dutyAssignments,
   dutyPrograms,
@@ -25,6 +26,7 @@ export interface DutyAssignmentItem {
   assignmentDate: string;
   meetingKind: string;
   dutyKey: string;
+  dutyName: string;
   postLabel: string;
   side: string | null;
   personId: string | null;
@@ -92,9 +94,24 @@ export async function getDutyProgramDetail(programId: string): Promise<{
   }
   const program = programs[0];
   if (!program) return null;
-  const assignments = await db
-    .select()
+  // Nome do posto a partir do setor de designação (cai para o rótulo salvo).
+  const assignmentRows = await db
+    .select({
+      id: dutyAssignments.id,
+      programId: dutyAssignments.programId,
+      assignmentDate: dutyAssignments.assignmentDate,
+      meetingKind: dutyAssignments.meetingKind,
+      dutyKey: dutyAssignments.dutyKey,
+      dutyName: designationSectors.name,
+      postLabel: dutyAssignments.postLabel,
+      side: dutyAssignments.side,
+      personId: dutyAssignments.personId,
+      personName: dutyAssignments.personName,
+      isManual: dutyAssignments.isManual,
+      sortOrder: dutyAssignments.sortOrder,
+    })
     .from(dutyAssignments)
+    .leftJoin(designationSectors, eq(designationSectors.personFlag, dutyAssignments.dutyKey))
     .where(eq(dutyAssignments.programId, programId))
     .orderBy(dutyAssignments.assignmentDate, dutyAssignments.sortOrder);
   const count = await db
@@ -111,12 +128,13 @@ export async function getDutyProgramDetail(programId: string): Promise<{
       createdAt: program.createdAt,
       assignmentCount: count[0]?.count ?? 0,
     },
-    assignments: assignments.map((a) => ({
+    assignments: assignmentRows.map((a) => ({
       id: a.id,
       programId: a.programId,
       assignmentDate: a.assignmentDate,
       meetingKind: a.meetingKind,
       dutyKey: a.dutyKey,
+      dutyName: a.dutyName ?? a.postLabel,
       postLabel: a.postLabel,
       side: a.side,
       personId: a.personId,
@@ -174,7 +192,6 @@ export async function listDutyEligiblePersons(): Promise<DutyPersonItem[]> {
     }))
     .sort((a, b) => a.name.localeCompare(b.name, "es", { sensitivity: "base" }));
 }
-
 /** Histórico completo (pessoa, data) para o rodízio justo. */
 export async function listPersonDutyHistory(): Promise<{ personId: string; date: string }[]> {
   await requireAuthenticatedUser();
@@ -189,6 +206,44 @@ export async function listPersonDutyHistory(): Promise<{ personId: string; date:
     return rows.flatMap((row) =>
       row.personId ? [{ personId: row.personId, date: row.date }] : [],
     );
+  } catch {
+    return [];
+  }
+}
+
+export interface PersonDutyItem {
+  assignmentDate: string;
+  dutyKey: string;
+  postLabel: string;
+  side: string | null;
+}
+
+/** Apoio En la reunión de uma pessoa no intervalo (para "minha semana"). */
+export async function listPersonDutiesInRange(
+  personId: string,
+  startDate: string,
+  endDate: string,
+): Promise<PersonDutyItem[]> {
+  await requireAuthenticatedUser();
+  try {
+    const db = getDb();
+    const rows = await db
+      .select({
+        assignmentDate: dutyAssignments.assignmentDate,
+        dutyKey: dutyAssignments.dutyKey,
+        postLabel: dutyAssignments.postLabel,
+        side: dutyAssignments.side,
+      })
+      .from(dutyAssignments)
+      .where(
+        and(
+          eq(dutyAssignments.personId, personId),
+          gte(dutyAssignments.assignmentDate, startDate),
+          lte(dutyAssignments.assignmentDate, endDate),
+        ),
+      )
+      .orderBy(asc(dutyAssignments.assignmentDate), asc(dutyAssignments.sortOrder));
+    return rows;
   } catch {
     return [];
   }
