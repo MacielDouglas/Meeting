@@ -10,6 +10,7 @@ async function SiteHeaderData() {
   return (
     <SiteHeader
       showSettings={user?.role === "owner"}
+      showAdmin={user?.role === "owner" || user?.role === "admin"}
       isAuthed
       congregationName={schedule.congregationName}
     />
@@ -23,6 +24,11 @@ function SiteHeaderFallback() {
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="h-5 w-28 animate-pulse rounded-lg bg-secondary" />
         <div className="h-3 w-20 animate-pulse rounded-lg bg-secondary" />
+      </div>
+      <div className="hidden flex-1 items-center gap-1 sm:flex">
+        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
+        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
+        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
       </div>
       <div className="h-11 w-11 animate-pulse rounded-xl bg-secondary" />
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaMeetup } from "react-icons/fa";
 import {
@@ -15,6 +15,7 @@ import {
   FaRightToBracket,
   FaSun,
   FaUserGroup,
+  FaUsersGear,
   FaXmark,
 } from "react-icons/fa6";
 import { authClient } from "@/features/auth/presentation/auth-client";
@@ -34,17 +35,25 @@ function initialTheme(): Theme {
 
 interface SiteHeaderProps {
   showSettings: boolean;
+  showAdmin: boolean;
   isAuthed: boolean;
   congregationName: string;
 }
 
 /**
- * Ilha client mínima: menu mobile, alternador de tema e estado ativo.
- * O shell server entrega só primitivos (`showSettings`/`isAuthed` e o nome
- * da congregação).
+ * Ilha client mínima: menu mobile, navegação desktop, alternador de tema e
+ * estado ativo. O shell server entrega só primitivos (`showSettings`/
+ * `showAdmin`/`isAuthed` e o nome da congregação).
  */
-export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHeaderProps) {
+export function SiteHeader({
+  showSettings,
+  showAdmin,
+  isAuthed,
+  congregationName,
+}: SiteHeaderProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTab = searchParams.get("tab");
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -83,6 +92,9 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
+  const isPersonas = pathname.startsWith("/personas") && activeTab !== "usuarios";
+  const isUsuarios = pathname.startsWith("/personas") && activeTab === "usuarios";
+
   const items = [
     { href: "/", label: es.home, icon: FaHouse, match: (path: string) => path === "/" },
     {
@@ -101,8 +113,18 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
       href: "/personas",
       label: es.people,
       icon: FaUserGroup,
-      match: (path: string) => path.startsWith("/personas"),
+      match: () => isPersonas,
     },
+    ...(showAdmin
+      ? [
+          {
+            href: "/personas?tab=usuarios",
+            label: es.usersTab,
+            icon: FaUsersGear,
+            match: () => isUsuarios,
+          },
+        ]
+      : []),
     ...(showSettings
       ? [
           {
@@ -134,14 +156,43 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
       >
         <FaMeetup aria-hidden size={26} />
       </Link>
-      <div className="flex min-w-0 flex-col">
+      <div className="flex min-w-0 shrink-0 flex-col">
         <p className="font-display text-2xl font-semibold leading-none tracking-tight">Meeting</p>
         {congregationName.trim() !== "" && (
-          <p className="truncate text-xs text-muted-foreground">{congregationName}</p>
+          <p className="max-w-40 truncate text-xs text-muted-foreground sm:max-w-48">
+            {congregationName}
+          </p>
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
+      <nav
+        aria-label="Navegación principal"
+        className="ml-1 hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-1 sm:flex"
+      >
+        {items
+          .filter((item) => item.href !== "/")
+          .map((item) => {
+            const active = item.match(pathname);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "shrink-0 whitespace-nowrap rounded-lg px-2.5 py-2 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
+                  active
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+      </nav>
+
+      <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
         <button
           type="button"
           // Tema é valor client-only (classe do <html> via theme-init.js):
@@ -149,7 +200,7 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
           suppressHydrationWarning
           aria-label={theme === "dark" ? es.switchToLight : es.switchToDark}
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="grid h-11 w-11 place-items-center rounded-xl bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {theme === "dark" ? <FaSun aria-hidden size={18} /> : <FaMoon aria-hidden size={18} />}
         </button>
@@ -158,10 +209,22 @@ export function SiteHeader({ showSettings, isAuthed, congregationName }: SiteHea
           aria-label={menuOpen ? es.closeMenu : es.menu}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(!menuOpen)}
-          className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
+          className="grid h-11 w-11 place-items-center rounded-xl bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 sm:hidden"
         >
           {menuOpen ? <FaXmark aria-hidden size={18} /> : <FaBars aria-hidden size={18} />}
         </button>
+        {isAuthed && (
+          <button
+            type="button"
+            disabled={signingOut}
+            onClick={() => void handleSignOut()}
+            aria-label={es.signOut}
+            title={es.signOut}
+            className="hidden h-11 w-11 place-items-center rounded-xl bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 sm:grid"
+          >
+            <FaRightFromBracket aria-hidden size={18} />
+          </button>
+        )}
       </div>
 
       {menuOpen && (
