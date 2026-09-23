@@ -151,7 +151,7 @@ describe("generateCleaningAssignments", () => {
       }),
     );
     expect(assignments).toHaveLength(1);
-    expect(messages.some((m) => m.message.includes("jovem"))).toBe(true);
+    expect(messages.some((m) => m.message.includes("joven"))).toBe(true);
   });
 
   it("escala família junta no mesmo setor quando cabe", () => {

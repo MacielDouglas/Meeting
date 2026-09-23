@@ -74,7 +74,7 @@ export async function updateOutsideSpeaker(
   input: unknown,
 ): Promise<{ ok: boolean; error?: string }> {
   await requirePrivilegedUser();
-  if (!speakerId.safeParse(id).success) return { ok: false, error: "Orador inválido." };
+  if (!speakerId.safeParse(id).success) return { ok: false, error: "Orador no válido." };
   const parsed = speakerSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Datos del orador inválidos." };
   await ensureOutsideSpeakerTalksTable();
@@ -91,7 +91,7 @@ export async function updateOutsideSpeaker(
 
 export async function deleteOutsideSpeaker(id: string): Promise<{ ok: boolean; error?: string }> {
   await requirePrivilegedUser();
-  if (!speakerId.safeParse(id).success) return { ok: false, error: "Orador inválido." };
+  if (!speakerId.safeParse(id).success) return { ok: false, error: "Orador no válido." };
   await ensureOutsideSpeakerTalksTable();
   const db = getDb();
   await db.delete(outsideSpeakerTalks).where(eq(outsideSpeakerTalks.speakerId, id));

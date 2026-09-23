@@ -43,9 +43,9 @@ import { Card, CardTitle } from "@/shared/components/ui/card";
 import { Switch } from "@/shared/components/ui/switch";
 
 const SEX_OPTIONS: { value: RequiredSex; label: string }[] = [
-  { value: "any", label: "Qualquer" },
+  { value: "any", label: "Cualquiera" },
   { value: "male", label: "Masculino" },
-  { value: "female", label: "Feminino" },
+  { value: "female", label: "Femenino" },
 ];
 
 function SectorForm({
@@ -93,7 +93,7 @@ function SectorForm({
       if (result.ok) {
         onDone();
       } else {
-        setError(result.error ?? "Não foi possível salvar.");
+        setError(result.error ?? "No se pudo guardar.");
       }
     } finally {
       setPending(false);
@@ -107,7 +107,7 @@ function SectorForm({
     >
       {error && <p className="text-sm text-danger">{error}</p>}
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">Nome do setor</span>
+        <span className="text-muted-foreground">Nombre del sector</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -117,7 +117,7 @@ function SectorForm({
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">Tarefa</span>
+        <span className="text-muted-foreground">Tarea</span>
         <textarea
           value={task}
           onChange={(e) => setTask(e.target.value)}
@@ -127,7 +127,7 @@ function SectorForm({
       </label>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Pessoas (opcional)</span>
+          <span className="text-muted-foreground">Personas (opcional)</span>
           <input
             type="number"
             min={1}
@@ -154,12 +154,12 @@ function SectorForm({
         </label>
       </div>
       <div className="flex items-center justify-between py-1.5 text-sm">
-        <span className="text-muted-foreground">Permite jovem</span>
-        <Switch label="Permite jovem" checked={allowYoung} onCheckedChange={setAllowYoung} />
+        <span className="text-muted-foreground">Permite joven</span>
+        <Switch label="Permite joven" checked={allowYoung} onCheckedChange={setAllowYoung} />
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {initial ? "Salvar" : "Adicionar setor"}
+          {initial ? "Guardar" : "Añadir sector"}
         </Button>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
@@ -171,12 +171,12 @@ function SectorForm({
 
 function sexLabel(sex: RequiredSex): string {
   if (sex === "male") return "Sexo: masculino";
-  if (sex === "female") return "Sexo: feminino";
-  return "Sexo: qualquer";
+  if (sex === "female") return "Sexo: femenino";
+  return "Sexo: cualquiera";
 }
 
 function youngLabel(allowYoung: boolean): string {
-  return allowYoung ? "Jovem: sim" : "Só adulto";
+  return allowYoung ? "Joven: sí" : "Solo adulto";
 }
 
 const SECTOR_ICONS: Record<string, ComponentType<{ size?: number; className?: string }>> = {
@@ -253,7 +253,7 @@ function SectorModal({
             {sector.name}
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {sector.peopleCount != null ? `${sector.peopleCount} pessoa(s)` : "Qtd. livre"}
+            {sector.peopleCount != null ? `${sector.peopleCount} persona(s)` : "Cant. libre"}
             {" · "}
             {sexLabel(sector.requiredSex)}
             {" · "}
@@ -275,10 +275,10 @@ function SectorModal({
           />
         ) : confirmingDelete ? (
           <p className="text-sm">
-            Excluir o setor “{sector.name}”? Esta ação não pode ser desfeita.
+            Eliminar el sector “{sector.name}”? Esta acción no se puede deshacer.
           </p>
         ) : (
-          <p className="text-sm">{sector.task || "Sem tarefa cadastrada."}</p>
+          <p className="text-sm">{sector.task || "Sin tarea registrada."}</p>
         )}
         <AlertDialogFooter className="flex-col sm:flex-row">
           {!editing && !confirmingDelete && (
@@ -290,7 +290,7 @@ function SectorModal({
                 className="border-transparent bg-danger text-danger-ink"
                 onClick={() => setConfirmingDelete(true)}
               >
-                Excluir
+                Eliminar
               </Button>
             </>
           )}
@@ -299,12 +299,12 @@ function SectorModal({
               className="border-transparent bg-danger text-danger-ink"
               onClick={() => void handleDelete()}
             >
-              Confirmar exclusão
+              Confirmar eliminación
             </Button>
           )}
           {confirmingDelete ? (
             <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
-              Voltar
+              Volver
             </Button>
           ) : (
             !editing && <AlertDialogCancel>Cancelar</AlertDialogCancel>
@@ -333,7 +333,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
               <p className="text-sm text-muted-foreground">{cleaning.description}</p>
             </div>
             <Switch
-              label={`Ativar ${cleaning.label}`}
+              label={`Activar ${cleaning.label}`}
               checked={cleaning.enabled}
               onCheckedChange={(checked) =>
                 void toggleCleaningType({ key: cleaning.key, enabled: checked })
@@ -344,7 +344,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
           <div className="flex flex-col gap-2">
             {cleaning.sectors.length === 0 && (
               <p className="text-sm text-muted-foreground">
-                Nenhum setor. Adicione abaixo ou restaure os padrões.
+                Ningún sector. Añade abajo o restaura los predeterminados.
               </p>
             )}
             {cleaning.sectors.map((sector) => (
@@ -358,11 +358,13 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                   >
                     {sector.name}{" "}
                     {sector.isDefault && (
-                      <span className="text-xs font-normal text-muted-foreground">(padrão)</span>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (predeterminado)
+                      </span>
                     )}
                   </button>
                   <Switch
-                    label={`Ativar setor ${sector.name}`}
+                    label={`Activar sector ${sector.name}`}
                     checked={sector.enabled}
                     onCheckedChange={(checked) =>
                       void toggleCleaningSector({ id: sector.id, enabled: checked })
@@ -376,7 +378,9 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                 >
                   <span className="block text-sm text-muted-foreground">{sector.task}</span>
                   <span className="mt-1 block text-xs text-muted-foreground">
-                    {sector.peopleCount != null ? `${sector.peopleCount} pessoa(s)` : "Qtd. livre"}
+                    {sector.peopleCount != null
+                      ? `${sector.peopleCount} persona(s)`
+                      : "Cant. libre"}
                     {" · "}
                     {sexLabel(sector.requiredSex)}
                     {" · "}
@@ -392,7 +396,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
           ) : (
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setShowForm(cleaning.key)}>
-                + Novo setor
+                + Nuevo sector
               </Button>
               <Button
                 variant="outline"
@@ -404,7 +408,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                   );
                 }}
               >
-                {restoring === cleaning.key ? "Restaurando…" : "Recuperar setores padrão"}
+                {restoring === cleaning.key ? "Restaurando…" : "Recuperar sectores predeterminados"}
               </Button>
             </div>
           )}

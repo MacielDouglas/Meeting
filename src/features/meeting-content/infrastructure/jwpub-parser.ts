@@ -270,25 +270,25 @@ export async function openPublicationDb(
   const language = detectLanguageFromFilename(filename);
   if (!language) {
     throw new Error(
-      "Idioma não identificado pelo nome do arquivo (use _S, _T ou _E). Informe o idioma manualmente.",
+      "Idioma no identificado por el nombre del archivo (usa _S, _T o _E). Informa el idioma manualmente.",
     );
   }
   let outer: AdmZip;
   try {
     outer = new AdmZip(buffer);
   } catch {
-    throw new Error("Arquivo inválido: não foi possível abrir o .jwpub.");
+    throw new Error("Archivo no válido: no se pudo abrir el .jwpub.");
   }
   const manifestEntry = outer.getEntry("manifest.json");
   const contentsEntry = outer.getEntry("contents");
   if (!manifestEntry || !contentsEntry) {
-    throw new Error("Arquivo .jwpub inválido (manifest.json ou contents ausente).");
+    throw new Error("Archivo .jwpub no válido (manifest.json o contents ausente).");
   }
   let manifest: Manifest;
   try {
     manifest = JSON.parse(manifestEntry.getData().toString("utf-8")) as Manifest;
   } catch {
-    throw new Error("Arquivo .jwpub inválido (manifest.json ilegível).");
+    throw new Error("Archivo .jwpub no válido (manifest.json ilegible).");
   }
   const symbol = manifest.publication?.uniqueSymbol ?? manifest.publication?.symbol ?? "";
   const inner = new AdmZip(contentsEntry.getData());
@@ -297,7 +297,7 @@ export async function openPublicationDb(
     (dbName ? inner.getEntry(dbName) : null) ??
     inner.getEntries().find((entry) => entry.entryName.endsWith(".db"));
   if (!dbEntry) {
-    throw new Error("Banco de dados não encontrado dentro do .jwpub.");
+    throw new Error("Base de datos no encontrada dentro del .jwpub.");
   }
   const SQL = await getSqlJs();
   const db = new SQL.Database(new Uint8Array(dbEntry.getData()));
@@ -311,7 +311,9 @@ export async function parseJwpub(
 ): Promise<ParsedJwpub> {
   const result = await inspectJwpubFile(buffer, filename);
   if (result.kind !== "songs" && result.kind !== "outlines") {
-    throw new Error("Este arquivo não é de cânticos nem de esboços. Use a aba correspondente.");
+    throw new Error(
+      "Este archivo no es de cánticos ni de esbozos. Usa la pestaña correspondiente.",
+    );
   }
   if (languageOverride && languageOverride !== result.language) {
     return { ...result, language: languageOverride };
@@ -402,7 +404,7 @@ function readWatchtowerIssue(
 
   const articles = parseWatchtowerArticles(db, language);
   if (articles.length === 0) {
-    throw new Error("Nenhum artigo de estudo encontrado no arquivo.");
+    throw new Error("Ningún artículo de estudio encontrado en el archivo.");
   }
   const issue = String(issueNumber ?? 0).padStart(2, "0");
   const displaySymbol = `${pubSymbol}.${issue}-${languageSuffix(language)}`;
@@ -441,12 +443,14 @@ export async function inspectJwpubFile(
     }
     if (!kind) {
       throw new Error(
-        `Tipo de arquivo não identificado (símbolo "${symbol}"). Suportados: cânticos (sjj), esboços (S-34), Sentinela (w) e apostila (mwb).`,
+        `Tipo de archivo no identificado (símbolo "${symbol}"). Soportados: cánticos (sjj), esbozos (S-34), Atalaya (w) y Guía (mwb).`,
       );
     }
     const items = kind === "songs" ? parseSongs(db) : parseOutlines(db);
     if (items.length === 0) {
-      throw new Error("Nenhum item encontrado no arquivo. Verifique se o arquivo é válido.");
+      throw new Error(
+        "Ningún elemento encontrado en el archivo. Verifica que el archivo sea válido.",
+      );
     }
     return { kind, language, symbol, title: manifest.publication?.title ?? filename, items };
   } finally {
@@ -460,7 +464,7 @@ export async function parseWatchtowerJwpub(
 ): Promise<ParsedWatchtower> {
   const result = await inspectJwpubFile(buffer, filename);
   if (result.kind !== "watchtower") {
-    throw new Error("Este arquivo não é uma edição de A Sentinela (w).");
+    throw new Error("Este archivo no es una edición de La Atalaya (w).");
   }
   return result;
 }

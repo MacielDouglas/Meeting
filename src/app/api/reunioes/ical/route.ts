@@ -30,17 +30,17 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const kind = url.searchParams.get("kind") === "weekend" ? "weekend" : "midweek";
   const week = url.searchParams.get("week");
-  if (!isWeek(week)) return new Response("Parâmetro week inválido (YYYY-MM-DD).", { status: 400 });
+  if (!isWeek(week)) return new Response("Parámetro week no válido (YYYY-MM-DD).", { status: 400 });
 
   const result = await getMeetingProgram(kind, week);
-  if (!result) return new Response("Programa não encontrado.", { status: 404 });
+  if (!result) return new Response("Programa no encontrado.", { status: 404 });
 
   const totalMinutes = result.assignments.reduce((acc, part) => acc + part.durationMinutes, 0);
   const firstTime = result.assignments[0]?.startTime ?? "19:30";
   const lines = result.assignments.map((part) => {
     const who = [part.personName, part.helperPersonName].filter(Boolean).join(" · ");
     const label = part.songNumber
-      ? `Cântico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
+      ? `Cántico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
       : part.title;
     return `${part.startTime} ${label}${who ? ` — ${who}` : ""}`;
   });
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
     `UID:${result.program.id}@meeting`,
     `DTSTART:${toIcalDate(result.program.date, firstTime)}`,
     `DURATION:PT${totalMinutes}M`,
-    `SUMMARY:${escapeIcal(kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana")}`,
+    `SUMMARY:${escapeIcal(kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana")}`,
     `DESCRIPTION:${escapeIcal(lines.join("\n"))}`,
     "END:VEVENT",
     "END:VCALENDAR",

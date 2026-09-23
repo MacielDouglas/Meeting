@@ -44,11 +44,11 @@ async function nextSortOrder(typeKey: CleaningTypeKey): Promise<number> {
 
 export async function toggleCleaningType(input: { key: CleaningTypeKey; enabled: boolean }) {
   const parsed = z.object({ key: typeKeySchema, enabled: z.boolean() }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Tipo de limpeza inválido." };
+  if (!parsed.success) return { ok: false, error: "Tipo de limpieza no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar." };
+    return { ok: false, error: "Solo el owner puede cambiar." };
   }
   await ensureTypesSeeded();
   await getDb()
@@ -67,11 +67,11 @@ export async function setCleaningAssignmentMode(input: {
   mode: "person" | "family" | "group";
 }) {
   const parsed = z.object({ key: typeKeySchema, mode: modeSchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Modo inválido." };
+  if (!parsed.success) return { ok: false, error: "Modo no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar." };
+    return { ok: false, error: "Solo el owner puede cambiar." };
   }
   await ensureTypesSeeded();
   await getDb()
@@ -96,11 +96,11 @@ const sectorSchema = z.object({
 
 export async function createCleaningSector(input: unknown) {
   const parsed = sectorSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique nome, tarefa e quantidade." };
+  if (!parsed.success) return { ok: false, error: "Revisa nombre, tarea y cantidad." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode criar setores." };
+    return { ok: false, error: "Solo el owner puede crear sectores." };
   }
   await ensureTypesSeeded();
   await getDb()
@@ -133,11 +133,11 @@ const updateSectorSchema = z.object({
 
 export async function updateCleaningSector(input: unknown) {
   const parsed = updateSectorSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique os dados do setor." };
+  if (!parsed.success) return { ok: false, error: "Revisa los datos del sector." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode editar." };
+    return { ok: false, error: "Solo el owner puede editar." };
   }
   await getDb()
     .update(cleaningSectors)
@@ -156,11 +156,11 @@ export async function updateCleaningSector(input: unknown) {
 
 export async function toggleCleaningSector(input: { id: string; enabled: boolean }) {
   const parsed = z.object({ id: idSchema, enabled: z.boolean() }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Setor inválido." };
+  if (!parsed.success) return { ok: false, error: "Sector no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar." };
+    return { ok: false, error: "Solo el owner puede cambiar." };
   }
   await getDb()
     .update(cleaningSectors)
@@ -172,11 +172,11 @@ export async function toggleCleaningSector(input: { id: string; enabled: boolean
 
 export async function deleteCleaningSector(input: unknown) {
   const parsed = z.object({ id: idSchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Setor inválido." };
+  if (!parsed.success) return { ok: false, error: "Sector no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode excluir." };
+    return { ok: false, error: "Solo el owner puede eliminar." };
   }
   await getDb().delete(cleaningSectors).where(eq(cleaningSectors.id, parsed.data.id));
   revalidate();
@@ -191,11 +191,11 @@ const SECTOR_SEX_DEFAULTS: Record<string, "any" | "male" | "female"> = {
 };
 export async function restoreDefaultCleaningSectors(input: { key: CleaningTypeKey }) {
   const parsed = z.object({ key: typeKeySchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Tipo inválido." };
+  if (!parsed.success) return { ok: false, error: "Tipo no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode restaurar." };
+    return { ok: false, error: "Solo el owner puede restaurar." };
   }
   await ensureTypesSeeded();
   const db = getDb();
@@ -250,7 +250,7 @@ export async function seedAllCleaningDefaults() {
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode semear." };
+    return { ok: false, error: "Solo el owner puede restaurar los predeterminados." };
   }
   await ensureTypesSeeded();
   for (const def of CLEANING_TYPES) {

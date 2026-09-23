@@ -177,7 +177,7 @@ export function analyzeDays(input: AssignmentInput): DayInfo[] {
           celebrationReplacement = true;
         }
         if (isExceptionNoMeeting(dateStr, scheduleExceptions)) {
-          assemblyType = "Sem reunião (exceção)";
+          assemblyType = "Sin reunión (excepción)";
         }
       }
     }
@@ -331,7 +331,7 @@ export function generateCleaningAssignments(input: AssignmentInput): {
 
   for (const day of days) {
     if (day.assemblyType && !day.celebrationReplacement) {
-      messages.push({ date: day.date, message: `${day.assemblyType} — semana sem reunião` });
+      messages.push({ date: day.date, message: `${day.assemblyType} — semana sin reunión` });
       continue;
     }
 
@@ -465,24 +465,24 @@ export function generateCleaningAssignments(input: AssignmentInput): {
       if (assigned < neededCount) {
         messages.push({
           date: day.date,
-          message: `${sector.name}: ${assigned}/${neededCount} designados (faltou gente elegível)`,
+          message: `${sector.name}: ${assigned}/${neededCount} designados (faltó gente elegible)`,
         });
       } else {
         if (usedYoungFallback) {
           messages.push({
             date: day.date,
-            message: `${sector.name}: jovem escalado em setor só-adulto (faltou adulto)`,
+            message: `${sector.name}: joven asignado en sector solo-adulto (faltó adulto)`,
           });
         }
         if (usedWeeklyDouble) {
           messages.push({
             date: day.date,
-            message: `${sector.name}: alguém repetido na mesma semana (faltou gente descansada)`,
+            message: `${sector.name}: alguien repetido en la misma semana (faltó gente descansada)`,
           });
         } else if (usedRepeatPrev) {
           messages.push({
             date: day.date,
-            message: `${sector.name}: alguém repetido da sessão anterior (faltou gente descansada)`,
+            message: `${sector.name}: alguien repetido de la sesión anterior (faltó gente descansada)`,
           });
         }
       }
@@ -507,7 +507,7 @@ export function validateWeeklyConstraint(selectedDates: string[]): {
     if (dates.length > 1) {
       return {
         valid: false,
-        error: `Semana de ${week}: não é possível programar mais de um dia para limpeza semanal.`,
+        error: `Semana de ${week}: no es posible programar más de un día para limpieza semanal.`,
       };
     }
   }

@@ -31,11 +31,11 @@ import { getDb } from "@/shared/lib/db";
 
 const idSchema = z.string().trim().min(1).max(64);
 
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida (use AAAA-MM-DD).");
+const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha no válida (usa AAAA-MM-DD).");
 
 const createProgramSchema = z.object({
   typeKey: z.enum(["per_meeting", "weekly", "general"]),
-  selectedDates: z.array(isoDateSchema).min(1, "Selecione ao menos um dia.").max(400),
+  selectedDates: z.array(isoDateSchema).min(1, "Selecciona al menos un día.").max(400),
 });
 
 interface CreateProgramResult {
@@ -52,7 +52,7 @@ export async function createCleaningProgram(
 ): Promise<CreateProgramResult> {
   const parsed = createProgramSchema.safeParse({ typeKey, selectedDates });
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Datos no válidos." };
   }
   const validTypeKey = parsed.data.typeKey;
   const validDates = parsed.data.selectedDates;
@@ -89,7 +89,7 @@ export async function createCleaningProgram(
     .limit(1);
 
   if (!typeRow?.enabled) {
-    return { ok: false, error: "Tipo de limpeza não encontrado ou desativado." };
+    return { ok: false, error: "Tipo de limpieza no encontrado o desactivado." };
   }
 
   const sectors = await db
@@ -100,7 +100,7 @@ export async function createCleaningProgram(
   const enabledSectors = sectors.filter((s) => s.enabled);
 
   if (enabledSectors.length === 0) {
-    return { ok: false, error: "Nenhum setor ativo para este tipo de limpeza." };
+    return { ok: false, error: "Ningún sector activo para este tipo de limpieza." };
   }
 
   const allPersons = await db.select().from(persons).where(eq(persons.cleaning, true));
@@ -127,7 +127,7 @@ export async function createCleaningProgram(
   if (overlapping[0]) {
     return {
       ok: false,
-      error: `Já foi criada tabela para aquela semana (${overlapping[0].startDate} — ${overlapping[0].endDate}). Escolha outro período ou edite a tabela existente.`,
+      error: `Ya fue creada tabla para aquella semana (${overlapping[0].startDate} — ${overlapping[0].endDate}). Elige otro período o edita la tabla existente.`,
     };
   }
 
@@ -206,7 +206,7 @@ export async function createCleaningProgram(
     if (historyTruncated) {
       messages.unshift({
         date: startDate,
-        message: `Histórico parcial: mais de ${CLEANING_HISTORY_ROW_LIMIT} designações em ${CLEANING_HISTORY_DAYS} dias; o rodízio pode estar aproximado.`,
+        message: `Historial parcial: más de ${CLEANING_HISTORY_ROW_LIMIT} designaciones en ${CLEANING_HISTORY_DAYS} días; la rotación puede estar aproximada.`,
       });
     }
     return { assignments, generatedMessages: messages };
@@ -239,7 +239,7 @@ export async function createCleaningProgram(
     if (lateOverlap[0]) {
       return {
         ok: false,
-        error: `Já foi criada tabela para aquela semana (${lateOverlap[0].startDate} — ${lateOverlap[0].endDate}). Escolha outro período ou edite a tabela existente.`,
+        error: `Ya fue creada tabla para aquella semana (${lateOverlap[0].startDate} — ${lateOverlap[0].endDate}). Elige otro período o edita la tabla existente.`,
       };
     }
 
@@ -271,7 +271,7 @@ export async function createCleaningProgram(
     console.error("[cleaning] falha ao criar programa, revertendo", { programId, error });
     await db.delete(cleaningAssignments).where(eq(cleaningAssignments.programId, programId));
     await db.delete(cleaningPrograms).where(eq(cleaningPrograms.id, programId));
-    return { ok: false, error: "Não foi possível salvar o programa. Tente novamente." };
+    return { ok: false, error: "No se pudo guardar el programa. Inténtalo de nuevo." };
   }
 
   revalidatePath("/designacoes");
@@ -294,9 +294,9 @@ export async function updateCleaningAssignment(
 ): Promise<UpdateResult> {
   await requireOwnerUser();
   const validatedId = idSchema.safeParse(assignmentId);
-  if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  if (!validatedId.success) return { ok: false, error: "ID no válido." };
   const validatedPerson = idSchema.safeParse(personId);
-  if (!validatedPerson.success) return { ok: false, error: "Pessoa inválida." };
+  if (!validatedPerson.success) return { ok: false, error: "Persona no válida." };
 
   const db = getDb();
 
@@ -307,12 +307,13 @@ export async function updateCleaningAssignment(
       .where(eq(cleaningAssignments.id, assignmentId))
       .limit(1);
 
-    if (!existing) return { ok: false, error: "Designação não encontrada." };
+    if (!existing) return { ok: false, error: "Designación no encontrada." };
 
     const [person] = await db.select().from(persons).where(eq(persons.id, personId)).limit(1);
 
-    if (!person) return { ok: false, error: "Pessoa não encontrada." };
-    if (!person.cleaning) return { ok: false, error: "Pessoa não está habilitada para limpeza." };
+    if (!person) return { ok: false, error: "Persona no encontrada." };
+    if (!person.cleaning)
+      return { ok: false, error: "La persona no está habilitada para limpieza." };
 
     // Valida sexo + jovem contra a regra do setor (troca manual é estrita, sem fallback).
     // Edição manual é permitida em qualquer status, inclusive arquivado.
@@ -332,13 +333,13 @@ export async function updateCleaningAssignment(
       );
       if (sectorRule) {
         if (sectorRule.requiredSex === "male" && person.sex !== "male") {
-          return { ok: false, error: "Este setor exige irmão (masculino)." };
+          return { ok: false, error: "Este sector exige hermano (masculino)." };
         }
         if (sectorRule.requiredSex === "female" && person.sex !== "female") {
-          return { ok: false, error: "Este setor exige irmã (feminino)." };
+          return { ok: false, error: "Este sector exige hermana (femenino)." };
         }
         if (!(sectorRule.allowYoung ?? true) && (person.young ?? false)) {
-          return { ok: false, error: "Este setor exige adulto (jovem não permitido)." };
+          return { ok: false, error: "Este sector exige adulto (joven no permitido)." };
         }
       }
     }
@@ -353,7 +354,7 @@ export async function updateCleaningAssignment(
       .where(eq(cleaningAssignments.id, assignmentId));
   } catch (error) {
     console.error("[cleaning] falha ao trocar designação", { assignmentId, personId, error });
-    return { ok: false, error: "Não foi possível atualizar. Tente novamente." };
+    return { ok: false, error: "No se pudo actualizar. Inténtalo de nuevo." };
   }
 
   revalidatePath("/designacoes");
@@ -363,9 +364,9 @@ export async function updateCleaningAssignment(
 export async function deleteCleaningDay(programId: string, date: string): Promise<UpdateResult> {
   await requireOwnerUser();
   const validatedId = idSchema.safeParse(programId);
-  if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  if (!validatedId.success) return { ok: false, error: "ID no válido." };
   const validatedDate = isoDateSchema.safeParse(date);
-  if (!validatedDate.success) return { ok: false, error: "Data inválida." };
+  if (!validatedDate.success) return { ok: false, error: "Fecha no válida." };
 
   const db = getDb();
   try {
@@ -374,7 +375,7 @@ export async function deleteCleaningDay(programId: string, date: string): Promis
       .from(cleaningPrograms)
       .where(eq(cleaningPrograms.id, programId))
       .limit(1);
-    if (!program) return { ok: false, error: "Programa não encontrado." };
+    if (!program) return { ok: false, error: "Programa no encontrado." };
 
     await db
       .delete(cleaningAssignments)
@@ -386,7 +387,7 @@ export async function deleteCleaningDay(programId: string, date: string): Promis
       );
   } catch (error) {
     console.error("[cleaning] falha ao excluir dia", { programId, date, error });
-    return { ok: false, error: "Não foi possível excluir o dia. Tente novamente." };
+    return { ok: false, error: "No se pudo eliminar el día. Inténtalo de nuevo." };
   }
 
   revalidatePath("/designacoes");
@@ -396,7 +397,7 @@ export async function deleteCleaningDay(programId: string, date: string): Promis
 export async function deleteCleaningProgram(programId: string): Promise<UpdateResult> {
   await requireOwnerUser();
   const validatedId = idSchema.safeParse(programId);
-  if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  if (!validatedId.success) return { ok: false, error: "ID no válido." };
 
   const db = getDb();
   await db.delete(cleaningAssignments).where(eq(cleaningAssignments.programId, programId));
@@ -412,7 +413,7 @@ export async function updateProgramStatus(
 ): Promise<UpdateResult> {
   await requireOwnerUser();
   const validatedId = idSchema.safeParse(programId);
-  if (!validatedId.success) return { ok: false, error: "ID inválido." };
+  if (!validatedId.success) return { ok: false, error: "ID no válido." };
 
   const db = getDb();
   await db

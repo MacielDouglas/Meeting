@@ -3,21 +3,21 @@
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 const MONTH_NAMES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
+  "Enero",
+  "Febrero",
+  "Marzo",
   "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
+  "Mayo",
+  "Junio",
+  "Julio",
   "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
 
-const WEEKDAY_HEADERS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+const WEEKDAY_HEADERS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function getDaysInMonth(year: number, month: number): number {
   return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
@@ -75,7 +75,7 @@ export function MonthlyCalendar({
   monthNames = MONTH_NAMES,
   weekdayHeaders = WEEKDAY_HEADERS,
   disableProgramDates = true,
-  programDateHint = "Já foi criada tabela para aquela semana — edite a tabela existente",
+  programDateHint = "Ya fue creada tabla para aquella semana — edita la tabla existente",
 }: MonthlyCalendarProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);

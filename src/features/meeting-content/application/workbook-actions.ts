@@ -39,12 +39,12 @@ export async function inspectWorkbookJwpub(formData: FormData): Promise<Workbook
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode enviar." };
+    return { ok: false, error: "Solo owner/admin puede enviar." };
   }
   const file = formData.get("file");
-  if (!(file instanceof File)) return { ok: false, error: "Selecione um arquivo .jwpub ou .json." };
+  if (!(file instanceof File)) return { ok: false, error: "Selecciona un archivo .jwpub o .json." };
   if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Arquivo muito grande (máx. 200 MB)." };
+    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileName = file.name.toLowerCase();
@@ -56,7 +56,7 @@ export async function inspectWorkbookJwpub(formData: FormData): Promise<Workbook
     } else if (fileName.endsWith(".jwpub")) {
       parsed = await parseWorkbookJwpub(buffer, file.name);
     } else {
-      return { ok: false, error: "Formato não suportado. Envie um .jwpub ou .json." };
+      return { ok: false, error: "Formato no soportado. Envía un .jwpub o .json." };
     }
 
     const db = getDb();
@@ -75,7 +75,10 @@ export async function inspectWorkbookJwpub(formData: FormData): Promise<Workbook
       hadExisting: existing.length > 0,
     };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Falha ao ler o arquivo." };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Fallo al leer el archivo.",
+    };
   }
 }
 
@@ -90,11 +93,11 @@ const saveWorkbookSchema = z.object({
 // Salva a edição revisada (substitui a edição de mesmo símbolo, se houver).
 export async function saveWorkbookIssue(input: unknown) {
   const parsed = saveWorkbookSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Conteúdo inválido para salvar." };
+  if (!parsed.success) return { ok: false, error: "Contenido no válido para guardar." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode salvar." };
+    return { ok: false, error: "Solo owner/admin puede guardar." };
   }
   try {
     const db = getDb();
@@ -110,17 +113,17 @@ export async function saveWorkbookIssue(input: unknown) {
     revalidate();
     return { ok: true };
   } catch {
-    return { ok: false, error: "Falha ao salvar no banco de dados." };
+    return { ok: false, error: "Fallo al guardar en la base de datos." };
   }
 }
 
 export async function updateWorkbookContent(input: unknown) {
   const parsed = z.object({ id: idSchema, content: z.string().min(1) }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Conteúdo inválido." };
+  if (!parsed.success) return { ok: false, error: "Contenido no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode editar." };
+    return { ok: false, error: "Solo owner/admin puede editar." };
   }
   await getDb()
     .update(meetingWorkbooks)
@@ -132,11 +135,11 @@ export async function updateWorkbookContent(input: unknown) {
 
 export async function deleteWorkbookIssue(input: unknown) {
   const parsed = z.object({ id: idSchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Edição inválida." };
+  if (!parsed.success) return { ok: false, error: "Edición no válida." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode excluir." };
+    return { ok: false, error: "Solo owner/admin puede eliminar." };
   }
   await getDb().delete(meetingWorkbooks).where(eq(meetingWorkbooks.id, parsed.data.id));
   revalidate();

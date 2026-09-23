@@ -57,7 +57,7 @@ export interface DutyDraftDate {
 const DUTY_KEYS: DutyKey[] = ["usher", "microphone", "sound", "video", "platform"];
 
 const DUTY_TABLES_MISSING_ERROR =
-  "Tabelas de designações não criadas no banco. Execute `npm run db:push` e recarregue a página.";
+  "Tablas de designaciones no creadas en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
 
 function isMissingTableError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);

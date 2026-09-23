@@ -323,7 +323,7 @@ export async function parseWorkbookJwpub(
   const normalizedFilename = stripDuplicationSuffix(filename);
   const language = detectLanguageFromFilename(normalizedFilename);
   if (!language) {
-    throw new Error("Idioma não identificado pelo nome do arquivo (use _S, _T ou _E).");
+    throw new Error("Idioma no identificado por el nombre del archivo (usa _S, _T o _E).");
   }
   const { db, manifest } = await openPublicationDb(buffer, normalizedFilename);
   let pubSymbol = "";
@@ -360,7 +360,7 @@ export async function parseWorkbookJwpub(
     await unlink(tempPath).catch(() => undefined);
   }
   if (!Array.isArray(rawWeeks) || rawWeeks.length === 0) {
-    throw new Error("Nenhuma semana encontrada no arquivo.");
+    throw new Error("Ninguna semana encontrada en el archivo.");
   }
   const mapped = rawWeeks.map((raw) => mapWeek(raw, language));
   const months = buildMonthsLabel(
@@ -392,14 +392,14 @@ export function parseWorkbookJson(text: string, filename: string): ParsedWorkboo
   try {
     data = JSON.parse(text) as unknown;
   } catch {
-    throw new Error("Arquivo .json inválido.");
+    throw new Error("Archivo .json no válido.");
   }
   if (!isRecord(data) || !Array.isArray(data.weeks) || data.weeks.length === 0) {
-    throw new Error("O .json precisa ter { name, weeks: [...] } com ao menos uma semana.");
+    throw new Error("El .json necesita { name, weeks: [...] } con al menos una semana.");
   }
   for (const week of data.weeks) {
     if (!isRecord(week) || typeof week.week !== "string" || !isRecord(week.meeting)) {
-      throw new Error("Cada semana precisa ter { week, meeting }.");
+      throw new Error("Cada semana necesita { week, meeting }.");
     }
   }
   const normalizedFilename = stripDuplicationSuffix(filename);

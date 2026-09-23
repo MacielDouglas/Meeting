@@ -167,16 +167,16 @@ export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectRes
   try {
     await requireOwnerUser();
   } catch (error) {
-    if (isPrivilegedError(error)) return { ok: false, error: "Somente owner/admin pode enviar." };
-    return { ok: false, error: "Não autenticado." };
+    if (isPrivilegedError(error)) return { ok: false, error: "Solo owner/admin puede enviar." };
+    return { ok: false, error: "No autenticado." };
   }
   const file = formData.get("file");
-  if (!(file instanceof File)) return { ok: false, error: "Selecione um arquivo .jwpub." };
+  if (!(file instanceof File)) return { ok: false, error: "Selecciona un archivo .jwpub." };
   if (!file.name.toLowerCase().endsWith(".jwpub")) {
-    return { ok: false, error: "O arquivo precisa ter extensão .jwpub." };
+    return { ok: false, error: "El archivo necesita extensión .jwpub." };
   }
   if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Arquivo muito grande (máx. 200 MB)." };
+    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const parsed = await inspectJwpubFile(buffer, file.name);
@@ -224,7 +224,10 @@ export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectRes
       hadExisting: existing > 0,
     };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Falha ao ler o arquivo." };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Fallo al leer el archivo.",
+    };
   }
 }
 
@@ -235,22 +238,25 @@ export async function inspectJwpub(formData: FormData): Promise<InspectResult> {
   try {
     await requireOwnerUser();
   } catch (error) {
-    if (isPrivilegedError(error)) return { ok: false, error: "Somente owner/admin pode enviar." };
-    return { ok: false, error: "Não autenticado." };
+    if (isPrivilegedError(error)) return { ok: false, error: "Solo owner/admin puede enviar." };
+    return { ok: false, error: "No autenticado." };
   }
   const file = formData.get("file");
-  if (!(file instanceof File)) return { ok: false, error: "Selecione um arquivo .jwpub." };
+  if (!(file instanceof File)) return { ok: false, error: "Selecciona un archivo .jwpub." };
   if (!file.name.toLowerCase().endsWith(".jwpub")) {
-    return { ok: false, error: "O arquivo precisa ter extensão .jwpub." };
+    return { ok: false, error: "El archivo necesita extensión .jwpub." };
   }
   if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Arquivo muito grande (máx. 200 MB)." };
+    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
   let parsed: Awaited<ReturnType<typeof parseJwpub>>;
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     parsed = await parseJwpub(buffer, file.name);
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "Falha ao ler o arquivo." };
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Fallo al leer el archivo.",
+    };
   }
   try {
     const existing = await countExisting(parsed.kind, parsed.language);
@@ -265,7 +271,7 @@ export async function inspectJwpub(formData: FormData): Promise<InspectResult> {
       hadExisting: existing > 0,
     };
   } catch {
-    return { ok: false, error: "Falha ao verificar o banco de dados." };
+    return { ok: false, error: "Fallo al verificar la base de datos." };
   }
 }
 
@@ -282,11 +288,11 @@ const saveInspectedSchema = z.object({
 // Salva o conteúdo revisado/editado no modal (upsert por número+idioma).
 export async function saveInspectedJwpub(input: unknown) {
   const parsed = saveInspectedSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Conteúdo inválido para salvar." };
+  if (!parsed.success) return { ok: false, error: "Contenido no válido para guardar." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode salvar." };
+    return { ok: false, error: "Solo owner/admin puede guardar." };
   }
   try {
     const { inserted, updated } = await upsertItems(
@@ -298,7 +304,7 @@ export async function saveInspectedJwpub(input: unknown) {
     revalidate();
     return { ok: true, inserted, updated, total: parsed.data.items.length };
   } catch {
-    return { ok: false, error: "Falha ao salvar no banco de dados." };
+    return { ok: false, error: "Fallo al guardar en la base de datos." };
   }
 }
 
@@ -311,11 +317,11 @@ const manualSchema = z.object({
 
 export async function createManualItem(input: unknown) {
   const parsed = manualSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique número, tema e idioma." };
+  if (!parsed.success) return { ok: false, error: "Revisa número, tema e idioma." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode criar." };
+    return { ok: false, error: "Solo owner/admin puede crear." };
   }
   const { inserted } = await upsertItems(
     parsed.data.kind,
@@ -337,11 +343,11 @@ const updateSchema = z.object({
 
 export async function updateManualItem(input: unknown) {
   const parsed = updateSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique os dados." };
+  if (!parsed.success) return { ok: false, error: "Revisa los datos." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode editar." };
+    return { ok: false, error: "Solo owner/admin puede editar." };
   }
   const db = getDb();
   if (parsed.data.kind === "songs") {
@@ -361,11 +367,11 @@ export async function updateManualItem(input: unknown) {
 
 export async function deleteItem(input: unknown) {
   const parsed = z.object({ kind: z.enum(["songs", "outlines"]), id: idSchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Registro inválido." };
+  if (!parsed.success) return { ok: false, error: "Registro no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode excluir." };
+    return { ok: false, error: "Solo owner/admin puede eliminar." };
   }
   const db = getDb();
   if (parsed.data.kind === "songs") {
@@ -381,11 +387,11 @@ export async function deleteAllByLanguage(input: unknown) {
   const parsed = z
     .object({ kind: z.enum(["songs", "outlines"]), language: languageSchema })
     .safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Seleção inválida." };
+  if (!parsed.success) return { ok: false, error: "Selección no válida." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente owner/admin pode excluir." };
+    return { ok: false, error: "Solo owner/admin puede eliminar." };
   }
   const db = getDb();
   if (parsed.data.kind === "songs") {

@@ -34,17 +34,17 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs text-muted-foreground">
-        Vagas dentro do setor (ex: Setor A, Setor B — ou Câmera A, Câmera B). Separe por vírgula.
+        Plazas dentro del sector (ej.: Sector A, Sector B — o Cámara A, Cámara B). Separa con comas.
       </span>
       <div className="flex gap-2">
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Ex: Setor A, Setor B"
+          placeholder="Ej.: Sector A, Sector B"
           className="h-10 flex-1 rounded-lg bg-background px-3 text-sm outline-none"
         />
         <Button variant="outline" disabled={pending} onClick={() => void handleSave()}>
-          Salvar
+          Guardar
         </Button>
       </div>
     </div>
@@ -72,7 +72,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
           .filter(Boolean),
       });
       if (result.ok) onDone();
-      else setError(result.error ?? "Não foi possível criar.");
+      else setError(result.error ?? "No se pudo crear.");
     } finally {
       setPending(false);
     }
@@ -85,7 +85,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
     >
       {error && <p className="text-sm text-danger">{error}</p>}
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">Nome do setor (ex: Câmera)</span>
+        <span className="text-muted-foreground">Nombre del sector (ej.: Cámara)</span>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -96,7 +96,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
       </label>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Pessoas (opcional)</span>
+          <span className="text-muted-foreground">Personas (opcional)</span>
           <input
             type="number"
             min={1}
@@ -107,18 +107,18 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Vagas (opcional)</span>
+          <span className="text-muted-foreground">Plazas (opcional)</span>
           <input
             value={slots}
             onChange={(e) => setSlots(e.target.value)}
-            placeholder="Câmera A, Câmera B"
+            placeholder="Cámara A, Cámara B"
             className="h-10 rounded-lg bg-background px-3 text-sm outline-none"
           />
         </label>
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          Criar setor
+          Crear sector
         </Button>
         <Button type="button" variant="outline" onClick={onDone}>
           Cancelar
@@ -136,11 +136,11 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-2">
-        <CardTitle>Designações — todas as reuniões</CardTitle>
+        <CardTitle>Designaciones — todas las reuniones</CardTitle>
         <p className="text-sm text-muted-foreground">
-          Ative ou desative setores. Setores desativados filtram as habilidades no cadastro de
-          Pessoas (ex: desativar Vídeo oculta a opção Vídeo). Acomodadores e Microfone aceitam
-          quantidade + vagas nomeáveis.
+          Activa o desactiva sectores. Los sectores desactivados filtran las habilidades en el
+          registro de Personas (ej.: desactivar Video oculta la opción Video). Acomodadores y
+          Micrófono aceptan cantidad + plazas con nombre.
         </p>
         {isPreview && (
           <Button
@@ -151,7 +151,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
               void seedDefaultDesignationSectors().finally(() => setSeeding(false));
             }}
           >
-            {seeding ? "Ativando…" : "Ativar setores padrão"}
+            {seeding ? "Activando…" : "Activar sectores predeterminados"}
           </Button>
         )}
       </Card>
@@ -163,17 +163,19 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
               <p className="text-base font-semibold">
                 {sector.name}{" "}
                 {sector.isDefault && (
-                  <span className="text-xs font-normal text-muted-foreground">(padrão)</span>
+                  <span className="text-xs font-normal text-muted-foreground">
+                    (predeterminado)
+                  </span>
                 )}
               </p>
               {sector.slots.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Vagas: {sector.slots.map((s) => s.label).join(" · ")}
+                  Plazas: {sector.slots.map((s) => s.label).join(" · ")}
                 </p>
               )}
             </div>
             <Switch
-              label={`Ativar ${sector.name}`}
+              label={`Activar ${sector.name}`}
               checked={sector.enabled}
               onCheckedChange={(checked) =>
                 void toggleDesignationSector({ id: sector.id, enabled: checked })
@@ -182,7 +184,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
           </div>
 
           <label className="flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Pessoas:</span>
+            <span className="text-muted-foreground">Personas:</span>
             <input
               type="number"
               min={1}
@@ -208,7 +210,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
               onClick={() => void deleteDesignationSector({ id: sector.id })}
               className="self-start text-xs font-medium text-danger"
             >
-              Excluir setor
+              Eliminar sector
             </button>
           )}
         </Card>
@@ -218,7 +220,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
         <NewSectorForm onDone={() => setShowForm(false)} />
       ) : (
         <Button variant="outline" onClick={() => setShowForm(true)}>
-          + Novo setor (ex: Câmera, 2 pessoas, Câmera A e B)
+          + Nuevo sector (ej.: Cámara, 2 personas, Cámara A y B)
         </Button>
       )}
     </div>

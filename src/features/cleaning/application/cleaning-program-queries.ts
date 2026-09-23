@@ -89,7 +89,7 @@ export async function getCleaningProgramDetail(
     .where(eq(cleaningPrograms.id, programId))
     .limit(1);
   const program = programRows[0];
-  if (!program) throw new Error("Programa não encontrado.");
+  if (!program) throw new Error("Programa no encontrado.");
 
   const assignmentRows = await db
     .select()

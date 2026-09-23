@@ -15,10 +15,10 @@ import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons"
 import { formatDateBR } from "@/shared/lib/format-date";
 
 const EXCEPTION_LABELS: Record<string, string> = {
-  no_meeting: "Sem reunião",
-  circuit_visit: "Visita do superintendente de circuito",
-  convention: "Congresso",
-  virtual_convention: "Congresso virtual",
+  no_meeting: "Sin reunión",
+  circuit_visit: "Visita del superintendente de circuito",
+  convention: "Congreso",
+  virtual_convention: "Congreso virtual",
   special: "Programa especial",
 };
 
@@ -64,9 +64,9 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
         <Suspense fallback={<PrintFallback />}>
           {speakers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Nenhum orador cadastrado.{" "}
+              Ningún orador registrado.{" "}
               <Link href="/reunioes?tab=oradores" className="text-accent underline">
-                Cadastrar oradores
+                Registrar oradores
               </Link>
             </p>
           ) : (
@@ -76,10 +76,10 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                   <h2 className="text-base font-bold">{speaker.name}</h2>
                   <p className="text-sm text-neutral-600">{speaker.congregation || "—"}</p>
                   <p className="mt-2 text-sm">
-                    {speaker.talkNumber ? `Discurso Nº ${speaker.talkNumber}` : "Discurso"}
+                    {speaker.talkNumber ? `Discurso N.º ${speaker.talkNumber}` : "Discurso"}
                     {speaker.talkTheme ? ` — ${speaker.talkTheme}` : ""}
                   </p>
-                  {speaker.phone && <p className="text-sm">Tel: {speaker.phone}</p>}
+                  {speaker.phone && <p className="text-sm">Tel.: {speaker.phone}</p>}
                   {speaker.notes && (
                     <p className="mt-1 text-xs text-neutral-600">{speaker.notes}</p>
                   )}
@@ -119,15 +119,15 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
     <main className="page-stack">
       <div className="print:hidden">
         <PageHeader
-          title="Impressão do programa"
-          meta={`${kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"} · semana de ${formatDateBR(weekStart)}`}
+          title="Impresión del programa"
+          meta={`${kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"} · semana del ${formatDateBR(weekStart)}`}
           actions={
             <>
               <Link
                 href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
                 className="flex h-11 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground"
               >
-                Baixar iCal
+                Descargar iCal
               </Link>
               <Suspense fallback={null}>
                 <PrintButton />
@@ -140,16 +140,16 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
       <Suspense fallback={<PrintFallback />}>
         {result === null ? (
           <p className="text-sm text-muted-foreground">
-            Nenhum programa salvo para esta semana.{" "}
+            Ningún programa guardado para esta semana.{" "}
             <Link href="/reunioes" className="text-accent underline">
-              Voltar para Reuniões
+              Volver a Reuniones
             </Link>
           </p>
         ) : result.program.exceptionType === "no_meeting" ||
           result.program.exceptionType === "convention" ? (
           <section className="rounded-xl border p-6 text-center">
             <h2 className="text-xl font-bold">
-              {EXCEPTION_LABELS[result.program.exceptionType] ?? "Sem reunião"}
+              {EXCEPTION_LABELS[result.program.exceptionType] ?? "Sin reunión"}
             </h2>
             {result.program.exceptionLabel && (
               <p className="mt-1 text-sm text-muted-foreground">{result.program.exceptionLabel}</p>
@@ -165,7 +165,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                 <p className="text-lg font-bold">{meetingScheduleData.congregationName}</p>
               )}
               <h2 className="text-xl font-bold uppercase">
-                {kind === "midweek" ? "Reunião entre semana" : "Reunião de fim de semana"}
+                {kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"}
               </h2>
               <p className="text-sm text-neutral-600">
                 {formatDateBR(result.program.date)}
@@ -191,7 +191,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-bold">
                         {part.songNumber
-                          ? `Cântico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
+                          ? `Cántico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
                           : part.title}
                         {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
                         {part.classroom && part.classroom !== "A"

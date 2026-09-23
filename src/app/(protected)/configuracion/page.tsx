@@ -17,9 +17,9 @@ import { es } from "@/shared/i18n/es";
 type ConfigTab = "reunioes" | "limpeza" | "designacoes";
 
 const TABS: { value: ConfigTab; label: string }[] = [
-  { value: "reunioes", label: "Reuniões" },
-  { value: "limpeza", label: "Limpeza" },
-  { value: "designacoes", label: "Designações" },
+  { value: "reunioes", label: "Reuniones" },
+  { value: "limpeza", label: "Limpieza" },
+  { value: "designacoes", label: "Designaciones" },
 ];
 
 export default async function ConfiguracionPage({
@@ -60,7 +60,7 @@ export default async function ConfiguracionPage({
         <TabNav
           param="tab"
           defaultValue="reunioes"
-          ariaLabel="Seções de configurações"
+          ariaLabel="Secciones de configuración"
           items={TABS.map((item) => ({
             value: item.value,
             label: item.label,

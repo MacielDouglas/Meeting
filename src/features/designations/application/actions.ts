@@ -28,11 +28,11 @@ async function nextSectorOrder(): Promise<number> {
 
 export async function toggleDesignationSector(input: { id: string; enabled: boolean }) {
   const parsed = z.object({ id: idSchema, enabled: z.boolean() }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Setor inválido." };
+  if (!parsed.success) return { ok: false, error: "Sector no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar." };
+    return { ok: false, error: "Solo el owner puede cambiar." };
   }
   // Suporta toggle na pré-visualização padrão (semeia antes)
   let sectorId = parsed.data.id;
@@ -44,7 +44,7 @@ export async function toggleDesignationSector(input: { id: string; enabled: bool
       .from(designationSectors)
       .where(eq(designationSectors.key, key))
       .limit(1);
-    if (!rows[0]) return { ok: false, error: "Setor não encontrado." };
+    if (!rows[0]) return { ok: false, error: "Sector no encontrado." };
     sectorId = rows[0].id;
   }
   await getDb()
@@ -62,11 +62,11 @@ export async function updateDesignationSectorPeopleCount(input: {
   const parsed = z
     .object({ id: idSchema, peopleCount: z.number().int().min(1).max(50).nullable() })
     .safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Quantidade inválida." };
+  if (!parsed.success) return { ok: false, error: "Cantidad no válida." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar." };
+    return { ok: false, error: "Solo el owner puede cambiar." };
   }
   let sectorId = parsed.data.id;
   if (sectorId.startsWith("default-")) {
@@ -77,7 +77,7 @@ export async function updateDesignationSectorPeopleCount(input: {
       .from(designationSectors)
       .where(eq(designationSectors.key, key))
       .limit(1);
-    if (!rows[0]) return { ok: false, error: "Setor não encontrado." };
+    if (!rows[0]) return { ok: false, error: "Sector no encontrado." };
     sectorId = rows[0].id;
   }
   await getDb()
@@ -96,11 +96,11 @@ const createSectorSchema = z.object({
 
 export async function createDesignationSector(input: unknown) {
   const parsed = createSectorSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique nome, quantidade e vagas." };
+  if (!parsed.success) return { ok: false, error: "Revisa nombre, cantidad y plazas." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode criar setores." };
+    return { ok: false, error: "Solo el owner puede crear sectores." };
   }
   const sectorId = randomUUID();
   await getDb()
@@ -130,14 +130,14 @@ export async function createDesignationSector(input: unknown) {
 
 export async function deleteDesignationSector(input: unknown) {
   const parsed = z.object({ id: idSchema }).safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Setor inválido." };
+  if (!parsed.success) return { ok: false, error: "Sector no válido." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode excluir." };
+    return { ok: false, error: "Solo el owner puede eliminar." };
   }
   if (parsed.data.id.startsWith("default-"))
-    return { ok: false, error: "Restaure os padrões primeiro." };
+    return { ok: false, error: "Restaura los predeterminados primero." };
   await getDb().delete(designationSectors).where(eq(designationSectors.id, parsed.data.id));
   revalidate();
   return { ok: true };
@@ -151,11 +151,11 @@ const slotsSchema = z.object({
 // Substitui as vagas nomeáveis do setor (ex: Setor A, Setor B / Câmera A, Câmera B).
 export async function saveDesignationSlots(input: unknown) {
   const parsed = slotsSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Verifique as vagas informadas." };
+  if (!parsed.success) return { ok: false, error: "Revisa las plazas informadas." };
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode alterar vagas." };
+    return { ok: false, error: "Solo el owner puede cambiar plazas." };
   }
   let sectorId = parsed.data.sectorId;
   if (sectorId.startsWith("default-")) {
@@ -166,7 +166,7 @@ export async function saveDesignationSlots(input: unknown) {
       .from(designationSectors)
       .where(eq(designationSectors.key, key))
       .limit(1);
-    if (!rows[0]) return { ok: false, error: "Setor não encontrado." };
+    if (!rows[0]) return { ok: false, error: "Sector no encontrado." };
     sectorId = rows[0].id;
   }
   await getDb().delete(designationSlots).where(eq(designationSlots.sectorId, sectorId));
@@ -187,7 +187,7 @@ export async function seedDefaultDesignationSectors() {
   try {
     await requireOwnerUser();
   } catch {
-    return { ok: false, error: "Somente o owner pode semear." };
+    return { ok: false, error: "Solo el owner puede activar los sectores predeterminados." };
   }
   const db = getDb();
   const existing = await db.select({ key: designationSectors.key }).from(designationSectors);

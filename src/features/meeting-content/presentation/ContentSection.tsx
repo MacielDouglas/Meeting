@@ -42,8 +42,8 @@ import { es } from "@/shared/i18n/es";
 
 const LANGUAGES: { value: ContentLanguage; label: string }[] = [
   { value: "es", label: "Español" },
-  { value: "pt", label: "Português" },
-  { value: "en", label: "English" },
+  { value: "pt", label: "Portugués" },
+  { value: "en", label: "Inglés" },
 ];
 
 function LanguageBadge({ language }: { language: ContentLanguage }) {
@@ -238,7 +238,7 @@ function SmartImportCard({
         ref={fileRef}
         type="file"
         accept=".jwpub"
-        aria-label="Arquivo .jwpub"
+        aria-label="Archivo .jwpub"
         className="hidden"
         onChange={(event) => void handleFileSelected(event.target.files?.[0])}
       />

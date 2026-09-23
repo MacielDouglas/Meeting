@@ -40,7 +40,7 @@ const exceptionSchema = z.object({
 });
 
 const MEETING_TABLES_MISSING_ERROR =
-  "Tabelas de reuniões não criadas no banco. Execute `npm run db:push` e recarregue a página.";
+  "Tablas de reuniones no creadas en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
 
 function isMissingTableError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -63,12 +63,12 @@ export async function saveMeetingProgram(
   const parsedWeek = weekSchema.safeParse(weekStart);
   const parsedDate = weekSchema.safeParse(date);
   if (!parsedKind.success || !parsedWeek.success || !parsedDate.success) {
-    return { ok: false, error: "Dados da semana inválidos." };
+    return { ok: false, error: "Datos de la semana no válidos." };
   }
   const parsedParts = z.array(partSchema).max(60).safeParse(parts);
-  if (!parsedParts.success) return { ok: false, error: "Partes inválidas." };
+  if (!parsedParts.success) return { ok: false, error: "Partes no válidas." };
   const parsedException = exceptionSchema.safeParse(exception ?? {});
-  if (!parsedException.success) return { ok: false, error: "Exceção inválida." };
+  if (!parsedException.success) return { ok: false, error: "Excepción no válida." };
 
   const user = await requirePrivilegedUser();
   const db = getDb();
@@ -83,7 +83,7 @@ export async function saveMeetingProgram(
   } catch (error) {
     console.error("[meetings] falha ao buscar programa", { kind, weekStart, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar o programa." };
+    return { ok: false, error: "No se pudo guardar el programa." };
   }
 
   const programId = existing[0]?.id ?? randomUUID();
@@ -168,7 +168,7 @@ export async function saveMeetingProgram(
   } catch (error) {
     console.error("[meetings] falha ao salvar programa", { programId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar o programa." };
+    return { ok: false, error: "No se pudo guardar el programa." };
   }
   revalidatePath("/reunioes");
   return { ok: true, programId };
@@ -198,7 +198,7 @@ export async function updateMeetingAssignment(
 ): Promise<{ ok: boolean; error?: string }> {
   await requirePrivilegedUser();
   const parsed = assignSchema.safeParse({ assignmentId, personId, helperPersonId });
-  if (!parsed.success) return { ok: false, error: "Dados inválidos." };
+  if (!parsed.success) return { ok: false, error: "Datos no válidos." };
   const db = getDb();
   try {
     const [existing] = await db
@@ -206,12 +206,12 @@ export async function updateMeetingAssignment(
       .from(meetingAssignments)
       .where(eq(meetingAssignments.id, assignmentId))
       .limit(1);
-    if (!existing) return { ok: false, error: "Parte não encontrada." };
+    if (!existing) return { ok: false, error: "Parte no encontrada." };
 
     let personName = "";
     if (personId) {
       const [person] = await db.select().from(persons).where(eq(persons.id, personId)).limit(1);
-      if (!person) return { ok: false, error: "Pessoa não encontrada." };
+      if (!person) return { ok: false, error: "Persona no encontrada." };
       personName = `${person.firstName} ${person.lastName}`;
     }
     let helperName = existing.helperPersonName;
@@ -225,7 +225,7 @@ export async function updateMeetingAssignment(
           .from(persons)
           .where(eq(persons.id, helperPersonId))
           .limit(1);
-        if (!helper) return { ok: false, error: "Ajudante não encontrado." };
+        if (!helper) return { ok: false, error: "Ayudante no encontrado." };
         helperName = `${helper.firstName} ${helper.lastName}`;
       }
     }
@@ -244,7 +244,7 @@ export async function updateMeetingAssignment(
   } catch (error) {
     console.error("[meetings] falha ao designar", { assignmentId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar a designação." };
+    return { ok: false, error: "No se pudo guardar la designación." };
   }
   revalidatePath("/reunioes");
   return { ok: true };
@@ -255,7 +255,7 @@ export async function updateMeetingAssignmentDetails(
 ): Promise<{ ok: boolean; error?: string }> {
   await requirePrivilegedUser();
   const parsed = assignmentDetailsSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Dados inválidos." };
+  if (!parsed.success) return { ok: false, error: "Datos no válidos." };
   const { assignmentId, speakerName, ...fields } = parsed.data;
   // Orador de fora: nome livre no lugar do vínculo de pessoa (limpa o anterior).
   const setFields =
@@ -277,7 +277,7 @@ export async function updateMeetingAssignmentDetails(
   } catch (error) {
     console.error("[meetings] falha ao salvar detalhes da parte", { assignmentId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar os detalhes." };
+    return { ok: false, error: "No se pudo guardar los detalles." };
   }
   revalidatePath("/reunioes");
   return { ok: true };
@@ -290,7 +290,7 @@ export async function updateMeetingException(
   await requirePrivilegedUser();
   const parsedId = z.string().min(1).max(64).safeParse(programId);
   const parsed = exceptionSchema.safeParse(exception);
-  if (!parsedId.success || !parsed.success) return { ok: false, error: "Dados inválidos." };
+  if (!parsedId.success || !parsed.success) return { ok: false, error: "Datos no válidos." };
   try {
     await getDb()
       .update(meetingPrograms)
@@ -303,7 +303,7 @@ export async function updateMeetingException(
   } catch (error) {
     console.error("[meetings] falha ao salvar exceção", { programId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar a exceção." };
+    return { ok: false, error: "No se pudo guardar la excepción." };
   }
   revalidatePath("/reunioes");
   return { ok: true };
@@ -318,7 +318,7 @@ export async function updateMeetingSong(
   const parsed = z
     .object({ assignmentId: z.string().min(1), songNumber: z.number().int().min(1).max(1000) })
     .safeParse({ assignmentId, songNumber });
-  if (!parsed.success) return { ok: false, error: "Cântico inválido." };
+  if (!parsed.success) return { ok: false, error: "Cántico no válido." };
   const db = getDb();
   try {
     await db
@@ -328,7 +328,7 @@ export async function updateMeetingSong(
   } catch (error) {
     console.error("[meetings] falha ao salvar cântico", { assignmentId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
-    return { ok: false, error: "Não foi possível salvar o cântico." };
+    return { ok: false, error: "No se pudo guardar el cántico." };
   }
   revalidatePath("/reunioes");
   return { ok: true };
