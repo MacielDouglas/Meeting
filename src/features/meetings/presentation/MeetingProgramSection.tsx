@@ -971,7 +971,7 @@ export function MeetingProgramSection({
         </p>
       )}
 
-      {programId && (
+      {programId && canManage && (
         <details className="group rounded-2xl border border-input bg-background">
           <summary className="flex cursor-pointer list-none items-center justify-between p-3 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
             <span className="font-display text-sm font-medium text-muted-foreground">

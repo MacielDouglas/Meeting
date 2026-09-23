@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FaCalendarDay, FaChevronDown, FaClock, FaLocationDot } from "react-icons/fa6";
+import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import {
@@ -273,6 +274,28 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
       {myWeek.meetings.map((meeting) => (
         <MeetingBlock key={meeting.kind} meeting={meeting} today={today} />
       ))}
+      {myWeek.upcomingDuties.length > 0 && (
+        <section aria-label={es.proximasEnLaReunion} className="flex flex-col gap-2">
+          <p className="text-xs font-semibold text-muted-foreground">{es.proximasEnLaReunion}</p>
+          <ul className="flex flex-col rounded-2xl border border-border bg-card px-4 text-card-foreground shadow-sm">
+            {myWeek.upcomingDuties.map((duty) => (
+              <li
+                key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.postLabel}-${duty.side ?? ""}`}
+                className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
+              >
+                <DutyKeyIcon dutyKey={duty.dutyKey} />
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {formatWeekday(duty.assignmentDate)} {formatShortDay(duty.assignmentDate)} ·{" "}
+                  {dutyLabel(duty.dutyKey, duty.postLabel)}
+                  {duty.side ? (
+                    <span className="font-normal text-muted-foreground"> · {duty.side}</span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {weekOff && (
         <p className="px-1 text-sm text-muted-foreground">
           Sin asignación esta semana. Nos vemos en {venue}.

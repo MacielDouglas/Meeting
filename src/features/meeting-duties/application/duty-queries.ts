@@ -250,6 +250,37 @@ export async function listPersonDutiesInRange(
   }
 }
 
+/**
+ * Próximos apoios da pessoa a partir de uma data (para a home) — dados
+ * próprios, visível para qualquer usuário logado.
+ */
+export async function listUpcomingPersonDuties(
+  personId: string,
+  fromDate: string,
+  limit = 6,
+): Promise<PersonDutyItem[]> {
+  await requireAuthenticatedUser();
+  try {
+    const db = getDb();
+    const rows = await db
+      .select({
+        assignmentDate: dutyAssignments.assignmentDate,
+        dutyKey: dutyAssignments.dutyKey,
+        postLabel: dutyAssignments.postLabel,
+        side: dutyAssignments.side,
+      })
+      .from(dutyAssignments)
+      .where(
+        and(eq(dutyAssignments.personId, personId), gte(dutyAssignments.assignmentDate, fromDate)),
+      )
+      .orderBy(asc(dutyAssignments.assignmentDate), asc(dutyAssignments.sortOrder))
+      .limit(limit);
+    return rows;
+  } catch {
+    return [];
+  }
+}
+
 /** Candidatos de um posto (homens com a flag), para edição manual. */
 export async function listDutyCandidates(
   dutyKey: "usher" | "sound" | "video" | "microphone" | "platform",

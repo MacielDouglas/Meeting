@@ -86,18 +86,20 @@ export default async function ReunioesPage({
         meta={`${formatDateBR(schedule.weekStart)} — ${formatDateBR(schedule.weekEnd)}`}
       />
 
-      <Suspense fallback={<TabNavSkeleton tabs={3} />}>
-        <TabNav
-          param="tab"
-          defaultValue="reunioes"
-          ariaLabel={es.seccionesReuniones}
-          items={TABS.map((item) => ({
-            value: item.value,
-            label: item.label,
-            href: `/reunioes?tab=${item.value}`,
-          }))}
-        />
-      </Suspense>
+      {canManage && (
+        <Suspense fallback={<TabNavSkeleton tabs={3} />}>
+          <TabNav
+            param="tab"
+            defaultValue="reunioes"
+            ariaLabel={es.seccionesReuniones}
+            items={TABS.map((item) => ({
+              value: item.value,
+              label: item.label,
+              href: `/reunioes?tab=${item.value}`,
+            }))}
+          />
+        </Suspense>
+      )}
 
       {tab === "reunioes" && (
         <Suspense fallback={<CardSkeleton />}>

@@ -253,6 +253,7 @@ export const es = {
   verPrograma: "Ver programa",
   verProgramaCompleto: "Ver programa completo",
   enLaReunion: "En la reunión",
+  proximasEnLaReunion: "Próximas en la reunión",
   seccionesDesignacoes: "Secciones de designaciones",
   periodoEscala: "Período de la escala",
   generarEscala: "Generar escala",

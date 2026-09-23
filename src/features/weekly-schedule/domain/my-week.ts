@@ -43,6 +43,8 @@ export interface MyWeek {
   personName: string | null;
   isMale: boolean;
   meetings: MyWeekMeeting[];
+  /** Próximos apoios fora das reuniões exibidas (só homens). */
+  upcomingDuties: MyWeekDuty[];
 }
 
 /** "AAAA-MM-DD" -> "DD/MM" para o cabeçalho da reunião. */
