@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { FaBookOpen, FaMeetup, FaUserGroup, FaWifi } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
@@ -7,10 +6,8 @@ import { getMyWeek } from "@/features/weekly-schedule/application/get-my-week";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { MyWeekSection } from "@/features/weekly-schedule/presentation/MyWeekSection";
 import { GoogleLoginButton } from "@/shared/components/GoogleLoginButton-client";
-import { PageHeader } from "@/shared/components/PageHeader";
 import { WeekCardsSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
-import { formatDateBR } from "@/shared/lib/format-date";
 
 async function MyWeekLoader({
   userId,
@@ -21,16 +18,6 @@ async function MyWeekLoader({
 }) {
   const myWeek = await getMyWeek(userId);
   return <MyWeekSection myWeek={myWeek} canLinkAccount={canLinkAccount} />;
-}
-
-/** "22/09 — 28/09 de 2026"; anos explícitos só na virada dezembro/janeiro. */
-function weekMeta(weekStart: string, weekEnd: string): string {
-  const startYear = weekStart.slice(0, 4);
-  const endYear = weekEnd.slice(0, 4);
-  if (startYear !== endYear) {
-    return `Semana: ${formatDateBR(weekStart)}/${startYear} — ${formatDateBR(weekEnd)}/${endYear}`;
-  }
-  return `Semana: ${formatDateBR(weekStart)} — ${formatDateBR(weekEnd)} de ${endYear}`;
 }
 
 const HIGHLIGHTS = [
@@ -82,12 +69,6 @@ export default async function HomePage() {
 
   return (
     <main className="page-stack">
-      <PageHeader
-        title={es.appName}
-        description={es.appDescription}
-        meta={weekMeta(schedule.weekStart, schedule.weekEnd)}
-      />
-
       <ScheduleCacheWriter schedule={schedule} />
 
       <Suspense fallback={<WeekCardsSkeleton />}>
@@ -96,20 +77,6 @@ export default async function HomePage() {
           canLinkAccount={user.role === "owner" || user.role === "admin"}
         />
       </Suspense>
-      <div className="tight-stack">
-        <Link
-          href="/reunioes"
-          className="flex h-12 items-center justify-center rounded-xl bg-accent px-3 text-center font-display text-base font-semibold text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          {es.verProgramaCompleto}
-        </Link>
-        <Link
-          href="/designacoes"
-          className="flex h-11 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          {es.tabDesignaciones}
-        </Link>
-      </div>
     </main>
   );
 }

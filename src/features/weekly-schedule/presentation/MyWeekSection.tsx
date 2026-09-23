@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { FaCalendarDay, FaChevronDown, FaClock, FaLocationDot } from "react-icons/fa6";
+import { FaListOl } from "react-icons/fa";
+import { FaBookOpen, FaChevronDown, FaLocationDot } from "react-icons/fa6";
+import { GiBroom } from "react-icons/gi";
 import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import {
-  assignmentSummary,
-  daysUntil,
   displayPartTitle,
   formatShortDay,
   formatWeekday,
@@ -26,231 +26,230 @@ interface MyWeekSectionProps {
   canLinkAccount: boolean;
 }
 
-function PartNames({
-  personName,
-  helperPersonName,
-  partKey,
+function kindLabel(kind: MyWeekMeeting["kind"]): string {
+  return kind === "midweek" ? es.entreSemana : es.finSemana;
+}
+
+function partRole(isHelper: boolean, partKey: string): string {
+  if (!isHelper) return es.titular;
+  return helperRoleOf(partKey) === "lector" ? es.lector : es.ayudante;
+}
+
+/** Parte/titular, apoio e limpeza da reunião, com estados honestos de "sem". */
+function HeroRows({
+  meeting,
+  isMale,
+  lead,
 }: {
-  personName: string;
-  helperPersonName: string;
-  partKey: string;
+  meeting: MyWeekMeeting;
+  isMale: boolean;
+  lead: boolean;
 }) {
-  if (!helperPersonName) return <span className="block break-words text-xs">{personName}</span>;
-  return (
-    <span className="block break-words text-xs">
-      {personName} y {helperPersonName} ({helperRoleOf(partKey)})
-    </span>
-  );
-}
-
-/** Data, hora e local com rótulos para leitor de tela. */
-function MeetingMeta({ meeting }: { meeting: MyWeekMeeting }) {
-  return (
-    <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground">
-      <li className="flex items-center gap-2">
-        <FaCalendarDay aria-hidden />
-        <span>
-          <span className="sr-only">Fecha: </span>
-          {formatWeekday(meeting.date)} {formatShortDay(meeting.date)}
-        </span>
-        <FaClock aria-hidden />
-        <span>
-          <span className="sr-only">Hora: </span>
-          {meeting.time}
-        </span>
-      </li>
-      <li className="flex items-center gap-2">
-        <FaLocationDot aria-hidden />
-        <span>
-          <span className="sr-only">Lugar: </span>
-          {meeting.location}
-        </span>
-      </li>
-    </ul>
-  );
-}
-
-/**
- * Partes + limpeza + apoio com disclosure progressivo: só rende a seção que
- * tem conteúdo. Sem nada, uma única linha honesta em vez de vazios.
- * A seção fixa "En la reunión" foi removida: vazia por padrão, lia-se como
- * erro; designação real aparece em "Mis partes" e no apoio abaixo.
- */
-function MeetingSections({ meeting }: { meeting: MyWeekMeeting }) {
   const groups = groupPartsBySection(meeting.parts);
-  const hasParts = groups.length > 0;
-  const hasCleaning = meeting.cleaning.length > 0;
-  const hasDuties = meeting.duties.length > 0;
-  if (!hasParts && !hasCleaning && !hasDuties) {
-    return <p className="mt-4 text-sm text-muted-foreground">{assignmentSummary(0, 0)}</p>;
-  }
+  const label = lead ? "text-white/60" : "text-muted-foreground";
+  const value = lead ? "text-white" : "text-foreground";
+  const faint = lead ? "text-white/60" : "text-muted-foreground";
+  const line = lead ? "border-white/10" : "border-border";
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      {hasParts && (
-        <section aria-label="Mis partes">
-          {groups.map((group) => (
+    <div className="flex flex-col gap-4">
+      <section aria-label={es.miParte}>
+        <p className={cn("text-xs font-semibold", label)}>{es.miParte}</p>
+        {groups.length === 0 ? (
+          <p className={cn("mt-1 text-sm", faint)}>{es.sinParte}</p>
+        ) : (
+          groups.map((group) => (
             <div key={group.section || "general"}>
-              {group.section && (
-                <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold tracking-tight text-muted-foreground first:mt-0">
-                  <span
-                    aria-hidden
-                    className="h-3.5 w-1 shrink-0 rounded-full"
-                    style={{ backgroundColor: sectionMetaOf(group.section).color }}
-                  />
-                  {sectionMetaOf(group.section).label}
-                </p>
-              )}
               <ul className="flex flex-col">
                 {group.parts.map((part) => (
                   <li
                     key={part.partKey}
-                    className="flex items-start justify-between gap-3 border-b border-border py-2 last:border-b-0"
+                    className={cn(
+                      "flex items-center justify-between gap-3 border-b py-2 text-sm last:border-b-0",
+                      line,
+                    )}
                   >
-                    <span className="min-w-0 flex-1 text-sm font-medium">
-                      {displayPartTitle(part)}
-                      {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
+                    <span className="flex min-w-0 items-center gap-2">
+                      {group.section ? (
+                        <span
+                          aria-hidden
+                          className="h-3.5 w-1 shrink-0 rounded-full"
+                          style={{ backgroundColor: sectionMetaOf(group.section).color }}
+                        />
+                      ) : null}
+                      <span className={cn("truncate font-medium", value)}>
+                        {displayPartTitle(part)}
+                        {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
+                      </span>
                     </span>
-                    <span className="max-w-[55%] shrink-0 text-right text-muted-foreground">
-                      <PartNames
-                        personName={part.personName}
-                        helperPersonName={part.helperPersonName}
-                        partKey={part.partKey}
-                      />
+                    <span className={cn("shrink-0 text-sm", faint)}>
+                      {partRole(part.isHelper, part.partKey)}
                     </span>
                   </li>
                 ))}
               </ul>
             </div>
-          ))}
-        </section>
-      )}
+          ))
+        )}
+      </section>
 
-      {hasCleaning && (
-        <section aria-label="Limpieza">
-          <p className="text-xs font-semibold text-muted-foreground">Limpieza</p>
+      {isMale ? (
+        <section aria-label={es.miAsignacion}>
+          <p className={cn("text-xs font-semibold", label)}>{es.miAsignacion}</p>
+          {meeting.duties.length === 0 ? (
+            <p className={cn("mt-1 text-sm", faint)}>{es.sinApoyo}</p>
+          ) : (
+            <ul className="flex flex-col">
+              {meeting.duties.map((duty) => (
+                <li
+                  key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.postLabel}-${duty.side ?? ""}`}
+                  className={cn(
+                    "flex items-center gap-2 border-b py-2 text-sm last:border-b-0",
+                    line,
+                  )}
+                >
+                  <DutyKeyIcon dutyKey={duty.dutyKey} />
+                  <span className={cn("min-w-0 flex-1 truncate font-medium", value)}>
+                    {dutyLabel(duty.dutyKey, duty.postLabel)}
+                    {duty.side ? (
+                      <span className={cn("font-normal", faint)}> · {duty.side}</span>
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      <section aria-label={es.miLimpieza}>
+        <p className={cn("text-xs font-semibold", label)}>{es.miLimpieza}</p>
+        {meeting.cleaning.length === 0 ? (
+          <p className={cn("mt-1 text-sm", faint)}>{es.sinLimpieza}</p>
+        ) : (
           <ul className="flex flex-col">
             {meeting.cleaning.map((item) => (
               <li
                 key={`${item.assignmentDate}-${item.sectorName}`}
-                className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-b-0"
+                className={cn(
+                  "flex items-center gap-2 border-b py-2 text-sm last:border-b-0",
+                  line,
+                )}
               >
-                <span className="font-medium">{item.sectorName}</span>
-                {item.isFamily && <span className="text-xs text-muted-foreground">familia</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {hasDuties && (
-        <section aria-label={es.enLaReunion}>
-          <p className="text-xs font-semibold text-muted-foreground">{es.enLaReunion}</p>
-          <ul className="flex flex-col">
-            {meeting.duties.map((item) => (
-              <li
-                key={`${item.assignmentDate}-${item.dutyKey}-${item.postLabel}-${item.side ?? ""}`}
-                className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
-              >
-                <DutyKeyIcon dutyKey={item.dutyKey} />
-                <span className="font-medium">
-                  {item.postLabel}
-                  {item.side ? (
-                    <span className="font-normal text-muted-foreground"> · {item.side}</span>
+                <GiBroom aria-hidden size={18} className="shrink-0 text-accent" />
+                <span className={cn("min-w-0 flex-1 truncate font-medium", value)}>
+                  {item.sectorName}
+                  {item.isFamily ? (
+                    <span className={cn("font-normal", faint)}> · familia</span>
                   ) : null}
                 </span>
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }
 
-function MeetingBlock({ meeting, today }: { meeting: MyWeekMeeting; today: string }) {
-  const summary = assignmentSummary(
-    meeting.parts.length,
-    meeting.cleaning.length,
-    meeting.duties.length,
+/** Painel de status da reunião em destaque: preto piano, numerais gigantes. */
+function LeadHero({
+  meeting,
+  today,
+  isMale,
+}: {
+  meeting: MyWeekMeeting;
+  today: string;
+  isMale: boolean;
+}) {
+  return (
+    <section
+      aria-label={`${kindLabel(meeting.kind)} ${formatWeekday(meeting.date)} ${formatShortDay(meeting.date)}`}
+      className="overflow-hidden rounded-[20px] bg-[#0b0b0d] text-white shadow-[0_24px_60px_-24px_rgb(0_0_0/0.55)] ring-1 ring-white/10 motion-safe:animate-[home-rise_.45s_cubic-bezier(.16,1,.3,1)_backwards] dark:bg-[#151517]"
+    >
+      <div className="flex flex-col gap-1.5 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-lg bg-white/10 px-2.5 py-1 font-display text-xs font-semibold text-white">
+            {kindLabel(meeting.kind)}
+          </span>
+          <span className="rounded-lg bg-accent px-2.5 py-1 font-display text-xs font-semibold text-accent-ink">
+            {urgencyLabel(meeting.date, today)}
+          </span>
+        </div>
+        <p className="mt-1 break-words text-lg text-white/70">{formatWeekday(meeting.date)}</p>
+        <div className="flex items-end justify-between gap-3">
+          <p className="break-words font-display text-6xl font-semibold tabular-nums leading-none tracking-tight">
+            {formatShortDay(meeting.date)}
+          </p>
+          <p className="shrink-0 font-display text-3xl font-semibold tabular-nums leading-none tracking-tight text-white/85">
+            {meeting.time}
+          </p>
+        </div>
+        <p className="flex items-center gap-1.5 break-words text-sm text-white/60">
+          <FaLocationDot aria-hidden className="shrink-0" />
+          <span>
+            <span className="sr-only">Lugar: </span>
+            {meeting.location}
+          </span>
+        </p>
+      </div>
+      <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+        <HeroRows meeting={meeting} isMale={isMale} lead />
+      </div>
+    </section>
   );
+}
 
-  if (!meeting.isNext) {
-    return (
-      <details className="group rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0">
-            <span className="block font-display text-xl font-semibold leading-tight tracking-tight">
-              {meeting.title}
-            </span>
-            <span className="mt-1 block break-words text-sm text-muted-foreground">
-              {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time} ·{" "}
-              {meeting.location} · {summary}
-            </span>
+/** Segunda reunião em acordeão; aberta, mostra as mesmas informações do herói. */
+function MeetingAccordion({
+  meeting,
+  today,
+  isMale,
+}: {
+  meeting: MyWeekMeeting;
+  today: string;
+  isMale: boolean;
+}) {
+  return (
+    <details className="group rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <span className="block text-xs font-medium text-muted-foreground">
+            {kindLabel(meeting.kind)}
+          </span>
+          <span className="block truncate font-display text-xl font-semibold tracking-tight">
+            {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time}
+          </span>
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span className="rounded-lg bg-accent px-2 py-1 font-display text-xs font-semibold text-accent-ink">
+            {urgencyLabel(meeting.date, today)}
           </span>
           <FaChevronDown
             aria-hidden
             size={16}
             className="shrink-0 text-muted-foreground motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:group-open:rotate-180"
           />
-        </summary>
-        <div className="px-4 pb-4">
-          <MeetingMeta meeting={meeting} />
-          <MeetingSections meeting={meeting} />
-        </div>
-      </details>
-    );
-  }
-
-  // Dia da sessão: o herói acende em azul no dia.
-  const isMatchDay = daysUntil(meeting.date, today) === 0;
-
-  return (
-    <Card className={cn("p-4 sm:p-5", meeting.isNext && "ring-2 ring-accent")}>
-      <div
-        className={cn(
-          "flex flex-col gap-1.5 rounded-xl px-3 py-3 motion-safe:animate-[home-rise_.35s_cubic-bezier(.16,1,.3,1)_backwards]",
-          isMatchDay ? "bg-accent text-accent-ink" : "bg-secondary",
-        )}
-      >
-        <h2
-          className={cn(
-            "break-words text-xs font-medium",
-            isMatchDay ? "text-accent-ink" : "text-muted-foreground",
-          )}
-        >
-          {meeting.title} · {urgencyLabel(meeting.date, today)}
-        </h2>
-        <p className="break-words font-display text-3xl font-semibold tabular-nums leading-none tracking-tight">
-          {formatWeekday(meeting.date)} {formatShortDay(meeting.date)} · {meeting.time}
-        </p>
-        <p
-          className={cn(
-            "flex items-center gap-1.5 break-words text-sm",
-            isMatchDay ? "text-accent-ink" : "text-muted-foreground",
-          )}
-        >
+        </span>
+      </summary>
+      <div className="px-4 pb-4">
+        <p className="flex items-center gap-1.5 break-words text-sm text-muted-foreground">
           <FaLocationDot aria-hidden className="shrink-0" />
           <span>
             <span className="sr-only">Lugar: </span>
-            {meeting.location} · {summary}
+            {meeting.location}
           </span>
         </p>
+        <div className="mt-3">
+          <HeroRows meeting={meeting} isMale={isMale} lead={false} />
+        </div>
       </div>
-
-      <MeetingSections meeting={meeting} />
-    </Card>
+    </details>
   );
 }
 
 export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
   const today = todayLocalISO();
-  const weekOff =
-    myWeek.personName != null &&
-    myWeek.meetings.every(
-      (meeting) =>
-        meeting.parts.length === 0 && meeting.cleaning.length === 0 && meeting.duties.length === 0,
-    );
-  const venue = myWeek.meetings[0]?.location || "el Salón";
+  const [lead, ...rest] = myWeek.meetings;
   return (
     <section aria-label="Mi semana" className="section-stack">
       {myWeek.personName ? (
@@ -271,9 +270,41 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
           </p>
         </Card>
       )}
-      {myWeek.meetings.map((meeting) => (
-        <MeetingBlock key={meeting.kind} meeting={meeting} today={today} />
+
+      {lead ? <LeadHero meeting={lead} today={today} isMale={myWeek.isMale} /> : null}
+      {rest.map((meeting) => (
+        <MeetingAccordion
+          key={meeting.kind}
+          meeting={meeting}
+          today={today}
+          isMale={myWeek.isMale}
+        />
       ))}
+
+      <div className="tight-stack">
+        <Link
+          href="/reunioes"
+          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-6 font-display text-base font-semibold text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <FaBookOpen aria-hidden size={18} />
+          {es.verProgramaCompleto}
+        </Link>
+        <Link
+          href="/designacoes"
+          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-secondary px-6 font-display text-sm font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <FaListOl aria-hidden size={18} />
+          {es.verDesignacoes}
+        </Link>
+        <Link
+          href="/designacoes"
+          className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-input bg-background px-6 font-display text-sm font-semibold text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <GiBroom aria-hidden size={18} />
+          {es.verTablaLimpieza}
+        </Link>
+      </div>
+
       {myWeek.upcomingDuties.length > 0 && (
         <section aria-label={es.proximasEnLaReunion} className="flex flex-col gap-2">
           <p className="text-xs font-semibold text-muted-foreground">{es.proximasEnLaReunion}</p>
@@ -295,11 +326,6 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
             ))}
           </ul>
         </section>
-      )}
-      {weekOff && (
-        <p className="px-1 text-sm text-muted-foreground">
-          Sin asignación esta semana. Nos vemos en {venue}.
-        </p>
       )}
     </section>
   );

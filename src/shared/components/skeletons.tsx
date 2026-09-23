@@ -35,16 +35,25 @@ export function TabNavSkeleton({ tabs = 3 }: { tabs?: number }) {
 export function WeekCardsSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-hidden>
-      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4">
-        <Pulse className="h-3 w-24" />
-        <Pulse className="h-8 w-3/4" />
-        <Pulse className="h-4 w-1/2" />
+      <div className="flex flex-col gap-2 rounded-[20px] bg-secondary p-5">
+        <div className="flex gap-2">
+          <Pulse className="h-6 w-24 rounded-lg" />
+          <Pulse className="h-6 w-16 rounded-lg" />
+        </div>
+        <Pulse className="h-5 w-28" />
+        <Pulse className="h-14 w-40 rounded-xl" />
+        <Pulse className="h-4 w-32" />
+        <div className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+          <Pulse className="h-4 w-full" />
+          <Pulse className="h-4 w-full" />
+          <Pulse className="h-4 w-2/3" />
+        </div>
       </div>
-      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4">
-        <Pulse className="h-5 w-full" />
-        <Pulse className="h-5 w-full" />
-        <Pulse className="h-5 w-2/3" />
+      <div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+        <Pulse className="h-6 w-48" />
+        <Pulse className="h-6 w-16 rounded-lg" />
       </div>
+      <Pulse className="h-14 w-full rounded-2xl" />
     </div>
   );
 }

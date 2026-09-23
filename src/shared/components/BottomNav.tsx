@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FaBookOpen, FaBroom, FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
+import { FaListOl } from "react-icons/fa";
+import { FaBookOpen, FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -17,7 +18,7 @@ const ITEMS = [
   {
     href: "/designacoes",
     label: es.tabDesignaciones,
-    icon: FaBroom,
+    icon: FaListOl,
     match: (path: string) => path.startsWith("/designacoes"),
   },
   {

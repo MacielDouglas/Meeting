@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FaMeetup } from "react-icons/fa";
+import { FaListOl, FaMeetup } from "react-icons/fa";
 import {
   FaBars,
   FaBookOpen,
-  FaBroom,
   FaClipboardList,
   FaGear,
   FaHouse,
@@ -121,7 +120,7 @@ export function SiteHeader({
     {
       href: "/designacoes",
       label: es.tabDesignaciones,
-      icon: FaBroom,
+      icon: FaListOl,
       match: (path: string) => path.startsWith("/designacoes"),
     },
     {
