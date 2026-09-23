@@ -1,8 +1,8 @@
 /**
- * Escala de apoio da reunião ("En la reunión"): 5 postos fixos por data de
- * reunião (acomodador, som, vídeo, microfone volante, plataforma), sorteio
- * com rodízio justo (menos escalados e há mais tempo primeiro) e edição
- * manual posterior. Quem serve no programa é excluído do sorteio da data.
+ * Escala de apoio da reunião ("En la reunión"): postos por data de reunião
+ * na ordem canônica (acomodadores, microfones, som, vídeo, plataforma),
+ * sorteio com rodízio justo (menos escalados e há mais tempo primeiro) e
+ * edição manual posterior. Quem serve no programa é excluído do sorteio da data.
  */
 
 export type DutyKey = "usher" | "sound" | "video" | "microphone" | "platform";
@@ -57,10 +57,20 @@ interface SeatSpec {
   side: DutySide | null;
 }
 
+/** Ordem canônica dos postos na escala (independe da ordem da config). */
+const DUTY_ORDER: Record<DutyKey, number> = {
+  usher: 0,
+  microphone: 1,
+  sound: 2,
+  video: 3,
+  platform: 4,
+};
+
 /** Postos de uma data a partir da config (lados alternados só no acomodador). */
 export function buildDutySeats(sectors: DutySectorConfig[]): SeatSpec[] {
   const seats: SeatSpec[] = [];
-  for (const sector of sectors) {
+  const ordered = [...sectors].sort((a, b) => DUTY_ORDER[a.key] - DUTY_ORDER[b.key]);
+  for (const sector of ordered) {
     if (!sector.enabled) continue;
     const posts = sector.slots.length > 0 ? sector.slots : [sector.name];
     const totalSeats = sector.peopleCount ?? posts.length;

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { DutyKeyIcon } from "./DutyKeyIcon";
 import { DutyProgramDetail } from "./DutyProgramDetail";
 
 function toISODate(date: Date): string {
@@ -267,6 +268,7 @@ export function DutySection() {
                           key={key}
                           className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm"
                         >
+                          <DutyKeyIcon dutyKey={slot.dutyKey} />
                           <span className="min-w-0 flex-1">
                             <span className="block truncate font-medium">
                               {slot.postLabel}

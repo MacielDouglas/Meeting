@@ -42,6 +42,23 @@ describe("build-duty-roster", () => {
     ]);
   });
 
+  it("ordena os postos na ordem canônica (acomodadores, microfones, som, vídeo, plataforma)", () => {
+    const seats = buildDutySeats([
+      { key: "platform", name: "Plataforma", enabled: true, peopleCount: 1, slots: [] },
+      { key: "video", name: "Vídeo", enabled: true, peopleCount: 1, slots: [] },
+      { key: "sound", name: "Som", enabled: true, peopleCount: 1, slots: [] },
+      { key: "microphone", name: "Microfone", enabled: true, peopleCount: 1, slots: [] },
+      { key: "usher", name: "Acomodadores", enabled: true, peopleCount: 1, slots: ["A"] },
+    ]);
+    expect(seats.map((s) => s.dutyKey)).toEqual([
+      "usher",
+      "microphone",
+      "sound",
+      "video",
+      "platform",
+    ]);
+  });
+
   it("numera postos repetidos para chaves únicas", () => {
     const seats = buildDutySeats([
       { key: "microphone", name: "Microfone", enabled: true, peopleCount: 2, slots: [] },

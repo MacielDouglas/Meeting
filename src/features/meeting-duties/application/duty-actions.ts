@@ -53,7 +53,20 @@ export interface DutyDraftDate {
   programConflictNames: string[];
 }
 
-const DUTY_KEYS: DutyKey[] = ["usher", "sound", "video", "microphone", "platform"];
+/** Ordem canônica da escala En la reunión: acomodadores, microfones, som, vídeo, plataforma. */
+const DUTY_KEYS: DutyKey[] = ["usher", "microphone", "sound", "video", "platform"];
+
+const DUTY_TABLES_MISSING_ERROR =
+  "Tabelas de designações não criadas no banco. Execute `npm run db:push` e recarregue a página.";
+
+function isMissingTableError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("duty_programs") ||
+    message.includes("duty_assignments") ||
+    message.includes("does not exist")
+  );
+}
 
 /** Segunda-feira (ISO) da semana da data — chave do programa que cobre a reunião. */
 function mondayOfISO(iso: string): string {
@@ -305,7 +318,9 @@ export async function saveDutyProgram(
 
     revalidatePath("/designacoes");
     return { ok: true, programId, assignmentCount };
-  } catch {
+  } catch (error) {
+    console.error("[duties] falha ao salvar escala", { programId, error });
+    if (isMissingTableError(error)) return { ok: false, error: DUTY_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo." };
   }
 }
@@ -334,7 +349,9 @@ export async function updateDutyAssignment(
       .where(eq(dutyAssignments.id, assignmentId));
     revalidatePath("/designacoes");
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("[duties] falha ao designar", { assignmentId, error });
+    if (isMissingTableError(error)) return { ok: false, error: DUTY_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo." };
   }
 }
@@ -348,7 +365,9 @@ export async function deleteDutyProgram(
     await db.delete(dutyPrograms).where(eq(dutyPrograms.id, programId));
     revalidatePath("/designacoes");
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("[duties] falha ao excluir escala", { programId, error });
+    if (isMissingTableError(error)) return { ok: false, error: DUTY_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo eliminar. Inténtalo de nuevo." };
   }
 }
@@ -363,7 +382,9 @@ export async function updateDutyProgramStatus(
     await db.update(dutyPrograms).set({ status }).where(eq(dutyPrograms.id, programId));
     revalidatePath("/designacoes");
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error("[duties] falha ao atualizar status da escala", { programId, status, error });
+    if (isMissingTableError(error)) return { ok: false, error: DUTY_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo guardar. Revisa tu conexión e inténtalo de nuevo." };
   }
 }

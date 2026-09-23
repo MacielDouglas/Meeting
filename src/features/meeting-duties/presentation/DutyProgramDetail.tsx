@@ -14,6 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { DutyKeyIcon } from "./DutyKeyIcon";
 
 interface DutyProgramDetailProps {
   program: DutyProgramItem;
@@ -54,6 +55,7 @@ function AssignmentRow({
 
   return (
     <div className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm">
+      <DutyKeyIcon dutyKey={assignment.dutyKey} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">
           {assignment.postLabel || assignment.dutyKey}
