@@ -131,6 +131,7 @@ export const es = {
   sinAsignar: "Sin asignar",
   sala: "Sala",
   asignar: "Asignar",
+  asignaciones: "Asignaciones",
   volver: "Volver",
   cambiar: "Cambiar",
   mostrarMas: "Mostrar más",
@@ -213,6 +214,7 @@ export const es = {
   // Reuniones: navegação e programa
   tabReuniones: "Reuniones",
   tabDesignaciones: "Designaciones",
+  sinDesignacionesProxima: "La próxima reunión aún no tiene designaciones.",
   tabContenido: "Contenido",
   tabOradores: "Oradores",
   seccionesReuniones: "Secciones de reuniones",

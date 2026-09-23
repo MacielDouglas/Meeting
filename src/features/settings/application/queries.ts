@@ -1,5 +1,5 @@
 import { asc, desc, eq } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
   DEFAULT_MEETING_SCHEDULE,
   type MeetingSchedule,
@@ -77,7 +77,7 @@ export interface SpecialEventItem {
 }
 
 export async function listSpecialEvents(): Promise<SpecialEventItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const rows = await getDb()
     .select({
       id: specialEvents.id,
@@ -101,7 +101,7 @@ export interface ScheduleExceptionItem {
 }
 
 export async function listScheduleExceptions(): Promise<ScheduleExceptionItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const rows = await getDb()
     .select({
       id: scheduleExceptions.id,

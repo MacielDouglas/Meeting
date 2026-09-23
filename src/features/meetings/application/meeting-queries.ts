@@ -1,7 +1,10 @@
 "use server";
 
 import { and, asc, eq, gte, lte } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import {
+  requireAuthenticatedUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
 import {
   type MeetingKind,
   meetingAssignments,
@@ -54,7 +57,7 @@ export async function listProgramsForPdf(
   from: string,
   to: string,
 ): Promise<PdfProgramItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const programs = await db
     .select()
@@ -112,7 +115,7 @@ export async function listProgramDates(
   from: string,
   to: string,
 ): Promise<string[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const programs = await db
     .select({ date: meetingPrograms.date })

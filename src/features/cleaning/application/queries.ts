@@ -1,5 +1,5 @@
 import { asc, eq } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
   CLEANING_SECTORS_DEFAULTS,
   CLEANING_TYPES,
@@ -33,7 +33,7 @@ export interface CleaningTypeItem {
 }
 
 export async function listCleaningConfig(): Promise<CleaningTypeItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const db = getDb();
     const [typeRows, sectorRows] = await Promise.all([
@@ -100,7 +100,7 @@ function buildDefaultCleaningConfig(): CleaningTypeItem[] {
 }
 
 export async function listEnabledDesignationFlags(): Promise<string[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const { designationSectors } = await import(
       "@/features/designations/infrastructure/designation-schema"
@@ -137,7 +137,7 @@ export function isPersonEligibleForCleaning(
 }
 
 export async function getCleaningSectorRule(sectorId: string): Promise<CleaningEligibility | null> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   if (sectorId.startsWith("default-"))
     return { peopleCount: null, requiredSex: "any", allowYoung: true };
   try {

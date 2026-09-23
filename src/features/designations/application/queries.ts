@@ -1,5 +1,5 @@
 import { asc } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { requirePrivilegedUser } from "@/features/auth/application/session";
 import { DESIGNATION_SECTORS_DEFAULTS } from "@/features/designations/domain/designation-defaults";
 import {
   designationSectors,
@@ -24,7 +24,7 @@ export interface DesignationSectorItem {
 }
 
 export async function listDesignationConfig(): Promise<DesignationSectorItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const db = getDb();
     const [sectorRows, slotRows] = await Promise.all([

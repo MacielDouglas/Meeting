@@ -38,6 +38,13 @@ export default async function ReunioesPage({
 
   const params = (await searchParams) ?? {};
   if (params.tab === "designacoes") redirect("/designacoes");
+  if (
+    (params.tab === "conteudo" || params.tab === "oradores") &&
+    user?.role !== "owner" &&
+    user?.role !== "admin"
+  ) {
+    redirect("/reunioes");
+  }
   const tab: ReunioesTab =
     params.tab === "conteudo" || params.tab === "oradores" ? params.tab : "reunioes";
   const canManage = user?.role === "owner" || user?.role === "admin";

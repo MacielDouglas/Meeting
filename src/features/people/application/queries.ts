@@ -1,5 +1,8 @@
 import { and, asc, eq, isNotNull, isNull, ne, or } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import {
+  requireAuthenticatedUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
 import { users } from "@/features/auth/infrastructure/user-schema";
 import { getFullName, type Person, type PersonSummary } from "@/features/people/domain/person";
 import { persons } from "@/features/people/infrastructure/person-schema";
@@ -39,7 +42,7 @@ export interface UserWithRole {
 }
 
 export async function listPersons(): Promise<PersonSummary[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   return getDb()
     .select({
       id: persons.id,
@@ -52,7 +55,7 @@ export async function listPersons(): Promise<PersonSummary[]> {
 }
 
 export async function getPerson(id: string): Promise<Person | null> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const rows = await getDb().select().from(persons).where(eq(persons.id, id)).limit(1);
   return rows[0] ?? null;
 }
@@ -63,7 +66,7 @@ export interface PersonOption {
 }
 
 export async function listPersonOptions(excludeId?: string): Promise<PersonOption[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const onlyHeads = eq(persons.familyHead, true);
   const rows = excludeId
     ? await getDb()
@@ -80,7 +83,7 @@ export async function listPersonOptions(excludeId?: string): Promise<PersonOptio
 }
 
 export async function listUsersWithRoles(): Promise<UserWithRole[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const userRows = await db
     .select({ id: users.id, name: users.name, email: users.email, role: users.role })
@@ -110,7 +113,7 @@ export interface UserOption {
 }
 
 export async function listUserOptions(linkedPersonId?: string): Promise<UserOption[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const condition = linkedPersonId
     ? or(isNull(persons.userId), eq(persons.id, linkedPersonId))
     : isNull(persons.userId);

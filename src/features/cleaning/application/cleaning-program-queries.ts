@@ -1,7 +1,10 @@
 "use server";
 
 import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import {
+  requireAuthenticatedUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
 import {
   cleaningAssignments,
   cleaningPrograms,
@@ -41,7 +44,7 @@ export interface PersonCleaningHistory {
 }
 
 export async function listCleaningPrograms(typeKey?: string): Promise<CleaningProgramItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select({
@@ -80,7 +83,7 @@ export async function listCleaningPrograms(typeKey?: string): Promise<CleaningPr
 export async function getCleaningProgramDetail(
   programId: string,
 ): Promise<{ program: CleaningProgramItem; assignments: CleaningAssignmentItem[] }> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
 
   const programRows = await db
@@ -126,7 +129,7 @@ export async function getManyPersonCleaningHistories(
   personIds: string[],
   limit = 10,
 ): Promise<Map<string, PersonCleaningHistory[]>> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const result = new Map<string, PersonCleaningHistory[]>();
   if (personIds.length === 0) return result;
   const db = getDb();
@@ -206,7 +209,7 @@ export async function listEligiblePersons(
   requiredSex?: "any" | "male" | "female",
   options?: { allowYoung?: boolean; search?: string; limit?: number },
 ): Promise<EligiblePerson[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const conditions = [eq(persons.cleaning, true)];
   if (requiredSex === "male") conditions.push(eq(persons.sex, "male"));
@@ -244,7 +247,7 @@ export async function listEligiblePersons(
 }
 
 export async function listFamilyMembers(familyMemberId: string): Promise<EligiblePerson[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select({
@@ -274,7 +277,7 @@ export async function getPersonAssignmentCountInSector(
   personId: string,
   sectorKey: string,
 ): Promise<number> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select({ count: sql<number>`cast(count(*) as int)` })
@@ -286,7 +289,7 @@ export async function getPersonAssignmentCountInSector(
 }
 
 export async function getLatestAssignmentDate(personId: string): Promise<string | null> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select({ assignmentDate: cleaningAssignments.assignmentDate })
@@ -298,7 +301,7 @@ export async function getLatestAssignmentDate(personId: string): Promise<string 
 }
 
 export async function getEnabledCleaningSectors(typeKey: string) {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select()
@@ -311,4 +314,68 @@ export async function getEnabledCleaningSectors(typeKey: string) {
     )
     .orderBy(asc(cleaningSectors.sortOrder));
   return rows;
+}
+
+export interface UpcomingCleaningAssignment {
+  assignmentDate: string;
+  typeKey: string;
+  sectorKey: string;
+  sectorName: string;
+  personName: string;
+  isFamily: boolean;
+  status: string;
+}
+
+/**
+ * Limpeza por data (só programas ativos) para os cards de Designações —
+ * visível para qualquer usuário logado.
+ */
+export async function listCleaningAssignmentsForDates(
+  dates: string[],
+): Promise<UpcomingCleaningAssignment[]> {
+  await requireAuthenticatedUser();
+  if (dates.length === 0) return [];
+  try {
+    const db = getDb();
+    const rows = await db
+      .select({
+        assignmentDate: cleaningAssignments.assignmentDate,
+        typeKey: cleaningPrograms.typeKey,
+        sectorKey: cleaningAssignments.sectorKey,
+        sectorName: cleaningAssignments.sectorName,
+        personName: cleaningAssignments.personName,
+        isFamily: cleaningAssignments.isFamily,
+        status: cleaningPrograms.status,
+      })
+      .from(cleaningAssignments)
+      .innerJoin(cleaningPrograms, eq(cleaningAssignments.programId, cleaningPrograms.id))
+      .where(inArray(cleaningAssignments.assignmentDate, dates))
+      .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
+    return rows.map((row) => ({ ...row, isFamily: row.isFamily ?? false }));
+  } catch (error) {
+    console.error("[cleaning] falha ao listar limpeza por data", { dates, error });
+    return [];
+  }
+}
+
+/**
+ * Datas com limpeza a partir de uma data (só programas ativos), para os
+ * cards de Designações encontrarem designações fora dos dias de reunião.
+ */
+export async function listUpcomingCleaningDates(fromDate: string, limit = 8): Promise<string[]> {
+  await requireAuthenticatedUser();
+  try {
+    const db = getDb();
+    const rows = await db
+      .selectDistinct({ date: cleaningAssignments.assignmentDate })
+      .from(cleaningAssignments)
+      .innerJoin(cleaningPrograms, eq(cleaningAssignments.programId, cleaningPrograms.id))
+      .where(gte(cleaningAssignments.assignmentDate, fromDate))
+      .orderBy(asc(cleaningAssignments.assignmentDate))
+      .limit(limit);
+    return rows.map((row) => row.date);
+  } catch (error) {
+    console.error("[cleaning] falha ao listar datas com limpeza", { fromDate, error });
+    return [];
+  }
 }

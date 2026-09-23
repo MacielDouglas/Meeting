@@ -25,6 +25,7 @@ const ITEMS = [
     label: es.people,
     icon: FaUserGroup,
     match: (path: string) => path.startsWith("/personas"),
+    privilegedOnly: true,
   },
   {
     href: "/configuracion",
@@ -35,9 +36,18 @@ const ITEMS = [
   },
 ] as const;
 
-export function BottomNav({ showSettings }: { showSettings: boolean }) {
+export function BottomNav({
+  showSettings,
+  showPeople,
+}: {
+  showSettings: boolean;
+  showPeople: boolean;
+}) {
   const pathname = usePathname();
-  const visibleItems = ITEMS.filter((item) => !("ownerOnly" in item) || showSettings);
+  const visibleItems = ITEMS.filter(
+    (item) =>
+      (!("ownerOnly" in item) || showSettings) && (!("privilegedOnly" in item) || showPeople),
+  );
   return (
     <nav
       aria-label="Navegación principal"

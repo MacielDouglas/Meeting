@@ -1,7 +1,10 @@
 "use server";
 
-import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  requireAuthenticatedUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
 import { designationSectors } from "@/features/designations/infrastructure/designation-schema";
 import {
   dutyAssignments,
@@ -49,7 +52,7 @@ export interface DutyPersonItem {
 }
 
 export async function listDutyPrograms(): Promise<DutyProgramItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const db = getDb();
     const rows = await db
@@ -84,7 +87,7 @@ export async function getDutyProgramDetail(programId: string): Promise<{
   program: DutyProgramItem;
   assignments: DutyAssignmentItem[];
 } | null> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   const db = getDb();
   let programs: (typeof dutyPrograms.$inferSelect)[];
   try {
@@ -94,26 +97,24 @@ export async function getDutyProgramDetail(programId: string): Promise<{
   }
   const program = programs[0];
   if (!program) return null;
-  // Nome do posto a partir do setor de designação (cai para o rótulo salvo).
   const assignmentRows = await db
-    .select({
-      id: dutyAssignments.id,
-      programId: dutyAssignments.programId,
-      assignmentDate: dutyAssignments.assignmentDate,
-      meetingKind: dutyAssignments.meetingKind,
-      dutyKey: dutyAssignments.dutyKey,
-      dutyName: designationSectors.name,
-      postLabel: dutyAssignments.postLabel,
-      side: dutyAssignments.side,
-      personId: dutyAssignments.personId,
-      personName: dutyAssignments.personName,
-      isManual: dutyAssignments.isManual,
-      sortOrder: dutyAssignments.sortOrder,
-    })
+    .select()
     .from(dutyAssignments)
-    .leftJoin(designationSectors, eq(designationSectors.personFlag, dutyAssignments.dutyKey))
     .where(eq(dutyAssignments.programId, programId))
     .orderBy(dutyAssignments.assignmentDate, dutyAssignments.sortOrder);
+  // Nome do posto a partir do setor de designação (cai para o rótulo salvo;
+  // busca isolada para a falta dessa tabela não esconder as designações).
+  let sectorNames = new Map<string, string>();
+  try {
+    const sectorRows = await db
+      .select({ personFlag: designationSectors.personFlag, name: designationSectors.name })
+      .from(designationSectors);
+    sectorNames = new Map(
+      sectorRows.flatMap((row) => (row.personFlag ? [[row.personFlag, row.name]] : [])),
+    );
+  } catch (error) {
+    console.error("[duties] falha ao buscar nomes dos setores", { programId, error });
+  }
   const count = await db
     .select({ count: sql<number>`cast(count(${dutyAssignments.id}) as int)` })
     .from(dutyAssignments)
@@ -134,7 +135,7 @@ export async function getDutyProgramDetail(programId: string): Promise<{
       assignmentDate: a.assignmentDate,
       meetingKind: a.meetingKind,
       dutyKey: a.dutyKey,
-      dutyName: a.dutyName ?? a.postLabel,
+      dutyName: sectorNames.get(a.dutyKey) ?? a.postLabel,
       postLabel: a.postLabel,
       side: a.side,
       personId: a.personId,
@@ -147,7 +148,7 @@ export async function getDutyProgramDetail(programId: string): Promise<{
 
 /** Pessoas com flags de apoio (filtro de sexo/flag acontece no domínio). */
 export async function listDutyEligiblePersons(): Promise<DutyPersonItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   let rows: {
     id: string;
     firstName: string;
@@ -194,7 +195,7 @@ export async function listDutyEligiblePersons(): Promise<DutyPersonItem[]> {
 }
 /** Histórico completo (pessoa, data) para o rodízio justo. */
 export async function listPersonDutyHistory(): Promise<{ personId: string; date: string }[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const db = getDb();
     const rows = await db
@@ -261,7 +262,7 @@ export async function listDutyCandidates(
 
 /** Datas com escala ativa (bloqueiam novo programa no período). */
 export async function listActiveDutyDates(): Promise<Set<string>> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   try {
     const db = getDb();
     const rows = await db
@@ -272,5 +273,84 @@ export async function listActiveDutyDates(): Promise<Set<string>> {
     return new Set(rows.map((row) => row.date));
   } catch {
     return new Set();
+  }
+}
+
+export interface UpcomingDutyAssignment {
+  assignmentDate: string;
+  dutyKey: string;
+  dutyName: string;
+  postLabel: string;
+  side: string | null;
+  personName: string;
+  status: string;
+}
+
+/**
+ * Apoio En la reunión por data (só programas ativos) para os cards de
+ * Designações — visível para qualquer usuário logado.
+ */
+export async function listDutyAssignmentsForDates(
+  dates: string[],
+): Promise<UpcomingDutyAssignment[]> {
+  await requireAuthenticatedUser();
+  if (dates.length === 0) return [];
+  try {
+    const db = getDb();
+    const rows = await db
+      .select({
+        assignmentDate: dutyAssignments.assignmentDate,
+        dutyKey: dutyAssignments.dutyKey,
+        postLabel: dutyAssignments.postLabel,
+        side: dutyAssignments.side,
+        personName: dutyAssignments.personName,
+        status: dutyPrograms.status,
+      })
+      .from(dutyAssignments)
+      .innerJoin(dutyPrograms, eq(dutyAssignments.programId, dutyPrograms.id))
+      .where(inArray(dutyAssignments.assignmentDate, dates))
+      .orderBy(asc(dutyAssignments.assignmentDate), asc(dutyAssignments.sortOrder));
+    // Nomes dos postos em busca isolada: a falta da tabela de setores não
+    // pode esconder as designações (cai para o rótulo salvo).
+    let sectorNames = new Map<string, string>();
+    try {
+      const sectorRows = await db
+        .select({ personFlag: designationSectors.personFlag, name: designationSectors.name })
+        .from(designationSectors);
+      sectorNames = new Map(
+        sectorRows.flatMap((row) => (row.personFlag ? [[row.personFlag, row.name]] : [])),
+      );
+    } catch (error) {
+      console.error("[duties] falha ao buscar nomes dos setores", { dates, error });
+    }
+    return rows.map((row) => ({
+      ...row,
+      dutyName: sectorNames.get(row.dutyKey) ?? row.postLabel,
+    }));
+  } catch (error) {
+    console.error("[duties] falha ao listar apoio por data", { dates, error });
+    return [];
+  }
+}
+
+/**
+ * Datas com apoio a partir de uma data (só programas ativos), para os cards
+ * de Designações encontrarem designações fora dos dias de reunião.
+ */
+export async function listUpcomingDutyDates(fromDate: string, limit = 8): Promise<string[]> {
+  await requireAuthenticatedUser();
+  try {
+    const db = getDb();
+    const rows = await db
+      .selectDistinct({ date: dutyAssignments.assignmentDate })
+      .from(dutyAssignments)
+      .innerJoin(dutyPrograms, eq(dutyAssignments.programId, dutyPrograms.id))
+      .where(gte(dutyAssignments.assignmentDate, fromDate))
+      .orderBy(asc(dutyAssignments.assignmentDate))
+      .limit(limit);
+    return rows.map((row) => row.date);
+  } catch (error) {
+    console.error("[duties] falha ao listar datas com apoio", { fromDate, error });
+    return [];
   }
 }

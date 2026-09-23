@@ -15,6 +15,7 @@ interface PeoplePageProps {
 export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
+  if (user.role !== "owner" && user.role !== "admin") redirect("/");
 
   const { tab } = await searchParams;
   const activeTab = tab === "usuarios" ? "usuarios" : "personas";

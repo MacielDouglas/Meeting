@@ -47,6 +47,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
   const weekStart = isValidWeek(params.week) ? params.week : currentMonday();
 
   if (params.view === "slips") {
+    if (user.role !== "owner" && user.role !== "admin") redirect("/reunioes");
     const speakers = await listOutsideSpeakers();
     return (
       <main className="page-stack">

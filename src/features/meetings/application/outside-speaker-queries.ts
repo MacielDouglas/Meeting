@@ -1,7 +1,7 @@
 "use server";
 
 import { asc } from "drizzle-orm";
-import { requireAuthenticatedUser } from "@/features/auth/application/session";
+import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
   ensureOutsideSpeakerTalksTable,
   outsideSpeakers,
@@ -27,7 +27,7 @@ export interface OutsideSpeakerItem {
 }
 
 export async function listOutsideSpeakers(): Promise<OutsideSpeakerItem[]> {
-  await requireAuthenticatedUser();
+  await requirePrivilegedUser();
   await ensureOutsideSpeakerTalksTable();
   const db = getDb();
   const rows = await db

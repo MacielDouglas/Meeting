@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaMeetup } from "react-icons/fa";
 import {
   FaBars,
   FaBookOpen,
   FaBroom,
+  FaClipboardList,
   FaGear,
   FaHouse,
   FaMoon,
@@ -57,7 +58,10 @@ export function SiteHeader({
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [theme, setTheme] = useState<Theme>(initialTheme);
+  // Tema nasce "light" igual ao server (hidratação idêntica); o valor real
+  // do cliente assume no efeito abaixo, sem divergir do HTML do servidor.
+  const [theme, setTheme] = useState<Theme>("light");
+  const appliedTheme = useRef(false);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -73,6 +77,17 @@ export function SiteHeader({
   }
 
   useEffect(() => {
+    setTheme(initialTheme());
+  }, []);
+
+  useEffect(() => {
+    // Primeira aplicação pula: o theme-init.js já deixou a classe certa no
+    // <html> antes da hidratação; reaplicar aqui causaria flash e escrita
+    // redundante no armazenamento.
+    if (!appliedTheme.current) {
+      appliedTheme.current = true;
+      return;
+    }
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
     root.classList.toggle("light", theme === "light");
@@ -114,6 +129,7 @@ export function SiteHeader({
       label: es.people,
       icon: FaUserGroup,
       match: () => isPersonas,
+      privileged: true,
     },
     ...(showAdmin
       ? [
@@ -122,6 +138,16 @@ export function SiteHeader({
             label: es.usersTab,
             icon: FaUsersGear,
             match: () => isUsuarios,
+          },
+        ]
+      : []),
+    ...(showAdmin
+      ? [
+          {
+            href: "/asignar",
+            label: es.asignar,
+            icon: FaClipboardList,
+            match: (path: string) => path.startsWith("/asignar"),
           },
         ]
       : []),
@@ -147,6 +173,8 @@ export function SiteHeader({
       : []),
   ];
 
+  const visibleItems = items.filter((item) => !("privileged" in item) || showAdmin);
+
   return (
     <header className="relative flex items-center gap-3">
       <Link
@@ -169,7 +197,7 @@ export function SiteHeader({
         aria-label="Navegación principal"
         className="ml-1 hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-1 sm:flex"
       >
-        {items
+        {visibleItems
           .filter((item) => item.href !== "/")
           .map((item) => {
             const active = item.match(pathname);
@@ -233,7 +261,7 @@ export function SiteHeader({
           className="absolute top-[calc(100%+8px)] right-0 z-50 w-60 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-lg"
         >
           <ul className="flex flex-col">
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const active = item.match(pathname);
               const Icon = item.icon;
               return (
