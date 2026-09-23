@@ -2,19 +2,14 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listCleaningConfig } from "@/features/cleaning/application/queries";
-import { CleaningSection } from "@/features/cleaning/presentation/CleaningSection";
 import { listDesignationConfig } from "@/features/designations/application/queries";
-import { DesignationSection } from "@/features/designations/presentation/DesignationSection";
 import {
   getMeetingSchedule,
   listScheduleExceptions,
   listSpecialEvents,
 } from "@/features/settings/application/queries";
-import { MeetingScheduleForm } from "@/features/settings/presentation/MeetingScheduleForm";
-import { ScheduleExceptionSection } from "@/features/settings/presentation/ScheduleExceptionSection";
-import { SpecialEventSection } from "@/features/settings/presentation/SpecialEventSection";
+import { ConfiguracionTabs } from "@/features/settings/presentation/ConfiguracionTabs-client";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { CardSkeleton, FormSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -81,23 +76,14 @@ export default async function ConfiguracionPage({
         />
       </Suspense>
 
-      {tab === "reunioes" && (
-        <Suspense fallback={<FormSkeleton fields={4} />}>
-          <MeetingScheduleForm initial={schedule} />
-          <SpecialEventSection events={events} />
-          <ScheduleExceptionSection exceptions={exceptions} />
-        </Suspense>
-      )}
-      {tab === "limpeza" && (
-        <Suspense fallback={<CardSkeleton />}>
-          <CleaningSection initial={cleaning} />
-        </Suspense>
-      )}
-      {tab === "designacoes" && (
-        <Suspense fallback={<CardSkeleton />}>
-          <DesignationSection initial={designations} />
-        </Suspense>
-      )}
+      <ConfiguracionTabs
+        tab={tab}
+        schedule={schedule}
+        events={events}
+        exceptions={exceptions}
+        cleaning={cleaning}
+        designations={designations}
+      />
     </main>
   );
 }

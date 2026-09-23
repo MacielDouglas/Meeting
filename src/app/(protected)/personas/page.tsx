@@ -2,33 +2,13 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { listPersons, listUsersWithRoles } from "@/features/people/application/queries";
-import { PersonList } from "@/features/people/presentation/PersonList";
-import { UserList } from "@/features/people/presentation/UserList";
+import { PersonasTabs } from "@/features/people/presentation/PersonasTabs-client";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { TableSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
 interface PeoplePageProps {
   searchParams: Promise<{ tab?: string }>;
-}
-
-/** Seção server: busca personas e entrega à ilha client `PersonList`. */
-async function PersonListSection({ canCreate }: { canCreate: boolean }) {
-  const persons = await listPersons();
-  return <PersonList persons={persons} canCreate={canCreate} />;
-}
-
-/** Seção server: busca usuários e entrega só flags primitivas à ilha client. */
-async function UserListSection({
-  currentUserId,
-  isOwner,
-}: {
-  currentUserId: string;
-  isOwner: boolean;
-}) {
-  const users = await listUsersWithRoles();
-  return <UserList users={users} currentUserId={currentUserId} isOwner={isOwner} />;
 }
 
 export default async function PeoplePage({ searchParams }: PeoplePageProps) {
@@ -38,6 +18,10 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const { tab } = await searchParams;
   const activeTab = tab === "usuarios" ? "usuarios" : "personas";
   const canCreate = user?.role === "owner" || user?.role === "admin";
+  const [persons, users] = await Promise.all([
+    activeTab === "personas" ? listPersons() : Promise.resolve([]),
+    activeTab === "usuarios" ? listUsersWithRoles() : Promise.resolve([]),
+  ]);
 
   return (
     <main className="flex flex-col gap-4">
@@ -62,13 +46,14 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
         />
       </Suspense>
 
-      <Suspense fallback={<TableSkeleton rows={8} />}>
-        {activeTab === "personas" ? (
-          <PersonListSection canCreate={canCreate} />
-        ) : (
-          <UserListSection currentUserId={user?.id ?? ""} isOwner={user?.role === "owner"} />
-        )}
-      </Suspense>
+      <PersonasTabs
+        tab={activeTab}
+        persons={persons}
+        users={users}
+        canCreate={canCreate}
+        currentUserId={user?.id ?? ""}
+        isOwner={user?.role === "owner"}
+      />
     </main>
   );
 }

@@ -1,14 +1,12 @@
 import { Suspense } from "react";
 import { listCleaningConfig } from "@/features/cleaning/application/queries";
-import { CleaningDesignationSection } from "@/features/cleaning/presentation/CleaningDesignationSection";
-import { DutySection } from "@/features/meeting-duties/presentation/DutySection";
+import { DesignacoesTabs } from "@/features/cleaning/presentation/DesignacoesTabs-client";
 import {
   getMeetingSchedule,
   listScheduleExceptions,
   listSpecialEvents,
 } from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { CalendarSkeleton, CardSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -27,12 +25,21 @@ export default async function DesignacoesPage({
   const params = (await searchParams) ?? {};
   const secao: DesignacoesSecao = params.secao === "reuniao" ? "reuniao" : "limpeza";
 
+  const needsCleaning = secao === "limpeza";
   const [cleaningConfig, specialEventsList, exceptionsList, meetingScheduleData] =
     await Promise.all([
-      secao === "limpeza" ? listCleaningConfig() : Promise.resolve([]),
-      listSpecialEvents(),
-      listScheduleExceptions(),
-      getMeetingSchedule(),
+      needsCleaning ? listCleaningConfig() : Promise.resolve([]),
+      needsCleaning ? listSpecialEvents() : Promise.resolve([]),
+      needsCleaning ? listScheduleExceptions() : Promise.resolve([]),
+      needsCleaning
+        ? getMeetingSchedule()
+        : Promise.resolve({
+            congregationName: "",
+            midweekDay: 2 as const,
+            midweekTime: "19:30",
+            weekendDay: 0 as const,
+            weekendTime: "10:00",
+          }),
     ]);
 
   return (
@@ -59,20 +66,13 @@ export default async function DesignacoesPage({
         />
       </Suspense>
 
-      {secao === "limpeza" ? (
-        <Suspense fallback={<CalendarSkeleton />}>
-          <CleaningDesignationSection
-            cleaningConfig={cleaningConfig}
-            specialEvents={specialEventsList}
-            scheduleExceptions={exceptionsList}
-            meetingSchedule={meetingScheduleData}
-          />
-        </Suspense>
-      ) : (
-        <Suspense fallback={<CardSkeleton />}>
-          <DutySection />
-        </Suspense>
-      )}
+      <DesignacoesTabs
+        secao={secao}
+        cleaningConfig={cleaningConfig}
+        specialEvents={specialEventsList}
+        scheduleExceptions={exceptionsList}
+        meetingSchedule={meetingScheduleData}
+      />
     </main>
   );
 }
