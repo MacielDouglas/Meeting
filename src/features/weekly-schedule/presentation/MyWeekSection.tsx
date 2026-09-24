@@ -5,6 +5,7 @@ import { GiBroom } from "react-icons/gi";
 import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import { SpecialEventBanner } from "@/features/meetings/presentation/SpecialEventBanner";
 import {
   displayPartTitle,
   formatShortDay,
@@ -192,6 +193,18 @@ function LeadHero({
           </span>
         </p>
       </div>
+      {meeting.notice ? (
+        <div className="border-t border-white/10 px-5 py-4 sm:px-6">
+          <SpecialEventBanner
+            event={meeting.notice.event}
+            variant={meeting.notice.variant}
+            showTuesdayNote={
+              meeting.kind === "midweek" && meeting.notice.variant === "circuit-visit"
+            }
+            compact
+          />
+        </div>
+      ) : null}
       <div className="border-t border-white/10 px-5 py-4 sm:px-6">
         <HeroRows meeting={meeting} isMale={isMale} lead />
       </div>
@@ -239,6 +252,18 @@ function MeetingAccordion({
             {meeting.location}
           </span>
         </p>
+        {meeting.notice ? (
+          <div className="mt-3">
+            <SpecialEventBanner
+              event={meeting.notice.event}
+              variant={meeting.notice.variant}
+              showTuesdayNote={
+                meeting.kind === "midweek" && meeting.notice.variant === "circuit-visit"
+              }
+              compact
+            />
+          </div>
+        ) : null}
         <div className="mt-3">
           <HeroRows meeting={meeting} isMale={isMale} lead={false} />
         </div>

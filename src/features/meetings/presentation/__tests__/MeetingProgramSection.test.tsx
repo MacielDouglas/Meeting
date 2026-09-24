@@ -33,6 +33,7 @@ const defaultProps: ComponentProps<typeof MeetingProgramSection> = {
   initialWeekStart: "2026-09-21",
   initialKind: "midweek",
   congregationName: "",
+  events: [],
 };
 
 const programFixture = {
@@ -89,5 +90,30 @@ describe("MeetingProgramSection", () => {
     expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: es.crearProgramaSemana })).toBeInTheDocument();
     expect(screen.queryByText(/Reunión de entre semana/)).not.toBeInTheDocument();
+  });
+
+  it("en semana de asamblea muestra el aviso en lugar de programar", async () => {
+    renderSection({
+      events: [
+        {
+          id: "evt-1",
+          type: "regional_assembly",
+          title: "Asamblea Regional",
+          startDate: "2026-09-26",
+          endDate: "2026-09-28",
+          startTime: "09:00",
+          notes: null,
+          speakerName: null,
+          midweekTheme: null,
+          publicTalkTheme: null,
+          finalTalkTheme: null,
+        },
+      ],
+    });
+
+    expect(await screen.findByRole("heading", { name: "Asamblea Regional" })).toBeInTheDocument();
+    expect(screen.getByText(es.assemblyCta)).toBeInTheDocument();
+    expect(screen.getByText(es.eventReplacesMeeting)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
   });
 });

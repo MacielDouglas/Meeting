@@ -38,11 +38,41 @@ export const createSpecialEventSchema = z
     endDate: dateField.optional().nullable(),
     startTime: timeField,
     notes: optionalPlainText(500),
+    // Detalhes da visita: obrigatórios só para circuit_visit (refines abaixo).
+    speakerName: optionalPlainText(120),
+    midweekTheme: optionalPlainText(200),
+    publicTalkTheme: optionalPlainText(200),
+    finalTalkTheme: optionalPlainText(200),
   })
   .refine((values) => !values.endDate || values.endDate >= values.startDate, {
     message: "La fecha de fin debe ser posterior al inicio.",
     path: ["endDate"],
-  });
+  })
+  .refine((values) => values.type !== "circuit_visit" || (values.speakerName ?? "").trim() !== "", {
+    message: "Informa el nombre del superintendente para la visita.",
+    path: ["speakerName"],
+  })
+  .refine(
+    (values) => values.type !== "circuit_visit" || (values.midweekTheme ?? "").trim() !== "",
+    {
+      message: "Informa el tema del discurso de entre semana para la visita.",
+      path: ["midweekTheme"],
+    },
+  )
+  .refine(
+    (values) => values.type !== "circuit_visit" || (values.publicTalkTheme ?? "").trim() !== "",
+    {
+      message: "Informa el tema del discurso público para la visita.",
+      path: ["publicTalkTheme"],
+    },
+  )
+  .refine(
+    (values) => values.type !== "circuit_visit" || (values.finalTalkTheme ?? "").trim() !== "",
+    {
+      message: "Informa el tema del discurso final para la visita.",
+      path: ["finalTalkTheme"],
+    },
+  );
 
 export const scheduleExceptionTypeSchema = z.enum([
   "no_meeting",

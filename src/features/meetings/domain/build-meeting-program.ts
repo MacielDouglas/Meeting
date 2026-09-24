@@ -15,7 +15,14 @@
  * - Cântico da Atalaya (inicial do estudo): 5
  * - Tema da Atalaya: 60 (dirigente + leitor)
  * - Cântico final + oração: 5 (final da Sentinela)
+ *
+ * Visita do superintendente (`visit`): sem Estudo bíblico no meio de semana
+ * (discurso de 30min do superintendente no lugar); no fim de semana o
+ * discurso público é do superintendente, A Sentinela cai para 30min sem
+ * leitor e há um discurso final de 30min após o estudo.
  */
+
+import type { CircuitVisitDetails } from "@/features/meetings/domain/special-event-weeks";
 
 export interface ProgramPartInput {
   key: string;
@@ -140,6 +147,9 @@ export function classifySavedPart(
       return { capability: "congregationStudy", needsHelper: true };
     case "public-talk":
       return { capability: "publicTalk" };
+    case "circuit-visit-talk":
+    case "circuit-visit-final-talk":
+      return {};
     case "watchtower-study":
       return { capability: "watchtowerStudy", needsHelper: true };
     case "watchtower-song":
@@ -179,6 +189,7 @@ export function buildMidweekParts(
   week: WorkbookWeekLike,
   startTime: string,
   songThemeByNumber: Map<number, string>,
+  visit?: CircuitVisitDetails | null,
 ): BuiltPart[] {
   const parts: ProgramPartInput[] = [];
   const song = week.meeting.song?.[0];
@@ -301,7 +312,17 @@ export function buildMidweekParts(
     });
   });
 
-  if (cbs) {
+  if (visit) {
+    // Semana de visita: sem Estudo bíblico; no lugar, o discurso do
+    // superintendente (orador fixo, sem designação de pessoa).
+    parts.push({
+      key: "circuit-visit-talk",
+      section: "NUESTRA VIDA CRISTIANA",
+      title: visit.midweekTheme || "Discurso del superintendente de circuito",
+      subtitle: visit.speakerName,
+      durationMinutes: 30,
+    });
+  } else if (cbs) {
     parts.push({
       key: "congregation-study",
       section: "NUESTRA VIDA CRISTIANA",
@@ -373,6 +394,7 @@ export function buildWeekendParts(
   outlineNumber: number | null,
   article: WatchtowerArticleLike | null,
   songThemeByNumber: Map<number, string>,
+  visit?: CircuitVisitDetails | null,
 ): BuiltPart[] {
   const parts: ProgramPartInput[] = [];
   // Presidente antes do cântico: pessoa com public_chairman. Duração zero.
@@ -401,8 +423,10 @@ export function buildWeekendParts(
       outlineNumber != null
         ? `${outlineTheme} (${outlineNumber})`
         : outlineTheme || "Discurso público",
+    subtitle: visit ? visit.speakerName : undefined,
     durationMinutes: 30,
-    capability: "publicTalk",
+    // Na visita o orador é o próprio superintendente (fixo, sem designação).
+    capability: visit ? undefined : "publicTalk",
   });
   const atalayaOpening = article?.openingSong ?? null;
   const atalayaClosing = article?.closingSong ?? null;
@@ -420,10 +444,21 @@ export function buildWeekendParts(
     key: "watchtower-study",
     section: "ESTUDIO DE LA ATALAYA",
     title: article?.title ?? "Estudio de La Atalaya",
-    durationMinutes: 60,
-    needsHelper: true,
+    // Na visita o estudo é reduzido e sem leitor (só o dirigente).
+    durationMinutes: visit ? 30 : 60,
+    needsHelper: !visit,
     capability: "watchtowerStudy",
   });
+  if (visit) {
+    // Discurso final do superintendente após A Sentinela (orador fixo).
+    parts.push({
+      key: "circuit-visit-final-talk",
+      section: "ESTUDIO DE LA ATALAYA",
+      title: visit.finalTalkTheme || "Discurso del superintendente de circuito",
+      subtitle: visit.speakerName,
+      durationMinutes: 30,
+    });
+  }
   parts.push({
     key: "closing-song",
     section: "ESTUDIO DE LA ATALAYA",

@@ -30,6 +30,11 @@ export const specialEvents = pgTable("special_events", {
   endDate: text("end_date"),
   startTime: text("start_time").notNull(),
   notes: text("notes"),
+  // Detalhes da Visita do Superintendente de Circuito (nulos nos demais tipos).
+  speakerName: text("speaker_name"),
+  midweekTheme: text("midweek_theme"),
+  publicTalkTheme: text("public_talk_theme"),
+  finalTalkTheme: text("final_talk_theme"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

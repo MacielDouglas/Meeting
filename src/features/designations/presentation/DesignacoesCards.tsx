@@ -1,6 +1,9 @@
 import { getSectorIcon } from "@/features/cleaning/domain/cleaning-sector-icons";
 import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
+import type { SpecialEventVariant } from "@/features/meetings/domain/special-event-weeks";
+import { SpecialEventBanner } from "@/features/meetings/presentation/SpecialEventBanner";
+import type { SpecialEventItem } from "@/features/settings/application/queries";
 import { formatShortDay, formatWeekday } from "@/features/weekly-schedule/domain/my-week";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
@@ -27,6 +30,7 @@ export interface DesignacoesCardDay {
   date: string;
   kind: "midweek" | "weekend";
   time: string;
+  notice?: { variant: SpecialEventVariant; event: SpecialEventItem } | null;
   cleaning: DesignacoesCardCleaning[];
   duties: DesignacoesCardDuty[];
 }
@@ -115,10 +119,18 @@ function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean
         </p>
       </div>
 
-      {empty ? (
+      {empty && !day.notice ? (
         <p className="mt-4 text-sm text-muted-foreground">{es.sinDesignacionesDia}</p>
       ) : (
         <div className="mt-4 flex flex-col gap-4">
+          {day.notice ? (
+            <SpecialEventBanner
+              event={day.notice.event}
+              variant={day.notice.variant}
+              showTuesdayNote={day.kind === "midweek" && day.notice.variant === "circuit-visit"}
+              compact
+            />
+          ) : null}
           <DutyRows items={day.duties} />
           <CleaningRows items={day.cleaning} />
         </div>

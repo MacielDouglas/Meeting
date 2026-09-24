@@ -46,6 +46,12 @@ import {
   findWorkbookWeekIndex,
 } from "@/features/meetings/domain/match-meeting-content";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import {
+  blocksMeeting,
+  resolveWeekOverrides,
+} from "@/features/meetings/domain/special-event-weeks";
+import { SpecialEventBanner } from "@/features/meetings/presentation/SpecialEventBanner";
+import type { SpecialEventItem } from "@/features/settings/application/queries";
 import { CardSkeleton } from "@/shared/components/skeletons";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
@@ -101,6 +107,7 @@ interface MeetingProgramSectionProps {
   initialWeekStart: string;
   initialKind: "midweek" | "weekend";
   congregationName: string;
+  events: SpecialEventItem[];
 }
 
 function mondayOf(offsetWeeks: number): string {
@@ -238,6 +245,7 @@ export function MeetingProgramSection({
   initialWeekStart,
   initialKind,
   congregationName,
+  events,
 }: MeetingProgramSectionProps) {
   const [kind, setKind] = useState<"midweek" | "weekend">(initialKind);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -293,15 +301,36 @@ export function MeetingProgramSection({
     [outlines, effectiveOutlineId],
   );
 
+  // Evento especial da semana: asamblea/celebración substituem a reunião
+  // (bloqueiam programar); visita ajusta o modelo; discurso especial avisa.
+  const weekEnd = addDays(weekStart, 6);
+  const overrides = useMemo(
+    () =>
+      resolveWeekOverrides(
+        {
+          weekStart,
+          weekEnd,
+          midweekDate: addDays(weekStart, (midweekDay - 1 + 7) % 7),
+          weekendDate: addDays(weekStart, (weekendDay - 1 + 7) % 7),
+        },
+        events,
+      ),
+    [weekStart, weekEnd, midweekDay, weekendDay, events],
+  );
+  const override = kind === "midweek" ? overrides.midweek : overrides.weekend;
+  const blocked = blocksMeeting(override);
+  const visit = override.kind === "circuit-visit" ? override.visit : null;
+
   // Cabeçalho da lista: dia da semana | nome da reunião.
-  const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
+  // Na visita, o meio de semana vai para terça.
+  const meetingDay = kind === "midweek" ? (visit ? 2 : midweekDay) : weekendDay;
   const meetingDayName = WEEKDAY_FULL_ES[meetingDay] ?? "";
   const meetingTitle = kind === "midweek" ? "Reunión de entre semana" : "Reunión del fin de semana";
 
   const template: BuiltPart[] = useMemo(() => {
     if (kind === "midweek") {
       if (!workbook) return [];
-      return buildMidweekParts({ meeting: workbook.meeting }, midweekTime, songMap);
+      return buildMidweekParts({ meeting: workbook.meeting }, midweekTime, songMap, visit);
     }
     if (!article) return [];
     return buildWeekendParts(
@@ -311,8 +340,9 @@ export function MeetingProgramSection({
       outline?.number ?? null,
       article,
       songMap,
+      visit,
     );
-  }, [kind, workbook, midweekTime, weekendTime, outline, article, songMap]);
+  }, [kind, workbook, midweekTime, weekendTime, outline, article, songMap, visit]);
 
   // Programa salvo via TanStack Query: cache entre montagens (staleTime 1h),
   // dedupe e invalidação explícita; loadToken força uma chave nova no Reintentar.
@@ -374,7 +404,8 @@ export function MeetingProgramSection({
   // Leitura estrita: ver nunca escreve. Criação e sincronização do modelo
   // exigem ação explícita do organizador (botões abaixo).
   function buildTemplatePayload() {
-    const date = kind === "midweek" ? addDays(weekStart, 3) : addDays(weekStart, 6);
+    // Na visita, o meio de semana é na terça (segunda + 1).
+    const date = kind === "midweek" ? addDays(weekStart, visit ? 1 : 3) : addDays(weekStart, 6);
     return {
       date,
       parts: template.map((t) => ({
@@ -398,7 +429,7 @@ export function MeetingProgramSection({
 
   /** Cria o programa da semana a partir do modelo (upsert não-destrutivo). */
   async function handleCreateProgram() {
-    if (!canManage || template.length === 0 || saving) return;
+    if (!canManage || blocked || template.length === 0 || saving) return;
     setSaving(true);
     setError(null);
     setJustSaved(false);
@@ -450,7 +481,7 @@ export function MeetingProgramSection({
 
   /** Sincroniza o programa com o modelo atual, sem perder designações. */
   async function handleSyncModel() {
-    if (!canManage || !programId || template.length === 0 || saving) return;
+    if (!canManage || blocked || !programId || template.length === 0 || saving) return;
     setSaving(true);
     setError(null);
     const payload = buildTemplatePayload();
@@ -629,6 +660,7 @@ export function MeetingProgramSection({
   }
 
   async function handleSaveAll() {
+    if (blocked) return;
     const entries = Object.entries(pending);
     const total = entries.length + (pendingOutlineId !== null ? 1 : 0);
     setSaving(true);
@@ -901,7 +933,16 @@ export function MeetingProgramSection({
       )}
       {!canManage && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
 
-      {canManage && programId !== null && !loading && assignmentStats.total > 0 && (
+      {override.kind !== "none" && !blocked && !loading && !loadError && (
+        <SpecialEventBanner
+          event={override.event}
+          variant={override.kind}
+          showTuesdayNote={kind === "midweek" && override.kind === "circuit-visit"}
+          compact
+        />
+      )}
+
+      {canManage && !blocked && programId !== null && !loading && assignmentStats.total > 0 && (
         <fieldset className="flex rounded-xl bg-secondary p-1">
           <legend className="sr-only">{es.filtrarPartes}</legend>
           {(
@@ -949,6 +990,11 @@ export function MeetingProgramSection({
             </Button>
           </div>
         </Card>
+      ) : blocked ? (
+        <>
+          <SpecialEventBanner event={override.event} variant={override.kind} />
+          <p className="text-xs text-muted-foreground">{es.eventReplacesMeeting}</p>
+        </>
       ) : programId === null ? (
         <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
           <div className="flex flex-col gap-2 px-0 py-4">

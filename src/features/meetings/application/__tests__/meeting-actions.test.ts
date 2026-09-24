@@ -11,6 +11,7 @@ import {
   updateMeetingSong,
 } from "@/features/meetings/application/meeting-actions";
 import type { MeetingKind } from "@/features/meetings/infrastructure/meeting-schema";
+import { es } from "@/shared/i18n/es";
 
 vi.mock("@/shared/lib/db", async () => {
   const { mockDb } = await import("@test/mock-db");
@@ -36,6 +37,32 @@ const MEETING_TABLES_MISSING_ERROR =
 
 function rejection(message: string): unknown {
   return rejected(new Error(message));
+}
+
+function scheduleRow() {
+  return {
+    congregationName: "",
+    midweekDay: 2,
+    midweekTime: "19:30",
+    weekendDay: 0,
+    weekendTime: "10:00",
+  };
+}
+
+function assemblyEventRow() {
+  return {
+    id: "evt-1",
+    type: "regional_assembly",
+    title: "Asamblea Regional",
+    startDate: "2026-09-26",
+    endDate: "2026-09-28",
+    startTime: "09:00",
+    notes: null,
+    speakerName: null,
+    midweekTheme: null,
+    publicTalkTheme: null,
+    finalTalkTheme: null,
+  };
 }
 
 function programRow(overrides: Record<string, unknown> = {}) {
@@ -168,7 +195,7 @@ describe("saveMeetingProgram", () => {
   });
 
   it("crea un programa nuevo con sus partes", async () => {
-    mockDb.enqueueMany([[], [], [], []]);
+    mockDb.enqueueMany([[scheduleRow()], [], [], [], [], []]);
     const result = await saveMeetingProgram(
       "midweek",
       "2026-09-21",
@@ -203,6 +230,8 @@ describe("saveMeetingProgram", () => {
 
   it("actualiza el programa existente y hace upsert por partKey", async () => {
     mockDb.enqueueMany([
+      [scheduleRow()],
+      [],
       [programRow()],
       [],
       [
@@ -244,7 +273,11 @@ describe("saveMeetingProgram", () => {
   });
 
   it("informa de tablas faltantes al buscar el programa", async () => {
-    mockDb.enqueue(rejection('relation "meeting_programs" does not exist'));
+    mockDb.enqueueMany([
+      [scheduleRow()],
+      [],
+      rejection('relation "meeting_programs" does not exist'),
+    ]);
     await expect(
       saveMeetingProgram("midweek", "2026-09-21", "2026-09-23", [part()]),
     ).resolves.toEqual({ ok: false, error: MEETING_TABLES_MISSING_ERROR });
@@ -252,17 +285,25 @@ describe("saveMeetingProgram", () => {
   });
 
   it("informa de tablas faltantes al guardar", async () => {
-    mockDb.enqueueMany([[], rejection("meeting_assignments does not exist")]);
+    mockDb.enqueueMany([[scheduleRow()], [], [], rejection("meeting_assignments does not exist")]);
     await expect(
       saveMeetingProgram("midweek", "2026-09-21", "2026-09-23", [part()]),
     ).resolves.toEqual({ ok: false, error: MEETING_TABLES_MISSING_ERROR });
   });
 
   it("informa error genérico cuando falla la búsqueda", async () => {
-    mockDb.enqueue(rejection("fallo transitorio"));
+    mockDb.enqueueMany([[scheduleRow()], [], rejection("fallo transitorio")]);
     await expect(
       saveMeetingProgram("midweek", "2026-09-21", "2026-09-23", [part()]),
     ).resolves.toEqual({ ok: false, error: "No se pudo guardar el programa." });
+  });
+
+  it("bloquea guardar en semana de asamblea", async () => {
+    mockDb.enqueueMany([[scheduleRow()], [assemblyEventRow()]]);
+    const result = await saveMeetingProgram("midweek", "2026-09-21", "2026-09-23", [part()]);
+    expect(result).toEqual({ ok: false, error: es.eventBlockedSave });
+    expect(mockDb.calls.some((call) => call.fn === "insert")).toBe(false);
+    expect(mockDb.pending).toBe(0);
   });
 });
 

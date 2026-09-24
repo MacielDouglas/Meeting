@@ -22,10 +22,10 @@ import {
 } from "@/features/cleaning/infrastructure/cleaning-program-schema";
 import { cleaningSectors, cleaningTypes } from "@/features/cleaning/infrastructure/cleaning-schema";
 import { persons } from "@/features/people/infrastructure/person-schema";
+import { listPublicSpecialEvents } from "@/features/settings/application/queries";
 import {
   meetingSettings,
   scheduleExceptions,
-  specialEvents,
 } from "@/features/settings/infrastructure/settings-schema";
 import { getDb } from "@/shared/lib/db";
 
@@ -132,7 +132,8 @@ export async function createCleaningProgram(
   }
 
   const [settings] = await db.select().from(meetingSettings).limit(1);
-  const events = await db.select().from(specialEvents);
+  // Leitura resiliente (banco pode estar sem a migração das colunas da visita).
+  const events = await listPublicSpecialEvents();
   const exceptions = await db.select().from(scheduleExceptions);
 
   // Fairness global (espelha AssignmentHub): conta designações anteriores.

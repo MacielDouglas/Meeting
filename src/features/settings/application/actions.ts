@@ -77,17 +77,35 @@ export async function createSpecialEvent(input: unknown): Promise<SettingsAction
   } catch {
     return { ok: false, error: "Solo el owner puede crear eventos." };
   }
-  await getDb()
-    .insert(specialEvents)
-    .values({
-      id: randomUUID(),
-      type: parsed.data.type,
-      title: parsed.data.title,
-      startDate: parsed.data.startDate,
-      endDate: parsed.data.endDate ?? null,
-      startTime: parsed.data.startTime,
-      notes: parsed.data.notes ?? null,
-    });
+  const eventValues = {
+    type: parsed.data.type,
+    title: parsed.data.title,
+    startDate: parsed.data.startDate,
+    endDate: parsed.data.endDate ?? null,
+    startTime: parsed.data.startTime,
+    notes: parsed.data.notes ?? null,
+    speakerName: parsed.data.speakerName ?? null,
+    midweekTheme: parsed.data.midweekTheme ?? null,
+    publicTalkTheme: parsed.data.publicTalkTheme ?? null,
+    finalTalkTheme: parsed.data.finalTalkTheme ?? null,
+  };
+  try {
+    await getDb()
+      .insert(specialEvents)
+      .values({ id: randomUUID(), ...eventValues });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    // Banco ainda sem a migração: cria as colunas da visita e tenta de novo sozinho.
+    if (!message.includes("speaker_name")) throw error;
+    await getDb().execute(sql`ALTER TABLE special_events
+      ADD COLUMN IF NOT EXISTS speaker_name text,
+      ADD COLUMN IF NOT EXISTS midweek_theme text,
+      ADD COLUMN IF NOT EXISTS public_talk_theme text,
+      ADD COLUMN IF NOT EXISTS final_talk_theme text`);
+    await getDb()
+      .insert(specialEvents)
+      .values({ id: randomUUID(), ...eventValues });
+  }
   revalidateSettingsPages();
   return { ok: true };
 }

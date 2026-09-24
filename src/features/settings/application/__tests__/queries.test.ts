@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
   getMeetingSchedule,
+  listPublicSpecialEvents,
   listScheduleExceptions,
   listSpecialEvents,
 } from "@/features/settings/application/queries";
@@ -94,6 +95,12 @@ describe("getMeetingSchedule", () => {
     });
     expect(mockDb.calls.filter((call) => call.fn === "select")).toHaveLength(2);
   });
+
+  it("devolve o padrão quando o banco está inacessível", async () => {
+    mockDb.enqueue(Promise.reject(new Error("connect failed")));
+    expect(await getMeetingSchedule()).toEqual(DEFAULT_MEETING_SCHEDULE);
+    expect(mockDb.calls.filter((call) => call.fn === "select")).toHaveLength(1);
+  });
 });
 
 describe("listSpecialEvents", () => {
@@ -131,6 +138,64 @@ describe("listSpecialEvents", () => {
     vi.mocked(requirePrivilegedUser).mockRejectedValue(new Error("FORBIDDEN"));
     await expect(listSpecialEvents()).rejects.toThrow("FORBIDDEN");
     expect(mockDb.calls).toHaveLength(0);
+  });
+
+  it("lê sem as colunas da visita quando o banco está sem a migração", async () => {
+    vi.mocked(requirePrivilegedUser).mockResolvedValue(admin);
+    mockDb.enqueue(Promise.reject(new Error('column "speaker_name" does not exist')));
+    mockDb.enqueue([
+      {
+        id: "ev-1",
+        type: "memorial",
+        title: "Celebración",
+        startDate: "2026-10-03",
+        endDate: null,
+        startTime: "19:30",
+        notes: null,
+      },
+    ]);
+    expect(await listSpecialEvents()).toEqual([
+      {
+        id: "ev-1",
+        type: "memorial",
+        title: "Celebración",
+        startDate: "2026-10-03",
+        endDate: null,
+        startTime: "19:30",
+        notes: null,
+        speakerName: null,
+        midweekTheme: null,
+        publicTalkTheme: null,
+        finalTalkTheme: null,
+      },
+    ]);
+    expect(mockDb.calls.filter((call) => call.fn === "select")).toHaveLength(2);
+  });
+});
+
+describe("listPublicSpecialEvents", () => {
+  it("não exige autenticação e usa o mesmo fallback sem a migração", async () => {
+    mockDb.enqueue(Promise.reject(new Error('column "speaker_name" does not exist')));
+    mockDb.enqueue([
+      {
+        id: "ev-1",
+        type: "memorial",
+        title: "Celebración",
+        startDate: "2026-10-03",
+        endDate: null,
+        startTime: "19:30",
+        notes: null,
+      },
+    ]);
+    const result = await listPublicSpecialEvents();
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ id: "ev-1", speakerName: null, finalTalkTheme: null });
+    expect(vi.mocked(requirePrivilegedUser)).not.toHaveBeenCalled();
+  });
+
+  it("devolve lista vazia quando o banco está inacessível", async () => {
+    mockDb.enqueue(Promise.reject(new Error("connect failed")));
+    expect(await listPublicSpecialEvents()).toEqual([]);
   });
 });
 

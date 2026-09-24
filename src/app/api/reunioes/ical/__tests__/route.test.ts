@@ -179,4 +179,41 @@ describe("GET /api/reunioes/ical", () => {
     expect(body).toContain("SUMMARY:Reunión de fin de semana");
     expect(body).toContain("UID:prog-2026w39@meeting");
   });
+
+  it("responde 200 con el evento cuando la semana es de asamblea", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue(owner);
+    vi.mocked(requireAuthenticatedUser).mockResolvedValue(owner);
+    mockDb.enqueue([]);
+    mockDb.enqueue([
+      {
+        congregationName: "",
+        midweekDay: 2,
+        midweekTime: "19:30",
+        weekendDay: 0,
+        weekendTime: "10:00",
+      },
+    ]);
+    mockDb.enqueue([
+      {
+        id: "evt-1",
+        type: "regional_assembly",
+        title: "Asamblea Regional",
+        startDate: "2026-09-26",
+        endDate: "2026-09-28",
+        startTime: "09:00",
+        notes: "Llevar almuerzo",
+        speakerName: null,
+        midweekTheme: null,
+        publicTalkTheme: null,
+        finalTalkTheme: null,
+      },
+    ]);
+    const response = await get("?kind=midweek&week=2026-09-21");
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).toContain("UID:evt-1@meeting");
+    expect(body).toContain("DTSTART:20260926T090000");
+    expect(body).toContain("SUMMARY:Asamblea Regional");
+    expect(body).toContain("Llevar almuerzo");
+  });
 });

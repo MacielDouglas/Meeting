@@ -10,6 +10,7 @@ import {
   type MeetingProgramItem,
 } from "@/features/meetings/application/meeting-queries";
 import { getPersonByUserId } from "@/features/people/application/queries";
+import { listPublicSpecialEvents } from "@/features/settings/application/queries";
 import { getMyWeek } from "@/features/weekly-schedule/application/get-my-week";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import type { WeeklySchedule } from "@/features/weekly-schedule/domain/schedule";
@@ -28,6 +29,30 @@ vi.mock("@/features/meeting-duties/application/duty-queries", () => ({
   listPersonDutiesInRange: vi.fn(),
   listUpcomingPersonDuties: vi.fn(),
 }));
+vi.mock("@/features/settings/application/queries", () => ({
+  listPublicSpecialEvents: vi.fn(),
+}));
+
+function publicEvent(
+  type: "regional_assembly" | "memorial" | "circuit_visit" | "special_talk",
+  startDate: string,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    id: `${type}-${startDate}`,
+    type,
+    title: type,
+    startDate,
+    endDate: null,
+    startTime: "09:00",
+    notes: null,
+    speakerName: null,
+    midweekTheme: null,
+    publicTalkTheme: null,
+    finalTalkTheme: null,
+    ...overrides,
+  };
+}
 
 const reference = new Date(2026, 8, 21, 12);
 
@@ -94,6 +119,7 @@ function assignmentRow(overrides: Partial<MeetingAssignmentItem>): MeetingAssign
 
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.mocked(listPublicSpecialEvents).mockResolvedValue([]);
 });
 
 describe("getMyWeek", () => {
@@ -114,6 +140,7 @@ describe("getMyWeek", () => {
           time: "20:00",
           location: "Salón del Reino",
           isNext: true,
+          notice: null,
           parts: [],
           cleaning: [],
           duties: [],
@@ -125,6 +152,7 @@ describe("getMyWeek", () => {
           time: "10:00",
           location: "Salón del Reino",
           isNext: false,
+          notice: null,
           parts: [],
           cleaning: [],
           duties: [],
@@ -314,5 +342,52 @@ describe("getMyWeek", () => {
     expect(result.meetings[0].isNext).toBe(true);
     expect(result.meetings[1].kind).toBe("midweek");
     expect(result.meetings[1].isNext).toBe(false);
+  });
+
+  it("anexa el aviso de asamblea y suprime las partes", async () => {
+    vi.mocked(getPersonByUserId).mockResolvedValue(null);
+    vi.mocked(getWeeklySchedule).mockResolvedValue(schedule);
+    vi.mocked(listPublicSpecialEvents).mockResolvedValue([
+      publicEvent("regional_assembly", "2026-09-26", { endDate: "2026-09-28" }),
+    ]);
+
+    const result = await getMyWeek("user-1", reference);
+
+    expect(result.meetings[0].notice?.variant).toBe("assembly");
+    expect(result.meetings[0].notice?.event.title).toBe("regional_assembly");
+    expect(result.meetings[1].notice?.variant).toBe("assembly");
+    expect(result.meetings[0].parts).toEqual([]);
+  });
+
+  it("mueve el medio de semana al martes en la visita", async () => {
+    vi.mocked(getPersonByUserId).mockResolvedValue(null);
+    vi.mocked(getWeeklySchedule).mockResolvedValue(schedule);
+    vi.mocked(listPublicSpecialEvents).mockResolvedValue([
+      publicEvent("circuit_visit", "2026-09-22", {
+        endDate: "2026-09-27",
+        speakerName: "Hno. Pérez",
+      }),
+    ]);
+
+    const result = await getMyWeek("user-1", reference);
+    const midweek = result.meetings.find((meeting) => meeting.kind === "midweek");
+
+    expect(midweek?.date).toBe("2026-09-22");
+    expect(midweek?.notice?.variant).toBe("circuit-visit");
+  });
+
+  it("anexa el discurso especial a la reunión más próxima", async () => {
+    vi.mocked(getPersonByUserId).mockResolvedValue(null);
+    vi.mocked(getWeeklySchedule).mockResolvedValue(schedule);
+    vi.mocked(listPublicSpecialEvents).mockResolvedValue([
+      publicEvent("special_talk", "2026-09-26"),
+    ]);
+
+    const result = await getMyWeek("user-1", reference);
+    const midweek = result.meetings.find((meeting) => meeting.kind === "midweek");
+    const weekend = result.meetings.find((meeting) => meeting.kind === "weekend");
+
+    expect(midweek?.notice).toBeNull();
+    expect(weekend?.notice?.variant).toBe("special-talk");
   });
 });

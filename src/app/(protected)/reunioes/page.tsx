@@ -11,7 +11,10 @@ import { listWorkbookIssues } from "@/features/meeting-content/application/workb
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
 import { ReunioesSecondaryTabs } from "@/features/meetings/presentation/ReunioesSecondaryTabs-client";
-import { getMeetingSchedule } from "@/features/settings/application/queries";
+import {
+  getMeetingSchedule,
+  listPublicSpecialEvents,
+} from "@/features/settings/application/queries";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -39,14 +42,16 @@ const ZERO_COUNTS = {
 
 /** Aba Reuniões: dados próprios sob Suspense — o shell nunca espera. */
 async function MeetingsTab({ canManage }: { canManage: boolean }) {
-  const [schedule, songs, outlines, issues, workbooks, meetingScheduleData] = await Promise.all([
-    getWeeklySchedule(),
-    listSongs(),
-    listOutlines(),
-    listWatchtowerIssues(),
-    listWorkbookIssues(),
-    getMeetingSchedule(),
-  ]);
+  const [schedule, songs, outlines, issues, workbooks, meetingScheduleData, events] =
+    await Promise.all([
+      getWeeklySchedule(),
+      listSongs(),
+      listOutlines(),
+      listWatchtowerIssues(),
+      listWorkbookIssues(),
+      getMeetingSchedule(),
+      listPublicSpecialEvents(),
+    ]);
 
   return (
     <MeetingProgramSection
@@ -83,6 +88,7 @@ async function MeetingsTab({ canManage }: { canManage: boolean }) {
       initialWeekStart={schedule.weekStart}
       initialKind={selectInitialKind(todayLocalISO(), schedule.midweek.date)}
       congregationName={meetingScheduleData.congregationName}
+      events={events}
     />
   );
 }

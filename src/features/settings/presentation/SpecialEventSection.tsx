@@ -25,8 +25,14 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
   const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
   const [notes, setNotes] = useState("");
+  const [speakerName, setSpeakerName] = useState("");
+  const [midweekTheme, setMidweekTheme] = useState("");
+  const [publicTalkTheme, setPublicTalkTheme] = useState("");
+  const [finalTalkTheme, setFinalTalkTheme] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const isVisit = type === "circuit_visit";
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -40,12 +46,20 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
         endDate: endDate === "" ? null : endDate,
         startTime,
         notes: notes === "" ? null : notes,
+        speakerName: isVisit && speakerName !== "" ? speakerName : null,
+        midweekTheme: isVisit && midweekTheme !== "" ? midweekTheme : null,
+        publicTalkTheme: isVisit && publicTalkTheme !== "" ? publicTalkTheme : null,
+        finalTalkTheme: isVisit && finalTalkTheme !== "" ? finalTalkTheme : null,
       });
       if (result.ok) {
         setTitle("");
         setStartDate("");
         setEndDate("");
         setNotes("");
+        setSpeakerName("");
+        setMidweekTheme("");
+        setPublicTalkTheme("");
+        setFinalTalkTheme("");
         router.refresh();
       } else {
         setError(result.error ?? null);
@@ -157,6 +171,60 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
             className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
           />
         </label>
+        {isVisit && (
+          <fieldset className="flex flex-col gap-2 rounded-xl border border-border p-3">
+            <legend className="px-1 text-sm font-medium">{es.visitSectionTitle}</legend>
+            <p className="-mt-1 text-xs text-muted-foreground">{es.visitFieldsHint}</p>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{es.visitSpeakerName}</span>
+              <input
+                type="text"
+                value={speakerName}
+                required
+                maxLength={120}
+                placeholder={es.visitSpeakerPlaceholder}
+                onChange={(event) => setSpeakerName(event.target.value)}
+                className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{es.visitMidweekTheme}</span>
+              <input
+                type="text"
+                value={midweekTheme}
+                required
+                maxLength={200}
+                placeholder={es.visitThemePlaceholder}
+                onChange={(event) => setMidweekTheme(event.target.value)}
+                className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{es.visitPublicTalkTheme}</span>
+              <input
+                type="text"
+                value={publicTalkTheme}
+                required
+                maxLength={200}
+                placeholder={es.visitThemePlaceholder}
+                onChange={(event) => setPublicTalkTheme(event.target.value)}
+                className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{es.visitFinalTalkTheme}</span>
+              <input
+                type="text"
+                value={finalTalkTheme}
+                required
+                maxLength={200}
+                placeholder={es.visitThemePlaceholder}
+                onChange={(event) => setFinalTalkTheme(event.target.value)}
+                className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+              />
+            </label>
+          </fieldset>
+        )}
         <Button type="submit" size="lg" disabled={pending}>
           {es.createEvent}
         </Button>

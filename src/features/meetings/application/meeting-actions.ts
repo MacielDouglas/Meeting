@@ -6,11 +6,17 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
+  blocksMeeting,
+  resolveWeekOverrides,
+} from "@/features/meetings/domain/special-event-weeks";
+import {
   type MeetingKind,
   meetingAssignments,
   meetingPrograms,
 } from "@/features/meetings/infrastructure/meeting-schema";
 import { persons } from "@/features/people/infrastructure/person-schema";
+import { getMeetingSchedule, listSpecialEvents } from "@/features/settings/application/queries";
+import { es } from "@/shared/i18n/es";
 import { getDb } from "@/shared/lib/db";
 
 const kindSchema = z.enum(["midweek", "weekend"]);
@@ -51,6 +57,17 @@ function isMissingTableError(error: unknown): boolean {
   );
 }
 
+function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+function dateForWeekday(mondayISO: string, weekday: number): string {
+  return addDaysISO(mondayISO, (weekday - 1 + 7) % 7);
+}
+
 export async function saveMeetingProgram(
   kind: MeetingKind,
   weekStart: string,
@@ -71,6 +88,25 @@ export async function saveMeetingProgram(
   if (!parsedException.success) return { ok: false, error: "Excepción no válida." };
 
   const user = await requirePrivilegedUser();
+
+  // Evento especial prevalece: semana de asamblea/celebración não programa reunião.
+  const [meetingSchedule, weekEvents] = await Promise.all([
+    getMeetingSchedule(),
+    listSpecialEvents(),
+  ]);
+  const overrides = resolveWeekOverrides(
+    {
+      weekStart,
+      weekEnd: addDaysISO(weekStart, 6),
+      midweekDate: dateForWeekday(weekStart, meetingSchedule.midweekDay),
+      weekendDate: dateForWeekday(weekStart, meetingSchedule.weekendDay),
+    },
+    weekEvents,
+  );
+  if (blocksMeeting(kind === "midweek" ? overrides.midweek : overrides.weekend)) {
+    return { ok: false, error: es.eventBlockedSave };
+  }
+
   const db = getDb();
 
   let existing: (typeof meetingPrograms.$inferSelect)[] | undefined;

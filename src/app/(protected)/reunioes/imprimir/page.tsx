@@ -8,7 +8,15 @@ import {
 } from "@/features/meetings/application/meeting-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
-import { getMeetingSchedule } from "@/features/settings/application/queries";
+import {
+  blocksMeeting,
+  resolveWeekOverrides,
+} from "@/features/meetings/domain/special-event-weeks";
+import { SpecialEventBanner } from "@/features/meetings/presentation/SpecialEventBanner";
+import {
+  getMeetingSchedule,
+  listPublicSpecialEvents,
+} from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
@@ -32,6 +40,17 @@ function currentMonday(): string {
 
 function isValidWeek(value: string | undefined): value is string {
   return value !== undefined && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function addDaysISO(iso: string, days: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return dt.toISOString().slice(0, 10);
+}
+
+function dateForWeekday(mondayISO: string, weekday: number): string {
+  return addDaysISO(mondayISO, (weekday - 1 + 7) % 7);
 }
 
 interface ImprimirPageProps {
@@ -93,10 +112,23 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
     );
   }
 
-  const [result, meetingScheduleData] = await Promise.all([
+  const [result, meetingScheduleData, weekEvents] = await Promise.all([
     getMeetingProgram(kind, weekStart),
     getMeetingSchedule(),
+    listPublicSpecialEvents().catch(() => []),
   ]);
+
+  const overrides = resolveWeekOverrides(
+    {
+      weekStart,
+      weekEnd: addDaysISO(weekStart, 6),
+      midweekDate: dateForWeekday(weekStart, meetingScheduleData.midweekDay),
+      weekendDate: dateForWeekday(weekStart, meetingScheduleData.weekendDay),
+    },
+    weekEvents,
+  );
+  const override = kind === "midweek" ? overrides.midweek : overrides.weekend;
+  const blocked = blocksMeeting(override);
 
   // Cabeçalho de seção derivado de forma pura (a primeira parte de cada seção
   // exibe a faixa colorida), calculado antes do JSX.
@@ -139,83 +171,101 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
       </div>
 
       <Suspense fallback={<PrintFallback />}>
-        {result === null ? (
-          <p className="text-sm text-muted-foreground">
-            Ningún programa guardado para esta semana.{" "}
-            <Link href="/reunioes" className="text-accent underline">
-              Volver a Reuniones
-            </Link>
-          </p>
-        ) : result.program.exceptionType === "no_meeting" ||
-          result.program.exceptionType === "convention" ? (
-          <section className="rounded-xl border p-6 text-center">
-            <h2 className="text-xl font-bold">
-              {EXCEPTION_LABELS[result.program.exceptionType] ?? "Sin reunión"}
-            </h2>
-            {result.program.exceptionLabel && (
-              <p className="mt-1 text-sm text-muted-foreground">{result.program.exceptionLabel}</p>
-            )}
-            <p className="mt-1 text-sm text-muted-foreground">
-              {formatDateBR(result.program.date)}
-            </p>
-          </section>
+        {blocked ? (
+          <SpecialEventBanner event={override.event} variant={override.kind} />
         ) : (
-          <article className="overflow-hidden rounded-xl border bg-white text-black">
-            <header className="border-b p-4 text-center">
-              {meetingScheduleData.congregationName && (
-                <p className="text-lg font-bold">{meetingScheduleData.congregationName}</p>
-              )}
-              <h2 className="text-xl font-semibold">
-                {kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"}
-              </h2>
-              <p className="text-sm text-neutral-600">
-                {formatDateBR(result.program.date)}
-                {result.program.exceptionLabel
-                  ? ` — ${EXCEPTION_LABELS[result.program.exceptionType] ?? result.program.exceptionType}: ${result.program.exceptionLabel}`
-                  : ""}
+          <>
+            {override.kind !== "none" ? (
+              <SpecialEventBanner
+                event={override.event}
+                variant={override.kind}
+                showTuesdayNote={kind === "midweek" && override.kind === "circuit-visit"}
+                compact
+              />
+            ) : null}
+            {result === null ? (
+              <p className="text-sm text-muted-foreground">
+                Ningún programa guardado para esta semana.{" "}
+                <Link href="/reunioes" className="text-accent underline">
+                  Volver a Reuniones
+                </Link>
               </p>
-            </header>
-            {partsWithSections.map((part) => {
-              const meta = sectionMetaOf(part.section);
-              return (
-                <div key={part.id}>
-                  {part.showSection && (
-                    <h3
-                      className="px-4 py-1 text-sm font-semibold text-white"
-                      style={{ backgroundColor: meta.color }}
-                    >
-                      {meta.label}
-                    </h3>
+            ) : result.program.exceptionType === "no_meeting" ||
+              result.program.exceptionType === "convention" ? (
+              <section className="rounded-xl border p-6 text-center">
+                <h2 className="text-xl font-bold">
+                  {EXCEPTION_LABELS[result.program.exceptionType] ?? "Sin reunión"}
+                </h2>
+                {result.program.exceptionLabel && (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {result.program.exceptionLabel}
+                  </p>
+                )}
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formatDateBR(result.program.date)}
+                </p>
+              </section>
+            ) : (
+              <article className="overflow-hidden rounded-xl border bg-white text-black">
+                <header className="border-b p-4 text-center">
+                  {meetingScheduleData.congregationName && (
+                    <p className="text-lg font-bold">{meetingScheduleData.congregationName}</p>
                   )}
-                  <div className="flex items-center gap-3 border-b px-4 py-1.5 last:border-b-0">
-                    <span className="w-12 shrink-0 text-xs font-semibold">{part.startTime}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-bold">
-                        {part.songNumber
-                          ? `Cántico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
-                          : part.title}
-                        {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
-                        {part.classroom && part.classroom !== "A"
-                          ? ` · Sala ${part.classroom}`
-                          : ""}
-                      </span>
-                      {(part.subtitle || part.songTheme || part.speakerCongregation) && (
-                        <span className="block truncate text-xs text-neutral-600">
-                          {[part.subtitle || part.songTheme, part.speakerCongregation]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
+                  <h2 className="text-xl font-semibold">
+                    {kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"}
+                  </h2>
+                  <p className="text-sm text-neutral-600">
+                    {formatDateBR(result.program.date)}
+                    {result.program.exceptionLabel
+                      ? ` — ${EXCEPTION_LABELS[result.program.exceptionType] ?? result.program.exceptionType}: ${result.program.exceptionLabel}`
+                      : ""}
+                  </p>
+                </header>
+                {partsWithSections.map((part) => {
+                  const meta = sectionMetaOf(part.section);
+                  return (
+                    <div key={part.id}>
+                      {part.showSection && (
+                        <h3
+                          className="px-4 py-1 text-sm font-semibold text-white"
+                          style={{ backgroundColor: meta.color }}
+                        >
+                          {meta.label}
+                        </h3>
                       )}
-                    </span>
-                    <span className="max-w-44 shrink-0 truncate text-right text-xs italic">
-                      {part.personName}
-                      {part.helperPersonName ? ` · ${part.helperPersonName}` : ""}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </article>
+                      <div className="flex items-center gap-3 border-b px-4 py-1.5 last:border-b-0">
+                        <span className="w-12 shrink-0 text-xs font-semibold">
+                          {part.startTime}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold">
+                            {part.songNumber
+                              ? `Cántico ${part.songNumber}${/oraci[óo]n/i.test(part.title) ? " y oración" : ""}`
+                              : part.title}
+                            {part.durationMinutes ? ` (${part.durationMinutes} min)` : ""}
+                            {part.classroom && part.classroom !== "A"
+                              ? ` · Sala ${part.classroom}`
+                              : ""}
+                          </span>
+                          {(part.subtitle || part.songTheme || part.speakerCongregation) && (
+                            <span className="block truncate text-xs text-neutral-600">
+                              {[part.subtitle || part.songTheme, part.speakerCongregation]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </span>
+                          )}
+                        </span>
+                        <span className="max-w-44 shrink-0 truncate text-right text-xs italic">
+                          {part.personName}
+                          {part.helperPersonName ? ` · ${part.helperPersonName}` : ""}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </article>
+            )}
+          </>
         )}
       </Suspense>
     </main>

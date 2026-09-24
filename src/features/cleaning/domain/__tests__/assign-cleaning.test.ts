@@ -47,6 +47,10 @@ function assemblyEvent(type: SpecialEventItem["type"], startDate: string): Speci
     endDate: startDate,
     startTime: "09:00",
     notes: null,
+    speakerName: null,
+    midweekTheme: null,
+    publicTalkTheme: null,
+    finalTalkTheme: null,
   };
 }
 

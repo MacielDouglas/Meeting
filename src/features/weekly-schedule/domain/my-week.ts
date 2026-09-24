@@ -1,3 +1,5 @@
+import type { SpecialEventVariant } from "@/features/meetings/domain/special-event-weeks";
+import type { SpecialEventItem } from "@/features/settings/application/queries";
 import type { MeetingKind } from "@/features/weekly-schedule/domain/schedule";
 
 /** Parte da reunião em que o usuário é titular ou ajudante/leitor. */
@@ -33,6 +35,11 @@ export interface MyWeekMeeting {
   time: string;
   location: string;
   isNext: boolean;
+  /** Aviso do evento especial da semana (banner compacto); ausente = semana normal. */
+  notice?: {
+    variant: SpecialEventVariant;
+    event: SpecialEventItem;
+  } | null;
   parts: MyWeekPart[];
   cleaning: MyWeekCleaning[];
   duties: MyWeekDuty[];

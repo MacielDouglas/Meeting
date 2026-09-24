@@ -14,7 +14,11 @@ import {
   listDutyAssignmentsForDates,
   listUpcomingDutyDates,
 } from "@/features/meeting-duties/application/duty-queries";
-import { getMeetingSchedule } from "@/features/settings/application/queries";
+import { mondayOfISO, noticeForDate } from "@/features/meetings/domain/special-event-weeks";
+import {
+  getMeetingSchedule,
+  listPublicSpecialEvents,
+} from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { WeekCardsSkeleton } from "@/shared/components/skeletons";
 import { Card } from "@/shared/components/ui/card";
@@ -119,9 +123,10 @@ async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
 
   // Une as datas da agenda com as datas que têm designação salva (limpeza
   // semanal/geral e escalas podem cair fora dos dias de reunião).
-  const [cleaningDates, dutyDates] = await Promise.all([
+  const [cleaningDates, dutyDates, weekEvents] = await Promise.all([
     listUpcomingCleaningDates(today),
     listUpcomingDutyDates(today),
+    listPublicSpecialEvents().catch(() => []),
   ]);
   const byDate = new Map<string, UpcomingMeeting>();
   for (const meeting of scheduled) byDate.set(meeting.date, meeting);
@@ -179,6 +184,7 @@ async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
       date: meeting.date,
       kind: meeting.kind,
       time: meeting.time,
+      notice: noticeForDate(meeting.date, mondayOfISO(meeting.date), weekEvents),
       cleaning: [...cleaningBySector.values()],
       duties: effectiveDuties.map((assignment) => ({
         dutyKey: assignment.dutyKey,
