@@ -6,6 +6,7 @@ import { es } from "@/shared/i18n/es";
 export default function OfflinePage() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-4 py-8">
+      <h1 className="sr-only">{es.offlineTitle}</h1>
       <Card className="flex flex-col gap-4 p-6">
         <div className="flex flex-col">
           <CardTitle className="font-display text-4xl font-semibold leading-[1.1] tracking-tight">

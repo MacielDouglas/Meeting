@@ -160,7 +160,7 @@ export function WatchtowerSection({
                 type="button"
                 onClick={() => setDeleteTarget(issue)}
                 aria-label={`${es.eliminar} la edición ${issue.symbol}`}
-                className="rounded-lg p-2 text-danger"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-danger transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 <FaTrashAlt aria-hidden size={18} />
               </button>

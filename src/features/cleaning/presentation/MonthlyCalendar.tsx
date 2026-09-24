@@ -92,7 +92,7 @@ export function MonthlyCalendar({
         <button
           type="button"
           onClick={onPrevMonth}
-          className="rounded-lg p-2 hover:bg-secondary"
+          className="grid h-11 w-11 place-items-center rounded-xl hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label="Mes anterior"
         >
           <FaChevronLeft size={14} />
@@ -103,7 +103,7 @@ export function MonthlyCalendar({
         <button
           type="button"
           onClick={onNextMonth}
-          className="rounded-lg p-2 hover:bg-secondary"
+          className="grid h-11 w-11 place-items-center rounded-xl hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label="Próximo mes"
         >
           <FaChevronRight size={14} />

@@ -860,11 +860,13 @@ export function MeetingProgramSection({
             <button
               type="button"
               onClick={handleGoToday}
-              className="mt-1 inline-flex h-9 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="mt-1 inline-flex h-9 min-w-12 items-center justify-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.hoy}
             </button>
-          ) : null}
+          ) : (
+            <span aria-hidden className="mt-1 h-9" />
+          )}
         </div>
         <button
           type="button"
@@ -1026,10 +1028,9 @@ export function MeetingProgramSection({
                     <span
                       className={
                         part.key === "public-talk"
-                          ? "block truncate text-base font-bold"
-                          : "block truncate text-sm font-semibold"
+                          ? "block truncate text-base font-semibold text-session-fg"
+                          : "block truncate text-sm font-semibold text-session-fg"
                       }
-                      style={{ color: meta.color }}
                     >
                       {display.title}
                     </span>
@@ -1139,7 +1140,7 @@ export function MeetingProgramSection({
               </span>
             </p>
             {saving && saveProgress && (
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p role="status" className="mt-1 text-xs text-muted-foreground">
                 {es.guardando} {saveProgress.done}/{saveProgress.total}…
               </p>
             )}
@@ -1187,7 +1188,7 @@ export function MeetingProgramSection({
             </button>
             <a
               href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-              className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground"
+              className="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-secondary px-3 text-center font-display text-sm font-medium text-muted-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.descargarICal}
             </a>

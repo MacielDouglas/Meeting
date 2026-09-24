@@ -130,8 +130,9 @@ function ImportModal({
       className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 p-0 sm:items-center sm:p-4"
     >
       <div className="flex max-h-full w-full max-w-lg flex-col gap-3 overflow-hidden rounded-none bg-background p-4 sm:rounded-2xl">
-        <h2 className="text-lg font-bold">
-          {kindLabel(inspected.kind)} · {languageLabel(inspected.language)} · {items.length} itens
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          {kindLabel(inspected.kind)} · {languageLabel(inspected.language)} · {items.length}{" "}
+          elementos
         </h2>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">

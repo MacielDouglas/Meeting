@@ -87,7 +87,7 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
                 type="button"
                 aria-label={es.delete}
                 onClick={() => void handleDelete(item.id)}
-                className="shrink-0 rounded-lg p-2 text-muted-foreground"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 <FaTrash aria-hidden />
               </button>

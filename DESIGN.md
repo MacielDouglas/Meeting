@@ -178,6 +178,7 @@ Ações são retângulos precisos, superfícies são cartões. Botões e control
 ### Buttons
 Precisos e quietos: retângulos exatos em caixa normal, sem resposta tátil.
 - **Shape:** cantos de 12–14px, altura 44px (36px no sm, 48px no lg); o CTA primário da página lidera em 48px com texto base em semibold.
+- **Toque:** alvos de 44px como regra (botões de ação, ícone e navegação); exceção documentada do sistema: controles segmentados (32px em trilho de 40px), campos e dias de calendário (36px) e selects compactos em fileiras — todos passam no mínimo AA de 24px.
 - **Primary:** acento sobre tinta de acento.
 - **Hover / Focus:** transição de cor, foco visível com outline duplo deslocado.
 - **Secondary / Ghost / Tertiary:** secundário em papel suave; outline com borda de linha; ghost só texto.
@@ -195,6 +196,7 @@ Precisos e quietos: retângulos exatos em caixa normal, sem resposta tátil.
 
 ### Inputs / Fields
 - **Style:** campo de 44px em papel suave, cantos de 8px, borda transparente, rótulo à esquerda e valor à direita.
+- **Texto:** campos de digitação (`text`, `search`, `date`, `time`, `number`, `tel`, `textarea`) em 1rem para não disparar o zoom automático do iOS no foco; selects compactos em fileiras mantêm o tamanho denso.
 - **Focus:** borda migra para o acento; sem brilho decorativo.
 - **Error / Disabled:** caixa em perigo suave com borda de perigo; desabilitado com opacidade reduzida.
 

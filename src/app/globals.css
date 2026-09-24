@@ -154,6 +154,19 @@ body {
   color: var(--accent-ink);
 }
 
+/* iOS amplia a tela ao focar campos com menos de 16px; campos de digitação
+   nascem em 1rem (respeita zoom do usuário, que usa rem). Selects compactos
+   em fileiras mantêm o tamanho denso de propósito. */
+input[type="text"],
+input[type="search"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+input[type="tel"],
+textarea {
+  font-size: 1rem;
+}
+
 /* Emblema de seção: pastilha plana na cor TheocBase, sem relevo. */
 .section-emblem {
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
