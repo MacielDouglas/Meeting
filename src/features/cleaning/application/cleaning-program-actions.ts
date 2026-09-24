@@ -76,7 +76,7 @@ export async function createCleaningProgram(
   if (rangeDays > CLEANING_MAX_RANGE_DAYS) {
     return {
       ok: false,
-      error: `Período máximo de ${CLEANING_MAX_RANGE_DAYS} dias por programa.`,
+      error: `Período máximo de ${CLEANING_MAX_RANGE_DAYS} días por programa.`,
     };
   }
 

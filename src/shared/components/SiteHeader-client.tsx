@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { FaListOl, FaMeetup } from "react-icons/fa";
 import {
   FaBars,
@@ -33,6 +33,33 @@ function initialTheme(): Theme {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+// Tema como store externo: o script theme-init já aplicou a classe antes da
+// hidratação; o store só observa/espelha o <html> e notifica quem alternar.
+const themeListeners = new Set<() => void>();
+
+function serverTheme(): Theme {
+  return "light";
+}
+
+function subscribeTheme(listener: () => void) {
+  themeListeners.add(listener);
+  return () => {
+    themeListeners.delete(listener);
+  };
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  root.classList.toggle("dark", theme === "dark");
+  root.classList.toggle("light", theme === "light");
+  try {
+    window.localStorage.setItem(THEME_KEY, theme);
+  } catch {
+    /* armazenamento indisponível: o tema vale só para a sessão */
+  }
+  for (const notify of themeListeners) notify();
+}
+
 interface SiteHeaderProps {
   showSettings: boolean;
   showAdmin: boolean;
@@ -57,10 +84,9 @@ export function SiteHeader({
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  // Tema nasce "light" igual ao server (hidratação idêntica); o valor real
-  // do cliente assume no efeito abaixo, sem divergir do HTML do servidor.
-  const [theme, setTheme] = useState<Theme>("light");
-  const appliedTheme = useRef(false);
+  // Tema nasce "light" igual ao server (hidratação idêntica); após a
+  // hidratação o store devolve a classe real do <html> sem divergência.
+  const theme = useSyncExternalStore(subscribeTheme, initialTheme, serverTheme);
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -74,28 +100,6 @@ export function SiteHeader({
       router.refresh();
     }
   }
-
-  useEffect(() => {
-    setTheme(initialTheme());
-  }, []);
-
-  useEffect(() => {
-    // Primeira aplicação pula: o script de tema já deixou a classe certa no
-    // <html> antes da hidratação; reaplicar aqui causaria flash e escrita
-    // redundante no armazenamento.
-    if (!appliedTheme.current) {
-      appliedTheme.current = true;
-      return;
-    }
-    const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    root.classList.toggle("light", theme === "light");
-    try {
-      window.localStorage.setItem(THEME_KEY, theme);
-    } catch {
-      /* armazenamento indisponível: o tema vale só para a sessão */
-    }
-  }, [theme]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -226,7 +230,7 @@ export function SiteHeader({
           // o server sempre chuta "light"; o client assume sem remendar.
           suppressHydrationWarning
           aria-label={theme === "dark" ? es.switchToLight : es.switchToDark}
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={() => applyTheme(theme === "dark" ? "light" : "dark")}
           className="grid h-11 w-11 place-items-center rounded-xl bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           {theme === "dark" ? <FaSun aria-hidden size={18} /> : <FaMoon aria-hidden size={18} />}

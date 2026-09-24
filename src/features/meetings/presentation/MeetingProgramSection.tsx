@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { IconType } from "react-icons";
 import {
   FaBookOpen,
@@ -32,10 +32,7 @@ import {
   updateMeetingAssignmentDetails,
   updateMeetingSong,
 } from "@/features/meetings/application/meeting-actions";
-import {
-  getMeetingProgram,
-  type MeetingAssignmentItem,
-} from "@/features/meetings/application/meeting-queries";
+import { getMeetingProgram } from "@/features/meetings/application/meeting-queries";
 import { summarizeAssignments } from "@/features/meetings/domain/assignment-stats";
 import {
   type BuiltPart,
@@ -249,18 +246,13 @@ export function MeetingProgramSection({
     [weekOffset, initialWeekStart],
   );
   const [outlineId, setOutlineId] = useState<string>("");
-  const [saved, setSaved] = useState<MeetingAssignmentItem[] | null>(null);
-  const [programId, setProgramId] = useState<string | null>(null);
-  const [programException, setProgramException] = useState({
-    exceptionType: "",
-    exceptionLabel: "",
-  });
   // Alterações preparadas pelo usuário (clique nas partes); só persistem no Salvar.
   const [pending, setPending] = useState<Record<string, StagedChange>>({});
   // Esboço do fim de semana também encena antes de salvar (mesmo modelo mental).
   // A escolha nasce no modal do discurso público; o topo não seleciona mais.
   const [pendingOutlineId, setPendingOutlineId] = useState<string | null>(null);
   const [loadToken, setLoadToken] = useState(0);
+  const [appliedLoadKey, setAppliedLoadKey] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -324,42 +316,43 @@ export function MeetingProgramSection({
 
   // Programa salvo via TanStack Query: cache entre montagens (staleTime 1h),
   // dedupe e invalidação explícita; loadToken força uma chave nova no Reintentar.
+  // O rascunho de sessionStorage viaja junto para restaurar na primeira carga.
   const programQuery = useQuery({
     queryKey: ["meeting-program", kind, weekStart, loadToken],
-    queryFn: () => getMeetingProgram(kind, weekStart),
+    queryFn: async () => {
+      const [result, draft] = await Promise.all([
+        getMeetingProgram(kind, weekStart),
+        Promise.resolve(readStoredDraft(draftStorageKey(kind, weekStart))),
+      ]);
+      return { result, draft };
+    },
   });
   const queryClient = useQueryClient();
   const loading = programQuery.isPending;
   const loadError = programQuery.isError;
 
-  // Aplica o programa buscado: dados novos sempre (é o caminho do refresh pós-salvar);
-  // sincronização completa (discurso, encenação, rascunho) só quando a chave muda.
+  // Programa/atribuições derivam dos dados da query (não há estado espelho).
+  const programData = programQuery.data;
+  const result = programData?.result ?? null;
+  const saved = result?.assignments ?? null;
+  const programId = result?.program.id ?? null;
+  const programException = {
+    exceptionType: result?.program.exceptionType ?? "",
+    exceptionLabel: result?.program.exceptionLabel ?? "",
+  };
+
+  // Ajuste durante o render (padrão React): na troca de semana/tentativa,
+  // quando os dados chegam, zera encenação/discurso e restaura o rascunho.
   const loadKey = `${kind}|${weekStart}|${loadToken}`;
-  const lastLoadKeyRef = useRef<string | null>(null);
-  useEffect(() => {
-    const data = programQuery.data;
-    if (data === undefined) return;
-    setSaved(data?.assignments ?? null);
-    setProgramId(data?.program.id ?? null);
-    setProgramException({
-      exceptionType: data?.program.exceptionType ?? "",
-      exceptionLabel: data?.program.exceptionLabel ?? "",
-    });
-    if (lastLoadKeyRef.current === loadKey) return;
-    lastLoadKeyRef.current = loadKey;
+  if (programData !== undefined && appliedLoadKey !== loadKey) {
+    setAppliedLoadKey(loadKey);
     setError(null);
     // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
     // semana sem programa, sem carregar escolha de outra semana).
-    setOutlineId(data?.program.outlineId ?? "");
-    setPending({});
-    setPendingOutlineId(null);
-    // Rede de segurança: restaura o rascunho encenado desta semana.
-    const stored = readStoredDraft(draftStorageKey(kind, weekStart));
-    if (stored) {
-      setPending(stored.pending);
-      setPendingOutlineId(stored.outlineId);
-    }
-  }, [programQuery.data, loadKey, kind, weekStart]);
+    setOutlineId(result?.program.outlineId ?? "");
+    setPending(programData.draft ? programData.draft.pending : {});
+    setPendingOutlineId(programData.draft ? programData.draft.outlineId : null);
+  }
 
   // Espelha o rascunho em sessionStorage; voltar à semana o restaura.
   useEffect(() => {
@@ -606,7 +599,7 @@ export function MeetingProgramSection({
     });
   }, [saved, template, pending, kind]);
 
-  const dirtyIds = useMemo(() => new Set(Object.keys(pending)), [pending]);
+  const dirtyIds = new Set(Object.keys(pending));
   const dirtyCount = dirtyIds.size + (pendingOutlineId !== null ? 1 : 0);
 
   // Resumo legível do que vai salvar ("Oración → García"), sem jargão de ids.

@@ -100,8 +100,10 @@ npm run dev            # http://localhost:3000
 | `npm run build` | build de produção (webpack) |
 | `npm run start` | serve o build |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` / `lint:fix` | Biome no `src/` |
-| `npm run test:unit` | Vitest (domínio e parsers) |
+| `npm run lint` / `lint:fix` | Biome + ESLint em `src/`, `test/` e `vitest.config.ts` |
+| `npm test` / `test:unit` | Vitest: 480 testes (banco mockado, sem rede) |
+| `npm run test:watch` | Vitest em modo watch |
+| `npm run test:coverage` | Vitest + relatório de cobertura (pasta `coverage/`, ignorada no git) |
 | `npm run db:generate` | gera migrations a partir do schema |
 | `npm run db:push` | aplica o schema direto no banco |
 

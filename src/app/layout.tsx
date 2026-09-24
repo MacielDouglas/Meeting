@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
 import { OnlineStatus } from "@/features/offline/OnlineStatus";
@@ -58,9 +59,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        {/* Tema salvo antes da primeira pintura (evita flash claro/escuro);
-            síncrono e no início do body, antes do shell. */}
-        <script src="/theme-init.js" />
+        {/* Tema salvo antes da primeira pintura (evita flash claro/escuro). */}
+        <Script src="/theme-init.js" strategy="beforeInteractive" />
         <QueryProvider>
           <div className="app-shell flex flex-col gap-6">
             <Suspense fallback={null}>

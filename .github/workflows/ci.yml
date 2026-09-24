@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Fakes apenas para o build avaliar módulos (nenhum serviço real).
+      # Os testes nunca usam: rodam com banco mockado e tripwire de rede.
+      DATABASE_URL: postgres://user:pass@127.0.0.1:5432/ci-fake
+      BETTER_AUTH_SECRET: ci-fake-secret
+      BETTER_AUTH_URL: http://localhost:3000
+      GOOGLE_CLIENT_ID: ci-fake-client-id
+      GOOGLE_CLIENT_SECRET: ci-fake-client-secret
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Biome (lint + formatação)
+        run: npx biome check src test vitest.config.ts
+
+      - name: ESLint
+        run: npx eslint src test
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Testes (banco mockado, sem rede)
+        run: npx vitest run
+
+      - name: Build
+        run: npm run build
