@@ -21,9 +21,9 @@ async function MyWeekLoader({
 }
 
 const HIGHLIGHTS = [
-  { icon: FaBookOpen, label: "Programa completo" },
-  { icon: FaUserGroup, label: "Designaciones claras" },
-  { icon: FaWifi, label: "Funciona sin conexión" },
+  { icon: FaBookOpen, label: es.homeFeatPrograma },
+  { icon: FaUserGroup, label: es.homeFeatDesignaciones },
+  { icon: FaWifi, label: es.homeFeatOffline },
 ] as const;
 
 /** Landing pública: sem chrome, sem programa — marca, explicação e login. */
@@ -42,7 +42,7 @@ function PublicLanding() {
         </p>
       </div>
       <p className="max-w-sm text-sm leading-relaxed text-muted-foreground motion-safe:animate-[home-rise_.6s_cubic-bezier(.16,1,.3,1)_backwards] motion-safe:[animation-delay:120ms]">
-        Qué parte, quién sirve y cuándo — en el teléfono, incluso sin conexión.
+        {es.homeTagline}
       </p>
       <ul className="flex w-full flex-col gap-2">
         {HIGHLIGHTS.map((item) => (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
 import {
   listCleaningAssignmentsForDates,
@@ -15,6 +16,8 @@ import {
 } from "@/features/meeting-duties/application/duty-queries";
 import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { WeekCardsSkeleton } from "@/shared/components/skeletons";
+import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 
@@ -77,6 +80,32 @@ export default async function DesignacoesPage({
   }
 
   const canManage = user.role === "owner" || user.role === "admin";
+
+  return (
+    <main className="page-stack">
+      <PageHeader
+        title={es.tabDesignaciones}
+        actions={
+          canManage ? (
+            <Link
+              href="/asignar"
+              className="flex h-11 items-center rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {es.asignar}
+            </Link>
+          ) : undefined
+        }
+      />
+
+      <Suspense fallback={<WeekCardsSkeleton />}>
+        <DesignacoesCardsSection canManage={canManage} />
+      </Suspense>
+    </main>
+  );
+}
+
+/** Busca blocante isolada: o shell (header) nunca espera os dados. */
+async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
   const meetingSchedule = await getMeetingSchedule();
   const today = todayLocalISO();
   const scheduled = nextMeetingDates(
@@ -163,25 +192,23 @@ export default async function DesignacoesPage({
   });
 
   return (
-    <main className="page-stack">
-      <PageHeader
-        title={es.tabDesignaciones}
-        actions={
-          canManage ? (
-            <Link
-              href="/asignar"
-              className="flex h-11 items-center rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              {es.asignar}
-            </Link>
-          ) : undefined
-        }
-      />
-
+    <>
       <DesignacoesCards days={days} />
       {days.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>
+        <Card className="flex flex-col gap-3 p-4">
+          <p className="text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>
+          {canManage ? (
+            <div>
+              <Link
+                href="/asignar"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                {es.asignar}
+              </Link>
+            </div>
+          ) : null}
+        </Card>
       ) : null}
-    </main>
+    </>
   );
 }

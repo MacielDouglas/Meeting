@@ -46,6 +46,7 @@ import {
   findWorkbookWeekIndex,
 } from "@/features/meetings/domain/match-meeting-content";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import { CardSkeleton } from "@/shared/components/skeletons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { MONTH_SHORT_ES, WEEKDAY_FULL_ES, WEEKDAY_SHORT_ES } from "@/shared/lib/format-date";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
 import { PdfExportModal } from "./PdfExportModal-client";
 
@@ -114,21 +116,6 @@ function mondayOf(offsetWeeks: number): string {
   return `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
 }
 
-const MES_CORTO = [
-  "ene",
-  "feb",
-  "mar",
-  "abr",
-  "may",
-  "jun",
-  "jul",
-  "ago",
-  "sep",
-  "oct",
-  "nov",
-  "dic",
-];
-
 /** Intervalo da semana: "12 – 18 ene" ou "28 ene – 3 feb". */
 function formatWeekRange(weekStart: string): string {
   const end = addDays(weekStart, 6);
@@ -136,8 +123,8 @@ function formatWeekRange(weekStart: string): string {
   const [, em, ed] = end.split("-").map(Number);
   const startDay = String(sd).padStart(2, "0");
   const endDay = String(ed).padStart(2, "0");
-  if (sm === em) return `${startDay} – ${endDay} ${MES_CORTO[sm - 1]}`;
-  return `${startDay} ${MES_CORTO[sm - 1]} – ${endDay} ${MES_CORTO[em - 1]}`;
+  if (sm === em) return `${startDay} – ${endDay} ${MONTH_SHORT_ES[sm - 1]}`;
+  return `${startDay} ${MONTH_SHORT_ES[sm - 1]} – ${endDay} ${MONTH_SHORT_ES[em - 1]}`;
 }
 
 function addDays(iso: string, days: number): string {
@@ -180,8 +167,6 @@ const SECTION_ICONS: Record<string, IconType> = {
   "PUBLIC TALK": FaMicrophone,
   "ESTUDIO DE LA ATALAYA": FaBookOpen,
 };
-
-const WEEKDAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
 
 /** Partes fixas: só leitura, sem botão de designação. */
 const ALWAYS_DISPLAY_ONLY_KEYS = new Set([
@@ -274,6 +259,8 @@ export function MeetingProgramSection({
   // A escolha nasce no modal do discurso público; o topo não seleciona mais.
   const [pendingOutlineId, setPendingOutlineId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [loadToken, setLoadToken] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
@@ -314,15 +301,10 @@ export function MeetingProgramSection({
     [outlines, effectiveOutlineId],
   );
 
-  // Cabeçalho da lista: dia da semana | nome da reunião + leitura semanal.
+  // Cabeçalho da lista: dia da semana | nome da reunião.
   const meetingDay = kind === "midweek" ? midweekDay : weekendDay;
-  const meetingDayName = WEEKDAY_NAMES[meetingDay] ?? "";
+  const meetingDayName = WEEKDAY_FULL_ES[meetingDay] ?? "";
   const meetingTitle = kind === "midweek" ? "Reunión de entre semana" : "Reunión del fin de semana";
-  const weekBibleReading = useMemo(() => {
-    const index = findWorkbookWeekIndex(workbooks, weekStart);
-    const matched = index != null ? workbooks[index] : null;
-    return matched?.meeting.BibleReading ?? "";
-  }, [workbooks, weekStart]);
 
   const template: BuiltPart[] = useMemo(() => {
     if (kind === "midweek") {
@@ -341,10 +323,13 @@ export function MeetingProgramSection({
   }, [kind, workbook, midweekTime, weekendTime, outline, article, songMap]);
 
   useEffect(() => {
+    // loadToken só existe para o Reintentar forçar nova carga.
+    void loadToken;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError(null);
+      setLoadError(false);
       try {
         const result = await getMeetingProgram(kind, weekStart);
         if (cancelled) return;
@@ -368,6 +353,7 @@ export function MeetingProgramSection({
       } catch {
         if (!cancelled) {
           setSaved(null);
+          setLoadError(true);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -377,7 +363,7 @@ export function MeetingProgramSection({
     return () => {
       cancelled = true;
     };
-  }, [kind, weekStart]);
+  }, [kind, weekStart, loadToken]);
 
   // Espelha o rascunho em sessionStorage; voltar à semana o restaura.
   useEffect(() => {
@@ -601,9 +587,12 @@ export function MeetingProgramSection({
         classroom: "A",
         speakerCongregation: "",
       }));
-    const byKey = new Map(saved.map((a) => [a.partKey, a]));
+    // Mesma parte em salas distintas (A/B/C) não colapsa: chave inclui a sala,
+    // com queda para a chave simples em programas antigos sem sala.
+    const byKey = new Map(saved.map((a) => [`${a.partKey}|${a.classroom ?? "A"}`, a]));
+    const byKeyPlain = new Map(saved.map((a) => [a.partKey, a]));
     return template.map((t, index) => {
-      const s = byKey.get(t.key);
+      const s = byKey.get(`${t.key}|A`) ?? byKeyPlain.get(t.key);
       return applyPending({
         ...t,
         id: s?.id ?? `tpl-${index}`,
@@ -853,35 +842,34 @@ export function MeetingProgramSection({
         <button
           type="button"
           onClick={() => handleWeekStep(-1)}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaAnterior}
         >
           <FaChevronLeft size={16} />
         </button>
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-1 py-1">
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-1 py-1 text-center">
           <p className="truncate font-display text-2xl font-semibold leading-none tracking-tight">
             {formatWeekRange(weekStart)}
           </p>
           <p className="truncate text-sm font-medium text-muted-foreground">
             {kind === "midweek" ? es.entreSemana : es.finSemana} ·{" "}
-            {WEEKDAY_NAMES[kind === "midweek" ? midweekDay : weekendDay]?.slice(0, 3)}{" "}
+            {WEEKDAY_SHORT_ES[kind === "midweek" ? midweekDay : weekendDay]}{" "}
             {kind === "midweek" ? midweekTime : weekendTime}
-            {weekBibleReading ? ` · ${weekBibleReading}` : ""}
           </p>
+          {weekOffset !== 0 ? (
+            <button
+              type="button"
+              onClick={handleGoToday}
+              className="mt-1 inline-flex h-9 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {es.hoy}
+            </button>
+          ) : null}
         </div>
-        {weekOffset !== 0 && (
-          <button
-            type="button"
-            onClick={handleGoToday}
-            className="h-11 shrink-0 px-2 text-sm font-medium text-accent transition-colors hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
-          >
-            {es.hoy}
-          </button>
-        )}
         <button
           type="button"
           onClick={() => handleWeekStep(1)}
-          className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaSiguiente}
         >
           <FaChevronRight size={16} />
@@ -935,13 +923,16 @@ export function MeetingProgramSection({
             ] as const
           ).map((option) => {
             const active = vacantOnly ? option.value === "vacant" : option.value === "all";
+            const disabled =
+              option.value === "vacant" && assignmentStats.total - assignmentStats.assigned === 0;
             return (
               <button
                 key={option.value}
                 type="button"
                 aria-pressed={active}
+                disabled={disabled}
                 onClick={() => setVacantOnly(option.value === "vacant")}
-                className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
                   active
                     ? "bg-background font-semibold text-foreground shadow-sm"
                     : "font-medium text-muted-foreground hover:text-foreground"
@@ -955,7 +946,18 @@ export function MeetingProgramSection({
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">{es.cargandoPrograma}</p>
+        <CardSkeleton />
+      ) : loadError ? (
+        <Card className="flex flex-col gap-3 border-0 bg-session p-4 text-session-fg shadow-none">
+          <p role="alert" className="text-sm text-danger">
+            {es.errorCargarPrograma}
+          </p>
+          <div>
+            <Button size="sm" variant="outline" onClick={() => setLoadToken((token) => token + 1)}>
+              {es.reintentar}
+            </Button>
+          </div>
+        </Card>
       ) : programId === null ? (
         <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
           <div className="flex flex-col gap-2 px-0 py-4">
@@ -985,7 +987,7 @@ export function MeetingProgramSection({
               {assignmentProgress.assigned}/{assignmentProgress.total} {es.asignadas}
             </p>
           </div>
-          <div className="flex flex-col divide-y divide-session-line">
+          <div aria-busy={saving} className="flex flex-col divide-y divide-session-line">
             {displayPartsWithSections.map((part, index) => {
               const meta = sectionMetaOf(part.section);
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
@@ -993,10 +995,10 @@ export function MeetingProgramSection({
               if (!display) return null;
               if (!assignmentStats.rowVisible[index]) return null;
               const isSongPart = part.key.includes("song") || part.songNumber != null;
+              // Botão sempre renderizado (foco preservado); salvando só desabilita.
               const interactive =
                 canManage &&
                 programId !== null &&
-                !saving &&
                 !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
                 !(kind === "midweek" && part.key === "opening-song");
               const isDirty = dirtyIds.has(part.id);
@@ -1085,9 +1087,10 @@ export function MeetingProgramSection({
                   {interactive ? (
                     <button
                       type="button"
+                      disabled={saving}
                       onClick={() => setEditing(part)}
                       aria-label={`${es.asignar} ${display.title}`}
-                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg"
+                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg disabled:opacity-70"
                     >
                       {rowContent}
                     </button>

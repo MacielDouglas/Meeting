@@ -17,3 +17,31 @@ export function todayLocalISO(reference: Date = new Date()): string {
   const day = String(reference.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+/** Nomes de dias e meses em espanhol (fonte única para calendário e intervalos). */
+export const WEEKDAY_FULL_ES = [
+  "domingo",
+  "lunes",
+  "martes",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sábado",
+] as const;
+
+export const WEEKDAY_SHORT_ES = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"] as const;
+
+export const MONTH_SHORT_ES = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+] as const;

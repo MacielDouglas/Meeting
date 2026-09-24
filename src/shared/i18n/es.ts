@@ -1,6 +1,10 @@
 export const es = {
   appName: "Reuniones",
   appDescription: "Programa semanal de reuniones",
+  homeTagline: "Qué parte, quién sirve y cuándo — en el teléfono, incluso sin conexión.",
+  homeFeatPrograma: "Programa completo",
+  homeFeatDesignaciones: "Designaciones claras",
+  homeFeatOffline: "Funciona sin conexión",
   currentWeek: "Semana actual",
   midweekMeeting: "Reunión entre semana",
   weekendMeeting: "Reunión de fin de semana",
@@ -234,6 +238,7 @@ export const es = {
   semanaAnterior: "Semana anterior",
   semanaSiguiente: "Semana siguiente",
   cargandoPrograma: "Cargando el programa de la semana…",
+  errorCargarPrograma: "No se pudo cargar el programa.",
   cargandoPersonas: "Cargando personas…",
   importarGuiaHint: "Importa la Guía de esta semana para ver las partes aquí.",
   importarBosquejosHint: "Importa los bosquejos en la pestaña Contenido para elegir el tema aquí.",

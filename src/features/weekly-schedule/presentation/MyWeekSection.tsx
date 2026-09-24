@@ -280,7 +280,7 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
       ) : null}
       {rest.map((meeting) => (
         <MeetingAccordion
-          key={meeting.kind}
+          key={`${meeting.date}-${meeting.kind}`}
           meeting={meeting}
           today={today}
           isMale={myWeek.isMale}
