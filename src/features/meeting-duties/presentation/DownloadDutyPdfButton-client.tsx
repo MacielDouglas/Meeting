@@ -32,7 +32,7 @@ export function DownloadDutyPdfButton({
           organizationName: congregationName.trim() || es.appName,
           title: es.pdfAsignaciones,
           colDate: es.colFecha,
-          emptyCell: es.vacante,
+          emptyCell: es.sinAsignar,
           internoLabel: es.interno,
           externoLabel: es.externo,
           filePrefix: "en-la-reunion",

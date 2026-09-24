@@ -153,7 +153,7 @@ Branco e tinta no claro; preto profundo no escuro. Um único azul funcional, com
 - **Meta** (500, 13px tabular): linha de intervalo de datas do `PageHeader`, um degrau intencional entre label e body.
 
 ### Named Rules
-**The Um Display Rule.** Um único display por tela; todo o resto desce para headline, body ou label.
+**The Um Display Rule.** Um único display por tela; todo o resto desce para headline, body ou label. Exceção: a home logada é liderada pelo herói da reunião (sem `PageHeader`) e carrega um `h1.sr-only` para leitores de tela.
 **The Caixa Normal Rule.** Caixa alta não existe no sistema; ênfase vem de peso e tamanho.
 
 ## Layout

@@ -144,7 +144,7 @@ export function ProgramDetail({
           assignmentDate: assignment.assignmentDate,
           sectorKey: assignment.sectorKey,
           sectorName: assignment.sectorName,
-          personName: assignment.personName || es.vacante,
+          personName: assignment.personName || es.sinAsignar,
           sortOrder: assignment.sortOrder,
         }))}
         sectorTasks={sectorTasks}

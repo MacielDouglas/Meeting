@@ -217,6 +217,7 @@ export interface PersonDutyItem {
   dutyKey: string;
   postLabel: string;
   side: string | null;
+  sortOrder: number;
 }
 
 /** Apoio En la reunión de uma pessoa no intervalo (para "minha semana"). */
@@ -234,6 +235,7 @@ export async function listPersonDutiesInRange(
         dutyKey: dutyAssignments.dutyKey,
         postLabel: dutyAssignments.postLabel,
         side: dutyAssignments.side,
+        sortOrder: dutyAssignments.sortOrder,
       })
       .from(dutyAssignments)
       .where(
@@ -268,6 +270,7 @@ export async function listUpcomingPersonDuties(
         dutyKey: dutyAssignments.dutyKey,
         postLabel: dutyAssignments.postLabel,
         side: dutyAssignments.side,
+        sortOrder: dutyAssignments.sortOrder,
       })
       .from(dutyAssignments)
       .where(
@@ -315,6 +318,7 @@ export interface UpcomingDutyAssignment {
   side: string | null;
   personName: string;
   status: string;
+  sortOrder: number;
 }
 
 /**
@@ -336,6 +340,7 @@ export async function listDutyAssignmentsForDates(
         side: dutyAssignments.side,
         personName: dutyAssignments.personName,
         status: dutyPrograms.status,
+        sortOrder: dutyAssignments.sortOrder,
       })
       .from(dutyAssignments)
       .innerJoin(dutyPrograms, eq(dutyAssignments.programId, dutyPrograms.id))

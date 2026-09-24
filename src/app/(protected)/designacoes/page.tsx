@@ -72,7 +72,9 @@ export default async function DesignacoesPage({
 
   const params = (await searchParams) ?? {};
   // Gestão mudou para /asignar; links antigos com ?secao= acompanham.
-  if (params.secao) redirect(`/asignar?secao=${params.secao}`);
+  if (params.secao === "limpeza" || params.secao === "reuniao") {
+    redirect(`/asignar?secao=${params.secao}`);
+  }
 
   const canManage = user.role === "owner" || user.role === "admin";
   const meetingSchedule = await getMeetingSchedule();
@@ -140,7 +142,7 @@ export default async function DesignacoesPage({
         personNames: [],
         isFamily: false,
       };
-      group.personNames.push(assignment.personName || es.vacante);
+      group.personNames.push(assignment.personName || es.sinAsignar);
       if (assignment.isFamily) group.isFamily = true;
       cleaningBySector.set(assignment.sectorKey, group);
     }
@@ -155,6 +157,7 @@ export default async function DesignacoesPage({
         postLabel: assignment.postLabel,
         side: assignment.side,
         personName: assignment.personName,
+        sortOrder: assignment.sortOrder,
       })),
     };
   });
@@ -176,6 +179,9 @@ export default async function DesignacoesPage({
       />
 
       <DesignacoesCards days={days} />
+      {days.length === 0 ? (
+        <p className="text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>
+      ) : null}
     </main>
   );
 }

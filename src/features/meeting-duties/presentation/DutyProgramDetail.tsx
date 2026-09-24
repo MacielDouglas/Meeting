@@ -78,7 +78,7 @@ function AssignmentRow({
         onChange={(e) => void handleChange(e.target.value === "" ? null : e.target.value)}
         className="h-9 max-w-36 rounded-lg border border-input bg-background px-1 text-xs outline-none focus:border-ring disabled:opacity-50"
       >
-        <option value="">{es.vacante}</option>
+        <option value="">{es.sinAsignar}</option>
         {(candidates ?? []).map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -140,7 +140,7 @@ export function DutyProgramDetail({
             dutyKey: assignment.dutyKey,
             dutyName: assignment.dutyName,
             side: assignment.side,
-            personName: assignment.personName || es.vacante,
+            personName: assignment.personName || es.sinAsignar,
           })),
         }))}
       />

@@ -95,7 +95,8 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
           dutyName: slot.dutyName,
           side: slot.side,
           personName:
-            slot.candidates.find((candidate) => candidate.id === slot.personId)?.name ?? es.vacante,
+            slot.candidates.find((candidate) => candidate.id === slot.personId)?.name ??
+            es.sinAsignar,
         })),
       })),
     [draft],
@@ -313,7 +314,7 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
                             }
                             className="h-9 max-w-36 rounded-lg border border-input bg-background px-1 text-xs outline-none focus:border-ring"
                           >
-                            <option value="">{es.vacante}</option>
+                            <option value="">{es.sinAsignar}</option>
                             {slot.candidates.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}

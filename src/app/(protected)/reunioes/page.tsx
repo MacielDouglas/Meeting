@@ -18,7 +18,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { CardSkeleton, TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
-import { formatDateBR, todayLocalISO } from "@/shared/lib/format-date";
+import { todayLocalISO } from "@/shared/lib/format-date";
 
 type ReunioesTab = "reunioes" | "conteudo" | "oradores";
 
@@ -31,7 +31,7 @@ const TABS: { value: ReunioesTab; label: string }[] = [
 export default async function ReunioesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; reuniao?: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
@@ -40,14 +40,14 @@ export default async function ReunioesPage({
   if (params.tab === "designacoes") redirect("/designacoes");
   if (
     (params.tab === "conteudo" || params.tab === "oradores") &&
-    user?.role !== "owner" &&
-    user?.role !== "admin"
+    user.role !== "owner" &&
+    user.role !== "admin"
   ) {
     redirect("/reunioes");
   }
   const tab: ReunioesTab =
     params.tab === "conteudo" || params.tab === "oradores" ? params.tab : "reunioes";
-  const canManage = user?.role === "owner" || user?.role === "admin";
+  const canManage = user.role === "owner" || user.role === "admin";
   const needsMeetings = tab === "reunioes" || tab === "conteudo";
   const needsOutlines = needsMeetings || tab === "oradores";
   const [schedule, songs, outlines, counts, issues, workbooks, meetingScheduleData, speakers] =
@@ -81,10 +81,7 @@ export default async function ReunioesPage({
 
   return (
     <main className="page-stack">
-      <PageHeader
-        title={es.tabReuniones}
-        meta={`${formatDateBR(schedule.weekStart)} — ${formatDateBR(schedule.weekEnd)}`}
-      />
+      <PageHeader title={es.tabReuniones} />
 
       {canManage && (
         <Suspense fallback={<TabNavSkeleton tabs={3} />}>

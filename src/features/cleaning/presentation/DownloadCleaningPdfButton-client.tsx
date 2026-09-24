@@ -39,7 +39,7 @@ export function DownloadCleaningPdfButton({
           colDate: es.colFecha,
           periodFrom,
           periodTo,
-          emptyCell: es.vacante,
+          emptyCell: es.sinAsignar,
           tasksHeading: es.tareasPdf,
           noDescription: es.sinDescripcion,
           titleDefault: es.cleaning,

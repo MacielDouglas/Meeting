@@ -93,7 +93,13 @@ function orderMeetings(
   midweekAssignments: ProgramAssignment[] | null,
   weekendAssignments: ProgramAssignment[] | null,
   cleaning: { assignmentDate: string; sectorName: string; isFamily: boolean }[],
-  duties: { assignmentDate: string; dutyKey: string; postLabel: string; side: string | null }[],
+  duties: {
+    assignmentDate: string;
+    dutyKey: string;
+    postLabel: string;
+    side: string | null;
+    sortOrder: number;
+  }[],
   nextKind: "midweek" | "weekend",
   personId?: string,
 ): MyWeekMeeting[] {

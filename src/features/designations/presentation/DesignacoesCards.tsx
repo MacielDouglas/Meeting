@@ -20,6 +20,7 @@ export interface DesignacoesCardDuty {
   postLabel: string;
   side: string | null;
   personName: string;
+  sortOrder: number;
 }
 
 export interface DesignacoesCardDay {
@@ -45,9 +46,12 @@ function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
             >
               <Icon aria-hidden size={18} className="shrink-0 text-accent" />
               <span className="min-w-0 flex-1 truncate font-medium">{item.sectorName}</span>
-              <span className="max-w-[55%] shrink-0 truncate text-right text-muted-foreground">
-                {item.personNames.join(" · ") || es.vacante}
-                {item.isFamily ? " · familia" : ""}
+              <span
+                title={`${item.personNames.join(" · ")}${item.isFamily ? ` · ${es.familiaMinuscula}` : ""}`}
+                className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
+              >
+                {item.personNames.join(" · ") || es.sinAsignar}
+                {item.isFamily ? ` · ${es.familiaMinuscula}` : ""}
               </span>
             </li>
           );
@@ -65,7 +69,7 @@ function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
       <ul className="flex flex-col">
         {items.map((item) => (
           <li
-            key={`${item.dutyKey}-${item.postLabel}-${item.side ?? ""}`}
+            key={`${item.dutyKey}-${item.sortOrder}`}
             className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
           >
             <DutyKeyIcon dutyKey={item.dutyKey} />
@@ -75,8 +79,11 @@ function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
                 <span className="font-normal text-muted-foreground"> · {item.side}</span>
               ) : null}
             </span>
-            <span className="max-w-[55%] shrink-0 truncate text-right text-muted-foreground">
-              {item.personName || es.vacante}
+            <span
+              title={item.personName || es.sinAsignar}
+              className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
+            >
+              {item.personName || es.sinAsignar}
             </span>
           </li>
         ))}
@@ -109,7 +116,7 @@ function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean
       </div>
 
       {empty ? (
-        <p className="mt-4 text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>
+        <p className="mt-4 text-sm text-muted-foreground">{es.sinDesignacionesDia}</p>
       ) : (
         <div className="mt-4 flex flex-col gap-4">
           <DutyRows items={day.duties} />
@@ -122,15 +129,14 @@ function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean
 
 /**
  * Cards das próximas reuniões: o primeiro (reunião do dia ou próxima) em
- * destaque, os seguintes apagados como disabled. Só leitura, sem ações.
+ * destaque com ring e cabeçalho em acento; os seguintes recuam só no
+ * cabeçalho (papel suave), sem opacidade — legível sob sol. Só leitura.
  */
 export function DesignacoesCards({ days }: { days: DesignacoesCardDay[] }) {
   return (
     <div className="section-stack">
       {days.map((day, index) => (
-        <div key={`${day.date}-${day.kind}`} className={cn(index > 0 && "opacity-60 saturate-50")}>
-          <DesignacoesCard day={day} lead={index === 0} />
-        </div>
+        <DesignacoesCard key={`${day.date}-${day.kind}`} day={day} lead={index === 0} />
       ))}
     </div>
   );

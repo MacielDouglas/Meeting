@@ -34,6 +34,7 @@ import {
   getMeetingProgram,
   type MeetingAssignmentItem,
 } from "@/features/meetings/application/meeting-queries";
+import { summarizeAssignments } from "@/features/meetings/domain/assignment-stats";
 import {
   type BuiltPart,
   buildMidweekParts,
@@ -45,6 +46,16 @@ import {
   findWorkbookWeekIndex,
 } from "@/features/meetings/domain/match-meeting-content";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
@@ -134,6 +145,32 @@ function addDays(iso: string, days: number): string {
   const dt = new Date(Date.UTC(y, m - 1, d));
   dt.setUTCDate(dt.getUTCDate() + days);
   return dt.toISOString().slice(0, 10);
+}
+
+/** Rascunho encenado em sessionStorage (rede de segurança ao trocar de semana). */
+function draftStorageKey(kind: string, weekStart: string): string {
+  return `reunion-draft:${kind}:${weekStart}`;
+}
+
+function readStoredDraft(key: string): {
+  pending: Record<string, StagedChange>;
+  outlineId: string | null;
+} | null {
+  try {
+    const raw = window.sessionStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      pending?: Record<string, StagedChange>;
+      outlineId?: string | null;
+    };
+    if (!parsed || typeof parsed.pending !== "object" || parsed.pending === null) return null;
+    return {
+      pending: parsed.pending,
+      outlineId: typeof parsed.outlineId === "string" ? parsed.outlineId : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 const SECTION_ICONS: Record<string, IconType> = {
@@ -239,10 +276,19 @@ export function MeetingProgramSection({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [failedLabel, setFailedLabel] = useState<string | null>(null);
   const [justSaved, setJustSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<DisplayPart | null>(null);
   const [pdfOpen, setPdfOpen] = useState(false);
+  const [vacantOnly, setVacantOnly] = useState(false);
+  const [navRequest, setNavRequest] = useState<
+    | { type: "kind"; value: "midweek" | "weekend" }
+    | { type: "step"; delta: number }
+    | { type: "today" }
+    | null
+  >(null);
 
   const songMap = useMemo(() => new Map(songs.map((s) => [s.number, s.theme])), [songs]);
   // Seleção inteligente e totalmente automática: encontra exatamente a semana
@@ -313,6 +359,12 @@ export function MeetingProgramSection({
         setOutlineId(result?.program.outlineId ?? "");
         setPending({});
         setPendingOutlineId(null);
+        // Rede de segurança: restaura o rascunho encenado desta semana.
+        const stored = readStoredDraft(draftStorageKey(kind, weekStart));
+        if (stored) {
+          setPending(stored.pending);
+          setPendingOutlineId(stored.outlineId);
+        }
       } catch {
         if (!cancelled) {
           setSaved(null);
@@ -326,6 +378,23 @@ export function MeetingProgramSection({
       cancelled = true;
     };
   }, [kind, weekStart]);
+
+  // Espelha o rascunho em sessionStorage; voltar à semana o restaura.
+  useEffect(() => {
+    const key = draftStorageKey(kind, weekStart);
+    try {
+      if (Object.keys(pending).length === 0 && pendingOutlineId === null) {
+        window.sessionStorage.removeItem(key);
+      } else {
+        window.sessionStorage.setItem(
+          key,
+          JSON.stringify({ pending, outlineId: pendingOutlineId }),
+        );
+      }
+    } catch {
+      /* armazenamento indisponível: segue sem a rede de segurança */
+    }
+  }, [pending, pendingOutlineId, kind, weekStart]);
 
   // Leitura estrita: ver nunca escreve. Criação e sincronização do modelo
   // exigem ação explícita do organizador (botões abaixo).
@@ -436,25 +505,52 @@ export function MeetingProgramSection({
     setSaving(false);
   }
 
-  /** Trocar de reunião/semana com pendências pede confirmação (nada se perde em silêncio). */
-  function confirmNavigate(): boolean {
-    if (dirtyIds.size === 0 && pendingOutlineId === null) return true;
-    return window.confirm(es.descartarCambioSemana);
+  /** Trocar de reunião/semana com pendências abre o diálogo (nada se perde em silêncio). */
+  type NavRequest =
+    | { type: "kind"; value: "midweek" | "weekend" }
+    | { type: "step"; delta: number }
+    | { type: "today" };
+
+  function applyNavigate(request: NavRequest) {
+    // Trocar de contexto limpa o filtro de vagas (evita lista vazia confusa).
+    setVacantOnly(false);
+    if (request.type === "kind") setKind(request.value);
+    else if (request.type === "step") setWeekOffset((offset) => offset + request.delta);
+    else setWeekOffset(0);
+  }
+
+  function requestNavigate(request: NavRequest) {
+    if (dirtyIds.size === 0 && pendingOutlineId === null) {
+      applyNavigate(request);
+      return;
+    }
+    setNavRequest(request);
+  }
+
+  function discardAndNavigate(request: NavRequest) {
+    try {
+      window.sessionStorage.removeItem(draftStorageKey(kind, weekStart));
+    } catch {
+      /* armazenamento indisponível: segue sem a rede de segurança */
+    }
+    setPending({});
+    setPendingOutlineId(null);
+    setError(null);
+    setNavRequest(null);
+    applyNavigate(request);
   }
 
   function handleKindChange(next: "midweek" | "weekend") {
-    if (next === kind || !confirmNavigate()) return;
-    setKind(next);
+    if (next === kind) return;
+    requestNavigate({ type: "kind", value: next });
   }
 
   function handleWeekStep(delta: number) {
-    if (!confirmNavigate()) return;
-    setWeekOffset((offset) => offset + delta);
+    requestNavigate({ type: "step", delta });
   }
 
   function handleGoToday() {
-    if (!confirmNavigate()) return;
-    setWeekOffset(0);
+    requestNavigate({ type: "today" });
   }
 
   const displayParts: DisplayPart[] = useMemo(() => {
@@ -538,7 +634,9 @@ export function MeetingProgramSection({
     });
     if (pendingOutlineId !== null) {
       const staged = outlines.find((o) => o.id === pendingOutlineId) ?? null;
-      items.unshift(`${es.esboco} → ${staged ? `${staged.number} — ${staged.theme}` : es.nenhum}`);
+      items.unshift(
+        `${es.bosquejo} → ${staged ? `${staged.number} — ${staged.theme}` : es.ninguno}`,
+      );
     }
     if (items.length <= 2) return items.join(" · ");
     return `${items.slice(0, 2).join(" · ")} · +${items.length - 2} más`;
@@ -558,6 +656,11 @@ export function MeetingProgramSection({
     setSaveProgress({ done: 0, total });
     setJustSaved(false);
     setError(null);
+    setSaveFailed(false);
+    setFailedLabel(null);
+    const labelOf = (assignmentId: string): string =>
+      displayParts.find((part) => part.id === assignmentId)?.title ?? assignmentId;
+    let failed: string | null = null;
     try {
       let done = 0;
       // O esboço encenado salva junto (mesmo modelo mental das pessoas).
@@ -566,6 +669,7 @@ export function MeetingProgramSection({
         const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
         if (!talk) throw new Error(es.errorGuardar);
         const title = staged ? `${staged.theme} (${staged.number})` : "Discurso público";
+        failed = title;
         const outlineResult = await updateMeetingAssignmentDetails({
           assignmentId: talk.id,
           title,
@@ -577,6 +681,7 @@ export function MeetingProgramSection({
         setSaveProgress({ done, total });
       }
       for (const [assignmentId, change] of entries) {
+        failed = labelOf(assignmentId);
         if (change.speakerName !== undefined) {
           const result = await updateMeetingAssignmentDetails({
             assignmentId,
@@ -616,12 +721,17 @@ export function MeetingProgramSection({
       setPending({});
       await refresh();
       setJustSaved(true);
+      setSaveProgress(null);
+      setSaveFailed(false);
+      setFailedLabel(null);
       window.setTimeout(() => setJustSaved(false), 6000);
     } catch (error) {
       setError(error instanceof Error ? error.message : es.errorGuardar);
+      // Mantém o progresso (mostra onde parou) para o Reintentar continuar.
+      setSaveFailed(true);
+      setFailedLabel(failed);
     } finally {
       setSaving(false);
-      setSaveProgress(null);
     }
   }
 
@@ -629,6 +739,8 @@ export function MeetingProgramSection({
     setPending({});
     setPendingOutlineId(null);
     setError(null);
+    setSaveFailed(false);
+    setFailedLabel(null);
   }
 
   /**
@@ -674,25 +786,42 @@ export function MeetingProgramSection({
     return new Map(displayPartsWithSections.map((part) => [part.id, describePart(part)]));
   }, [displayPartsWithSections]);
 
-  /** "N/M asignadas": o que falta grita no header, não em 15 linhas iguais. */
-  const assignmentProgress = useMemo(() => {
+  /** "N/M asignadas" + filtro de vagas: mesma regra conta progresso e visibilidade. */
+  const assignmentStats = useMemo(() => {
     // Só partes designáveis entram no progresso (mesma regra da
     // interatividade, sem o bloqueio de `saving` para o número não piscar).
-    const countable = (part: DisplayPart): boolean =>
-      canManage &&
-      programId !== null &&
-      !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
-      !(kind === "midweek" && part.key === "opening-song");
-    let assigned = 0;
-    let total = 0;
-    for (const part of displayPartsWithSections) {
-      if (!countable(part)) continue;
-      total += 1;
+    // Cânticos ficam de fora: nunca exibem "Sin asignar", então não contam.
+    const flags = displayPartsWithSections.map((part) => {
+      const countable =
+        canManage &&
+        programId !== null &&
+        !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
+        !part.key.includes("song") &&
+        part.songNumber == null;
       const display = partDisplay.get(part.id);
-      if (display && (display.line1 !== "—" || display.line2 !== "")) assigned += 1;
-    }
-    return { assigned, total };
-  }, [displayPartsWithSections, partDisplay, canManage, programId, kind]);
+      return {
+        countable,
+        assigned: !!display && (display.line1 !== "—" || display.line2 !== ""),
+      };
+    });
+    const { assigned, total } = summarizeAssignments(flags);
+    const rowVisible = flags.map((flag) => !vacantOnly || !flag.countable || !flag.assigned);
+    // Cabeçalho aparece só com fileira visível abaixo dele até o próximo.
+    const headerVisible = new Map<number, boolean>();
+    let current: number | null = null;
+    displayPartsWithSections.forEach((part, index) => {
+      if (part.showSection) {
+        current = index;
+        headerVisible.set(index, false);
+      }
+      if (current !== null && rowVisible[index]) headerVisible.set(current, true);
+    });
+    return { assigned, total, rowVisible, headerVisible };
+  }, [displayPartsWithSections, partDisplay, canManage, programId, vacantOnly]);
+  const assignmentProgress = {
+    assigned: assignmentStats.assigned,
+    total: assignmentStats.total,
+  };
 
   return (
     <div className="section-stack">
@@ -760,9 +889,23 @@ export function MeetingProgramSection({
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
+        <div role="alert" className="rounded-xl border border-danger/30 bg-danger-soft p-3">
+          <p className="text-sm text-danger">{error}</p>
+          {saveFailed && (
+            <>
+              {failedLabel ? (
+                <p className="mt-1 text-xs text-danger">
+                  {es.falloEn}: {failedLabel}
+                </p>
+              ) : null}
+              <div className="mt-2">
+                <Button size="sm" disabled={saving} onClick={() => void handleSaveAll()}>
+                  {saving ? es.guardando : es.reintentar}
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       )}
       {modelSyncAvailable && !loading && (
         <div role="status" className="rounded-xl border border-warning/30 bg-warning-soft p-3">
@@ -778,6 +921,38 @@ export function MeetingProgramSection({
         <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
       )}
       {!canManage && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
+
+      {canManage && programId !== null && !loading && assignmentStats.total > 0 && (
+        <fieldset className="flex rounded-xl bg-secondary p-1">
+          <legend className="sr-only">{es.filtrarPartes}</legend>
+          {(
+            [
+              { value: "all", label: es.todas },
+              {
+                value: "vacant",
+                label: `${es.sinAsignar} (${assignmentStats.total - assignmentStats.assigned})`,
+              },
+            ] as const
+          ).map((option) => {
+            const active = vacantOnly ? option.value === "vacant" : option.value === "all";
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setVacantOnly(option.value === "vacant")}
+                className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                  active
+                    ? "bg-background font-semibold text-foreground shadow-sm"
+                    : "font-medium text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </fieldset>
+      )}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">{es.cargandoPrograma}</p>
@@ -802,7 +977,7 @@ export function MeetingProgramSection({
         </Card>
       ) : (
         <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
-          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-3 border-b border-session-line bg-session px-0 py-3">
+          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-3 border-b border-session-line bg-session/95 px-0 py-3 backdrop-blur">
             <p className="text-sm font-medium text-session-mute">
               {meetingDayName} · {meetingTitle}
             </p>
@@ -816,6 +991,7 @@ export function MeetingProgramSection({
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
               const display = partDisplay.get(part.id);
               if (!display) return null;
+              if (!assignmentStats.rowVisible[index]) return null;
               const isSongPart = part.key.includes("song") || part.songNumber != null;
               const interactive =
                 canManage &&
@@ -889,8 +1065,8 @@ export function MeetingProgramSection({
                 </>
               );
               return (
-                <div key={`${part.startTime}-${part.title}-${part.id}`}>
-                  {part.showSection && (
+                <div key={part.id}>
+                  {part.showSection && assignmentStats.headerVisible.get(index) !== false && (
                     <div className={`flex items-center gap-3 py-4 ${index === 0 ? "" : "mt-1"}`}>
                       <span
                         className="section-emblem grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
@@ -935,14 +1111,29 @@ export function MeetingProgramSection({
         </Card>
       )}
 
+      {vacantOnly &&
+        assignmentStats.total > 0 &&
+        assignmentStats.assigned === assignmentStats.total && (
+          <Card className="flex flex-col gap-2 border-0 bg-session p-4 text-session-fg shadow-none">
+            <p className="text-sm font-medium text-success">{es.todoAsignado}</p>
+            <div>
+              <Button size="sm" variant="outline" onClick={() => setVacantOnly(false)}>
+                {es.verTodas}
+              </Button>
+            </div>
+          </Card>
+        )}
+
       {canManage && dirtyCount > 0 && (
         <div className="fixed inset-x-0 bottom-[84px] z-30 mx-auto w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
           <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
-            <p className="truncate text-sm">
+            <p className="text-sm">
               <span className="font-semibold">
                 {dirtyCount} {es.sinGuardar}:
               </span>{" "}
-              <span className="text-muted-foreground">{dirtySummary}</span>
+              <span title={dirtySummary} className="line-clamp-2 text-muted-foreground">
+                {dirtySummary}
+              </span>
             </p>
             {saving && saveProgress && (
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1008,6 +1199,30 @@ export function MeetingProgramSection({
           congregationName={congregationName}
           onClose={() => setPdfOpen(false)}
         />
+      )}
+
+      {navRequest && (
+        <AlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setNavRequest(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{es.descartarTitulo}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {dirtyCount} {es.sinGuardar}: {dirtySummary}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{es.seguirEditando}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => discardAndNavigate(navRequest)}>
+                {es.descartar} ({dirtyCount})
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       )}
 
       {editing && !editing.id.startsWith("tpl-") && (

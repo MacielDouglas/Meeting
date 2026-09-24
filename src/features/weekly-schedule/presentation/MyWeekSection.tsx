@@ -96,12 +96,12 @@ function HeroRows({
         <section aria-label={es.miAsignacion}>
           <p className={cn("text-xs font-semibold", label)}>{es.miAsignacion}</p>
           {meeting.duties.length === 0 ? (
-            <p className={cn("mt-1 text-sm", faint)}>{es.sinApoyo}</p>
+            <p className={cn("mt-1 text-sm", faint)}>{es.sinAsignar}</p>
           ) : (
             <ul className="flex flex-col">
               {meeting.duties.map((duty) => (
                 <li
-                  key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.postLabel}-${duty.side ?? ""}`}
+                  key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.sortOrder}`}
                   className={cn(
                     "flex items-center gap-2 border-b py-2 text-sm last:border-b-0",
                     line,
@@ -139,7 +139,7 @@ function HeroRows({
                 <span className={cn("min-w-0 flex-1 truncate font-medium", value)}>
                   {item.sectorName}
                   {item.isFamily ? (
-                    <span className={cn("font-normal", faint)}> · familia</span>
+                    <span className={cn("font-normal", faint)}> · {es.familiaMinuscula}</span>
                   ) : null}
                 </span>
               </li>
@@ -164,7 +164,7 @@ function LeadHero({
   return (
     <section
       aria-label={`${kindLabel(meeting.kind)} ${formatWeekday(meeting.date)} ${formatShortDay(meeting.date)}`}
-      className="overflow-hidden rounded-[20px] bg-[#0b0b0d] text-white shadow-[0_24px_60px_-24px_rgb(0_0_0/0.55)] ring-1 ring-white/10 motion-safe:animate-[home-rise_.45s_cubic-bezier(.16,1,.3,1)_backwards] dark:bg-[#151517]"
+      className="hero-panel overflow-hidden rounded-[20px] text-white ring-1 ring-white/10"
     >
       <div className="flex flex-col gap-1.5 p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
@@ -187,7 +187,7 @@ function LeadHero({
         <p className="flex items-center gap-1.5 break-words text-sm text-white/60">
           <FaLocationDot aria-hidden className="shrink-0" />
           <span>
-            <span className="sr-only">Lugar: </span>
+            <span className="sr-only">{es.lugar}</span>
             {meeting.location}
           </span>
         </p>
@@ -235,7 +235,7 @@ function MeetingAccordion({
         <p className="flex items-center gap-1.5 break-words text-sm text-muted-foreground">
           <FaLocationDot aria-hidden className="shrink-0" />
           <span>
-            <span className="sr-only">Lugar: </span>
+            <span className="sr-only">{es.lugar}</span>
             {meeting.location}
           </span>
         </p>
@@ -251,27 +251,33 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
   const today = todayLocalISO();
   const [lead, ...rest] = myWeek.meetings;
   return (
-    <section aria-label="Mi semana" className="section-stack">
+    <section aria-label={es.miSemana} className="section-stack">
+      <h1 className="sr-only">{es.miSemana}</h1>
       {myWeek.personName ? (
         <p className="text-sm text-muted-foreground">
-          Eres <span className="font-medium text-foreground">{myWeek.personName}</span>
+          {es.eres} <span className="font-medium text-foreground">{myWeek.personName}</span>
         </p>
       ) : (
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">
-            Tu usuario aún no está vinculado a una persona.{" "}
+            {es.usuarioNoVinculado}{" "}
             {canLinkAccount ? (
               <Link href="/personas" className="font-medium text-accent underline">
-                Vincular en Personas
+                {es.vincularEnPersonas}
               </Link>
             ) : (
-              "Pide a un administrador que lo vincule."
+              es.pideAdminVinculo
             )}
           </p>
         </Card>
       )}
 
       {lead ? <LeadHero meeting={lead} today={today} isMale={myWeek.isMale} /> : null}
+      {!lead ? (
+        <Card className="p-4">
+          <p className="text-sm text-muted-foreground">{es.semanaVacia}</p>
+        </Card>
+      ) : null}
       {rest.map((meeting) => (
         <MeetingAccordion
           key={meeting.kind}
@@ -294,14 +300,7 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
           className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-secondary px-6 font-display text-sm font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           <FaListOl aria-hidden size={18} />
-          {es.verDesignacoes}
-        </Link>
-        <Link
-          href="/designacoes"
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-input bg-background px-6 font-display text-sm font-semibold text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          <GiBroom aria-hidden size={18} />
-          {es.verTablaLimpieza}
+          {es.verDiseniosLimpieza}
         </Link>
       </div>
 
@@ -311,7 +310,7 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
           <ul className="flex flex-col rounded-2xl border border-border bg-card px-4 text-card-foreground shadow-sm">
             {myWeek.upcomingDuties.map((duty) => (
               <li
-                key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.postLabel}-${duty.side ?? ""}`}
+                key={`${duty.assignmentDate}-${duty.dutyKey}-${duty.sortOrder}`}
                 className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
               >
                 <DutyKeyIcon dutyKey={duty.dutyKey} />

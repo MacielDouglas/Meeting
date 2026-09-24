@@ -23,6 +23,7 @@ export interface MyWeekDuty {
   dutyKey: string;
   postLabel: string;
   side: string | null;
+  sortOrder: number;
 }
 
 export interface MyWeekMeeting {
