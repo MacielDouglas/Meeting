@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
@@ -24,6 +25,8 @@ import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 
 type ReunioesTab = "reunioes" | "conteudo" | "oradores";
+
+export const metadata: Metadata = { title: es.tabReuniones };
 
 const TABS: { value: ReunioesTab; label: string }[] = [
   { value: "reunioes", label: es.tabReuniones },

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -9,6 +10,8 @@ import { PersonForm } from "@/features/people/presentation/PersonForm";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { FormSkeleton } from "@/shared/components/skeletons";
 import { es } from "@/shared/i18n/es";
+
+export const metadata: Metadata = { title: es.newPerson };
 
 export default async function NewPersonPage() {
   const user = await getCurrentUser();

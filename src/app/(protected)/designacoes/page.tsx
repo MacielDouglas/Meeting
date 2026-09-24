@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -24,6 +25,8 @@ import { WeekCardsSkeleton } from "@/shared/components/skeletons";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
+
+export const metadata: Metadata = { title: es.tabDesignaciones };
 
 const UPCOMING_COUNT = 4;
 const MAX_CARDS = 6;

@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { SignInButton } from "@/features/auth/presentation/SignInButton";
 import { Card, CardDescription } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+
+export const metadata: Metadata = { title: es.signInTitle };
 
 export default function SignInPage() {
   return (

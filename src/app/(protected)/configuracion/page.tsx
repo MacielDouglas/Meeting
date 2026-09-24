@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
@@ -13,6 +14,8 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
+
+export const metadata: Metadata = { title: es.configuracion };
 
 type ConfigTab = "reunioes" | "limpeza" | "designacoes";
 

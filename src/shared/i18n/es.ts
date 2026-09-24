@@ -1,5 +1,5 @@
 export const es = {
-  appName: "Reuniones",
+  appName: "Meeting",
   appDescription: "Programa semanal de reuniones",
   homeTagline: "Qué parte, quién sirve y cuándo — en el teléfono, incluso sin conexión.",
   homeFeatPrograma: "Programa completo",
@@ -156,6 +156,7 @@ export const es = {
   hoy: "Hoy",
   descargarICal: "Descargar iCal",
   imprimirPrograma: "Imprimir programa",
+  impresionTitle: "Impresión del programa",
   sinGuardar: "Sin guardar",
   sinAsignar: "Sin asignar",
   sala: "Sala",

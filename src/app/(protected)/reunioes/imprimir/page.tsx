@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -20,7 +21,10 @@ import {
 import { PageHeader } from "@/shared/components/PageHeader";
 import { PrintButton } from "@/shared/components/PrintButton-client";
 import { CardSkeleton, PageHeaderSkeleton } from "@/shared/components/skeletons";
+import { es } from "@/shared/i18n/es";
 import { formatDateBR } from "@/shared/lib/format-date";
+
+export const metadata: Metadata = { title: es.impresionTitle };
 
 const EXCEPTION_LABELS: Record<string, string> = {
   no_meeting: "Sin reunión",

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardDescription } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+
+export const metadata: Metadata = { title: es.offlineTitle };
 
 export default function OfflinePage() {
   return (
