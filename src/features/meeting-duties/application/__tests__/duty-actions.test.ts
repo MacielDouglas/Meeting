@@ -201,7 +201,6 @@ describe("saveDutyProgram", () => {
       [],
       [],
       [],
-      [],
     ]);
     const result = await saveDutyProgram([
       {
@@ -230,7 +229,7 @@ describe("saveDutyProgram", () => {
       status: "draft",
       createdBy: "user-1",
     });
-    expect(valuePayloads().slice(1)).toEqual([
+    expect(valuePayloads()[1]).toEqual([
       expect.objectContaining({
         assignmentDate: "2026-09-23",
         personId: "p1",

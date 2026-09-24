@@ -88,6 +88,7 @@ export async function GET(request: Request) {
         headers: {
           "Content-Type": "text/calendar; charset=utf-8",
           "Content-Disposition": `attachment; filename="reuniao-${kind}-${week}.ics"`,
+          "Cache-Control": "private, max-age=60, must-revalidate",
         },
       });
     }
@@ -123,6 +124,8 @@ export async function GET(request: Request) {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Content-Disposition": `attachment; filename="reuniao-${kind}-${week}.ics"`,
+      // Programa da semana/tipo: reutilizável por 1 minuto no cliente.
+      "Cache-Control": "private, max-age=60, must-revalidate",
     },
   });
 }

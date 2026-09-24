@@ -21,6 +21,13 @@ function createAuth() {
   return betterAuth({
     secret: env.BETTER_AUTH_SECRET,
     baseURL: env.BETTER_AUTH_URL,
+    // Anti-bot explícito (padrão só liga em produção): 100 req/min por IP
+    // nas rotas /api/auth, com regras mais duras nas sensíveis.
+    rateLimit: {
+      enabled: true,
+      window: 60,
+      max: 100,
+    },
     database: drizzleAdapter(getDb(), {
       provider: "pg",
       schema: {

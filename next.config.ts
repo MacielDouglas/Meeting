@@ -13,10 +13,10 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  // .jwpub tem vários MB (a action valida o máximo de 200 MB).
+  // .jwpub tem vários MB (as actions validam o máximo de 100 MB).
   experimental: {
     serverActions: {
-      bodySizeLimit: "200MB",
+      bodySizeLimit: "100MB",
     },
     // Barris react-icons/* viram imports por ícone: menos JS por rota.
     optimizePackageImports: ["react-icons"],

@@ -43,8 +43,8 @@ export async function inspectWorkbookJwpub(formData: FormData): Promise<Workbook
   }
   const file = formData.get("file");
   if (!(file instanceof File)) return { ok: false, error: "Selecciona un archivo .jwpub o .json." };
-  if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
+  if (file.size > 100 * 1024 * 1024)
+    return { ok: false, error: "Archivo muy grande (máx. 100 MB)." };
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const fileName = file.name.toLowerCase();

@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requirePrivilegedUser } from "@/features/auth/application/session";
@@ -365,6 +365,163 @@ export async function updateMeetingSong(
     console.error("[meetings] falha ao salvar cântico", { assignmentId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo guardar el cántico." };
+  }
+  revalidatePath("/reunioes");
+  return { ok: true };
+}
+
+const stagedItemSchema = z.object({
+  assignmentId: z.string().min(1).max(64),
+  label: z.string().min(1).max(300),
+  personId: z.string().min(1).max(64).nullable().optional(),
+  helperPersonId: z.string().min(1).max(64).nullable().optional(),
+  songNumber: z.number().int().min(1).max(1000).nullable().optional(),
+  songTheme: z.string().max(300).optional(),
+  title: z.string().min(1).max(300).optional(),
+  classroom: z.enum(["A", "B", "C"]).optional(),
+  speakerCongregation: z.string().max(160).optional(),
+  speakerName: z.string().min(1).max(160).optional(),
+});
+
+export type StagedChangeInput = z.infer<typeof stagedItemSchema>;
+
+type AssignmentPatch = Partial<{
+  personId: string | null;
+  personName: string;
+  helperPersonId: string | null;
+  helperPersonName: string;
+  songNumber: number;
+  songTheme: string;
+  title: string;
+  classroom: "A" | "B" | "C";
+  speakerCongregation: string;
+}>;
+
+/**
+ * Salva todas as designações encenadas em UMA invocação: 1 auth, selects em
+ * lote (pessoas + partes), updates em batch, 1 toque de rodízio e 1
+ * revalidate — em vez de N actions sequenciais com auth e revalidate próprios.
+ */
+export async function saveStagedChanges(
+  items: StagedChangeInput[],
+): Promise<{ ok: boolean; failedLabel?: string; error?: string }> {
+  const parsed = z.array(stagedItemSchema).min(1).max(60).safeParse(items);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos." };
+  const changes = parsed.data;
+
+  await requirePrivilegedUser();
+  const db = getDb();
+
+  const fail = (label: string, error: string) => ({
+    ok: false as const,
+    failedLabel: label,
+    error,
+  });
+
+  try {
+    // Nomes de uma vez (sem 1 select por pessoa).
+    const wantedIds = [
+      ...new Set(
+        changes
+          .flatMap((item) => [item.personId, item.helperPersonId])
+          .filter((id): id is string => typeof id === "string" && id.length > 0),
+      ),
+    ];
+    let names = new Map<string, string>();
+    if (wantedIds.length > 0) {
+      const personRows = await db
+        .select({ id: persons.id, firstName: persons.firstName, lastName: persons.lastName })
+        .from(persons)
+        .where(inArray(persons.id, wantedIds));
+      names = new Map(
+        personRows.map((person) => [person.id, `${person.firstName} ${person.lastName}`]),
+      );
+    }
+
+    // Partes envolvidas de uma vez (sem 1 select por parte).
+    const assignmentRows = await db
+      .select()
+      .from(meetingAssignments)
+      .where(
+        inArray(
+          meetingAssignments.id,
+          changes.map((item) => item.assignmentId),
+        ),
+      );
+    const assignmentById = new Map(assignmentRows.map((row) => [row.id, row]));
+
+    const statements = [];
+    const touchedIds: string[] = [];
+    for (const item of changes) {
+      const existing = assignmentById.get(item.assignmentId);
+      if (!existing) return fail(item.label, "Parte no encontrada.");
+      if (item.personId) {
+        if (!names.has(item.personId)) return fail(item.label, "Persona no encontrada.");
+      }
+      if (item.helperPersonId) {
+        if (!names.has(item.helperPersonId)) return fail(item.label, "Ayudante no encontrado.");
+      }
+      const patch: AssignmentPatch = {};
+      if (item.speakerName !== undefined) {
+        // Orador de fora: nome livre no lugar do vínculo de pessoa.
+        Object.assign(patch, {
+          personId: null,
+          personName: item.speakerName,
+          helperPersonId: null,
+          helperPersonName: "",
+        });
+        if (item.classroom !== undefined) patch.classroom = item.classroom;
+        if (item.speakerCongregation !== undefined)
+          patch.speakerCongregation = item.speakerCongregation;
+      } else {
+        if (item.personId !== undefined) {
+          patch.personId = item.personId;
+          patch.personName = item.personId ? (names.get(item.personId) ?? "") : "";
+          patch.helperPersonId = item.helperPersonId ?? existing.helperPersonId;
+          patch.helperPersonName =
+            item.helperPersonId !== undefined
+              ? item.helperPersonId
+                ? (names.get(item.helperPersonId) ?? "").trim()
+                : ""
+              : existing.helperPersonName;
+        }
+        if (item.songNumber !== undefined && item.songNumber !== null) {
+          patch.songNumber = item.songNumber;
+          patch.songTheme = (item.songTheme ?? "").slice(0, 300);
+        }
+        if (item.title !== undefined) patch.title = item.title;
+        if (item.classroom !== undefined) patch.classroom = item.classroom;
+        if (item.speakerCongregation !== undefined)
+          patch.speakerCongregation = item.speakerCongregation;
+      }
+      if (Object.keys(patch).length === 0) continue;
+      statements.push(
+        db
+          .update(meetingAssignments)
+          .set(patch)
+          .where(eq(meetingAssignments.id, item.assignmentId)),
+      );
+      if (item.personId) touchedIds.push(item.personId);
+      if (item.helperPersonId) touchedIds.push(item.helperPersonId);
+    }
+
+    // Updates independentes disparam em paralelo (1 invocação, sem N roundtrips sequenciais).
+    if (statements.length > 0) await Promise.all(statements);
+    // Histórico para rodízio: um update só, em vez de um por pessoa.
+    const touched = [...new Set(touchedIds)];
+    if (touched.length > 0) {
+      await db
+        .update(persons)
+        .set({ lastAssignmentAt: new Date() })
+        .where(inArray(persons.id, touched));
+    }
+  } catch (error) {
+    console.error("[meetings] falha ao salvar lote de designações", {
+      count: changes.length,
+      error,
+    });
+    if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };
+    return { ok: false, error: "No se pudieron guardar las designaciones." };
   }
   revalidatePath("/reunioes");
   return { ok: true };

@@ -295,11 +295,12 @@ export async function saveDutyProgram(
     });
 
     let sortOrder = 0;
-    let assignmentCount = 0;
+    // Lote único (sem N inserts sequenciais, um por slot).
+    const rows: (typeof dutyAssignments.$inferInsert)[] = [];
     for (const day of sorted) {
       for (const slot of day.slots) {
         sortOrder += 1;
-        await db.insert(dutyAssignments).values({
+        rows.push({
           id: randomUUID(),
           programId,
           assignmentDate: day.date,
@@ -312,9 +313,12 @@ export async function saveDutyProgram(
           isManual: slot.isManual,
           sortOrder,
         });
-        assignmentCount += 1;
       }
     }
+    if (rows.length > 0) {
+      await db.insert(dutyAssignments).values(rows);
+    }
+    const assignmentCount = rows.length;
 
     revalidatePath("/designacoes");
     return { ok: true, programId, assignmentCount };

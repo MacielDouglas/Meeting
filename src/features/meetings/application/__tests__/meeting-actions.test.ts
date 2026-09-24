@@ -5,6 +5,7 @@ import { requirePrivilegedUser } from "@/features/auth/application/session";
 import type { AuthUser } from "@/features/auth/domain/user";
 import {
   saveMeetingProgram,
+  saveStagedChanges,
   updateMeetingAssignment,
   updateMeetingAssignmentDetails,
   updateMeetingException,
@@ -547,5 +548,146 @@ describe("updateMeetingSong", () => {
       ok: false,
       error: "No se pudo guardar el cántico.",
     });
+  });
+});
+
+describe("saveStagedChanges", () => {
+  it("rechaza lote inválido sin autenticar nem consultar", async () => {
+    await expect(saveStagedChanges([])).resolves.toEqual({
+      ok: false,
+      error: "Datos no válidos.",
+    });
+    expect(requirePrivilegedUser).not.toHaveBeenCalled();
+    expect(mockDb.calls).toEqual([]);
+  });
+
+  it("propaga FORBIDDEN de la autenticación", async () => {
+    vi.mocked(requirePrivilegedUser).mockRejectedValue(new Error("FORBIDDEN"));
+    await expect(saveStagedChanges([{ assignmentId: "asg-1", label: "Parte" }])).rejects.toThrow(
+      "FORBIDDEN",
+    );
+    expect(mockDb.calls).toEqual([]);
+  });
+
+  it("salva o lote com 1 auth, selects em lote e 1 revalidate", async () => {
+    mockDb.enqueueMany([
+      [
+        { id: "p1", firstName: "Juan", lastName: "Pérez" },
+        { id: "p2", firstName: "Ana", lastName: "García" },
+      ],
+      [
+        assignmentRow({ id: "asg-1", helperPersonId: "p9", helperPersonName: "Viejo" }),
+        assignmentRow({ id: "asg-2" }),
+      ],
+      [],
+      [],
+      [],
+    ]);
+    const result = await saveStagedChanges([
+      {
+        assignmentId: "asg-1",
+        label: "Lectura",
+        personId: "p1",
+        helperPersonId: "p2",
+        songNumber: 12,
+        songTheme: "Tema",
+      },
+      { assignmentId: "asg-2", label: "Discurso", title: "Nuevo título" },
+    ]);
+    expect(result).toEqual({ ok: true });
+    expect(requirePrivilegedUser).toHaveBeenCalledTimes(1);
+    expect(revalidatePath).toHaveBeenCalledTimes(1);
+    expect(revalidatePath).toHaveBeenCalledWith("/reunioes");
+    const patches = mockDb.calls.filter((call) => call.fn === "set").map((call) => call.args[0]);
+    expect(patches).toHaveLength(3);
+    expect(patches[0]).toMatchObject({
+      personId: "p1",
+      personName: "Juan Pérez",
+      helperPersonId: "p2",
+      helperPersonName: "Ana García",
+      songNumber: 12,
+      songTheme: "Tema",
+    });
+    expect(patches[1]).toMatchObject({ title: "Nuevo título" });
+    // Rodízio: um update só com as pessoas tocadas.
+    expect(patches[2]).toEqual({ lastAssignmentAt: expect.any(Date) });
+    const whereIn = mockDb.calls.filter((call) => call.fn === "where").map((call) => call.args[0]);
+    expect(whereIn.length).toBeGreaterThanOrEqual(3);
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("limpa pessoa com null e mantém ajudante existente", async () => {
+    mockDb.enqueueMany([
+      [assignmentRow({ id: "asg-1", helperPersonId: "p9", helperPersonName: "Viejo" })],
+      [],
+    ]);
+    const result = await saveStagedChanges([
+      { assignmentId: "asg-1", label: "Lectura", personId: null },
+    ]);
+    expect(result).toEqual({ ok: true });
+    const patches = mockDb.calls.filter((call) => call.fn === "set").map((call) => call.args[0]);
+    expect(patches[0]).toMatchObject({
+      personId: null,
+      personName: "",
+      helperPersonId: "p9",
+      helperPersonName: "Viejo",
+    });
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("orador de fora limpa vínculos e grava nome livre", async () => {
+    mockDb.enqueueMany([[assignmentRow({ id: "asg-1" })], []]);
+    const result = await saveStagedChanges([
+      {
+        assignmentId: "asg-1",
+        label: "Discurso",
+        speakerName: "Orador Visitante",
+        speakerCongregation: "Norte",
+      },
+    ]);
+    expect(result).toEqual({ ok: true });
+    const patches = mockDb.calls.filter((call) => call.fn === "set").map((call) => call.args[0]);
+    expect(patches[0]).toMatchObject({
+      personId: null,
+      personName: "Orador Visitante",
+      helperPersonId: null,
+      helperPersonName: "",
+      speakerCongregation: "Norte",
+    });
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("falha com rótulo quando a parte não existe", async () => {
+    mockDb.enqueue([]);
+    const result = await saveStagedChanges([{ assignmentId: "asg-9", label: "Perdida" }]);
+    expect(result).toEqual({ ok: false, failedLabel: "Perdida", error: "Parte no encontrada." });
+    expect(mockDb.calls.some((call) => call.fn === "update")).toBe(false);
+    expect(revalidatePath).not.toHaveBeenCalled();
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("falha com rótulo quando a pessoa não existe", async () => {
+    mockDb.enqueueMany([[], [assignmentRow({ id: "asg-1" })]]);
+    const result = await saveStagedChanges([
+      { assignmentId: "asg-1", label: "Lectura", personId: "p9" },
+    ]);
+    expect(result).toEqual({ ok: false, failedLabel: "Lectura", error: "Persona no encontrada." });
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("informa de tablas faltantes", async () => {
+    mockDb.enqueue(rejection("meeting_assignments does not exist"));
+    await expect(saveStagedChanges([{ assignmentId: "asg-1", label: "Lectura" }])).resolves.toEqual(
+      { ok: false, error: MEETING_TABLES_MISSING_ERROR },
+    );
+    expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("informa error genérico cuando falla un update", async () => {
+    mockDb.enqueueMany([[assignmentRow({ id: "asg-1" })], rejection("fallo transitorio")]);
+    await expect(
+      saveStagedChanges([{ assignmentId: "asg-1", label: "Lectura", title: "T" }]),
+    ).resolves.toEqual({ ok: false, error: "No se pudieron guardar las designaciones." });
+    expect(revalidatePath).not.toHaveBeenCalled();
   });
 });

@@ -14,6 +14,7 @@ vi.mock("@/features/meetings/application/meeting-queries", () => ({
 }));
 vi.mock("@/features/meetings/application/meeting-actions", () => ({
   saveMeetingProgram: vi.fn(),
+  saveStagedChanges: vi.fn(),
   updateMeetingAssignment: vi.fn(),
   updateMeetingAssignmentDetails: vi.fn(),
   updateMeetingException: vi.fn(),

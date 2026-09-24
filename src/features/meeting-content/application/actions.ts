@@ -175,8 +175,8 @@ export async function inspectAnyJwpub(formData: FormData): Promise<AnyInspectRes
   if (!file.name.toLowerCase().endsWith(".jwpub")) {
     return { ok: false, error: "El archivo necesita extensión .jwpub." };
   }
-  if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
+  if (file.size > 100 * 1024 * 1024)
+    return { ok: false, error: "Archivo muy grande (máx. 100 MB)." };
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
     const parsed = await inspectJwpubFile(buffer, file.name);
@@ -246,8 +246,8 @@ export async function inspectJwpub(formData: FormData): Promise<InspectResult> {
   if (!file.name.toLowerCase().endsWith(".jwpub")) {
     return { ok: false, error: "El archivo necesita extensión .jwpub." };
   }
-  if (file.size > 200 * 1024 * 1024)
-    return { ok: false, error: "Archivo muy grande (máx. 200 MB)." };
+  if (file.size > 100 * 1024 * 1024)
+    return { ok: false, error: "Archivo muy grande (máx. 100 MB)." };
   let parsed: Awaited<ReturnType<typeof parseJwpub>>;
   try {
     const buffer = Buffer.from(await file.arrayBuffer());

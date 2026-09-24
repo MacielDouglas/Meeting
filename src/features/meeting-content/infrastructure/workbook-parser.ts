@@ -4,6 +4,7 @@
 //   o Content (campos ricos como content/questions podem vir vazios);
 // - .json: conteúdo completo no formato { name, weeks: [...] }.
 import { writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadPub } from "meeting-schedules-parser/dist/node/index.js";
 import {
@@ -349,8 +350,9 @@ export async function parseWorkbookJwpub(
   }
 
   // A lib valida o nome exato do arquivo: o temp precisa manter o nome normalizado.
+  // tmpdir() do SO (em serverless Linux não existe D:\ nem C:\).
   const safeName = normalizedFilename.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const tempPath = join("D:\\temp", safeName);
+  const tempPath = join(tmpdir(), safeName);
   await writeFile(tempPath, buffer);
   let rawWeeks: LibWeek[];
   try {

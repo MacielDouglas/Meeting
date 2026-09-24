@@ -218,7 +218,6 @@ describe("listProgramsForPdf", () => {
         programRow({ id: "p-tue", kind: "weekend", weekStart: "2026-09-21", date: "2026-09-20" }),
       ],
       [assignmentRow({ id: "a-mon", programId: "p-mon" })],
-      [],
     ]);
     const items = await listProgramsForPdf("midweek", "2026-09-16", "2026-09-27");
     expect(requirePrivilegedUser).toHaveBeenCalledTimes(1);

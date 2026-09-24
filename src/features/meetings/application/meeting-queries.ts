@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte } from "drizzle-orm";
 import {
   requireAuthenticatedUser,
   requirePrivilegedUser,
@@ -70,43 +70,55 @@ export async function listProgramsForPdf(
       ),
     )
     .orderBy(asc(meetingPrograms.weekStart));
-  const items: PdfProgramItem[] = [];
-  for (const program of programs) {
-    const assignmentRows = await db
-      .select()
-      .from(meetingAssignments)
-      .where(eq(meetingAssignments.programId, program.id))
-      .orderBy(asc(meetingAssignments.sortOrder));
-    items.push({
-      id: program.id,
-      kind: program.kind,
-      weekStart: program.weekStart,
-      date: program.date,
-      assignments: assignmentRows.map((row) => ({
-        id: row.id,
-        programId: row.programId,
-        partKey: row.partKey,
-        section: row.section,
-        title: row.title,
-        subtitle: row.subtitle,
-        startTime: row.startTime,
-        durationMinutes: row.durationMinutes,
-        personId: row.personId,
-        personName: row.personName,
-        helperPersonId: row.helperPersonId,
-        helperPersonName: row.helperPersonName,
-        songNumber: row.songNumber,
-        songTheme: row.songTheme,
-        classroom: row.classroom ?? "A",
-        study: row.study ?? "",
-        source: row.source ?? "",
-        notes: row.notes ?? "",
-        speakerCongregation: row.speakerCongregation ?? "",
-        sortOrder: row.sortOrder,
-      })),
-    });
+  if (programs.length === 0) return [];
+  // Uma única busca de atribuições (sem N+1 por programa).
+  const assignmentRows = await db
+    .select()
+    .from(meetingAssignments)
+    .where(
+      inArray(
+        meetingAssignments.programId,
+        programs.map((program) => program.id),
+      ),
+    )
+    .orderBy(asc(meetingAssignments.sortOrder));
+  const byProgram = new Map<string, typeof assignmentRows>();
+  for (const row of assignmentRows) {
+    const list = byProgram.get(row.programId);
+    if (list) {
+      list.push(row);
+    } else {
+      byProgram.set(row.programId, [row]);
+    }
   }
-  return items;
+  return programs.map((program) => ({
+    id: program.id,
+    kind: program.kind,
+    weekStart: program.weekStart,
+    date: program.date,
+    assignments: (byProgram.get(program.id) ?? []).map((row) => ({
+      id: row.id,
+      programId: row.programId,
+      partKey: row.partKey,
+      section: row.section,
+      title: row.title,
+      subtitle: row.subtitle,
+      startTime: row.startTime,
+      durationMinutes: row.durationMinutes,
+      personId: row.personId,
+      personName: row.personName,
+      helperPersonId: row.helperPersonId,
+      helperPersonName: row.helperPersonName,
+      songNumber: row.songNumber,
+      songTheme: row.songTheme,
+      classroom: row.classroom ?? "A",
+      study: row.study ?? "",
+      source: row.source ?? "",
+      notes: row.notes ?? "",
+      speakerCongregation: row.speakerCongregation ?? "",
+      sortOrder: row.sortOrder,
+    })),
+  }));
 }
 
 /** Datas de reunião com programa salvo no intervalo (destaques do calendário). */

@@ -27,10 +27,9 @@ const JwpubImportButton = dynamic(
 );
 
 import {
+  type StagedChangeInput,
   saveMeetingProgram,
-  updateMeetingAssignment,
-  updateMeetingAssignmentDetails,
-  updateMeetingSong,
+  saveStagedChanges,
 } from "@/features/meetings/application/meeting-actions";
 import { getMeetingProgram } from "@/features/meetings/application/meeting-queries";
 import { summarizeAssignments } from "@/features/meetings/domain/assignment-stats";
@@ -662,74 +661,61 @@ export function MeetingProgramSection({
   async function handleSaveAll() {
     if (blocked) return;
     const entries = Object.entries(pending);
-    const total = entries.length + (pendingOutlineId !== null ? 1 : 0);
+    const items: StagedChangeInput[] = [];
+    const labelOf = (assignmentId: string): string =>
+      displayParts.find((part) => part.id === assignmentId)?.title ?? assignmentId;
+    // O esboço encenado salva junto (mesmo modelo mental das pessoas).
+    if (pendingOutlineId !== null) {
+      const staged = outlines.find((o) => o.id === pendingOutlineId) ?? null;
+      const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
+      if (!talk) {
+        setError(es.errorGuardar);
+        setSaveFailed(true);
+        setFailedLabel(null);
+        return;
+      }
+      const title = staged ? `${staged.theme} (${staged.number})` : "Discurso público";
+      items.push({ assignmentId: talk.id, label: title, title });
+    }
+    for (const [assignmentId, change] of entries) {
+      items.push({
+        assignmentId,
+        label: labelOf(assignmentId),
+        ...(change.personId !== undefined ? { personId: change.personId } : {}),
+        ...(change.helperPersonId !== undefined ? { helperPersonId: change.helperPersonId } : {}),
+        ...(change.songNumber !== undefined && change.songNumber !== null
+          ? { songNumber: change.songNumber, songTheme: change.songTheme ?? "" }
+          : {}),
+        ...(change.classroom !== undefined ? { classroom: change.classroom } : {}),
+        ...(change.speakerCongregation !== undefined
+          ? { speakerCongregation: change.speakerCongregation }
+          : {}),
+        ...(change.speakerName !== undefined ? { speakerName: change.speakerName } : {}),
+      });
+    }
+    if (items.length === 0) return;
     setSaving(true);
-    setSaveProgress({ done: 0, total });
+    setSaveProgress({ done: 0, total: items.length });
     setJustSaved(false);
     setError(null);
     setSaveFailed(false);
     setFailedLabel(null);
-    const labelOf = (assignmentId: string): string =>
-      displayParts.find((part) => part.id === assignmentId)?.title ?? assignmentId;
-    let failed: string | null = null;
     try {
-      let done = 0;
-      // O esboço encenado salva junto (mesmo modelo mental das pessoas).
+      // Lote único: 1 invocação, 1 auth, 1 revalidate (sem N actions em sequência).
+      const result = await saveStagedChanges(items);
+      if (!result.ok) {
+        setError(result.error ?? es.errorGuardar);
+        // O lote é idempotente: o Reintentar reenvia tudo.
+        setSaveFailed(true);
+        setFailedLabel(result.failedLabel ?? null);
+        return;
+      }
       if (pendingOutlineId !== null) {
-        const staged = outlines.find((o) => o.id === pendingOutlineId) ?? null;
-        const talk = saved?.find((assignment) => assignment.partKey === "public-talk");
-        if (!talk) throw new Error(es.errorGuardar);
-        const title = staged ? `${staged.theme} (${staged.number})` : "Discurso público";
-        failed = title;
-        const outlineResult = await updateMeetingAssignmentDetails({
-          assignmentId: talk.id,
-          title,
-        });
-        if (!outlineResult.ok) throw new Error(outlineResult.error ?? es.errorGuardar);
         setOutlineId(pendingOutlineId);
         setPendingOutlineId(null);
-        done += 1;
-        setSaveProgress({ done, total });
-      }
-      for (const [assignmentId, change] of entries) {
-        failed = labelOf(assignmentId);
-        if (change.speakerName !== undefined) {
-          const result = await updateMeetingAssignmentDetails({
-            assignmentId,
-            speakerName: change.speakerName,
-            ...(change.speakerCongregation !== undefined
-              ? { speakerCongregation: change.speakerCongregation }
-              : {}),
-          });
-          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
-        } else if (change.personId !== undefined) {
-          const result = await updateMeetingAssignment(
-            assignmentId,
-            change.personId,
-            change.helperPersonId,
-          );
-          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
-        }
-        if (change.songNumber !== undefined && change.songNumber !== null) {
-          const result = await updateMeetingSong(
-            assignmentId,
-            change.songNumber,
-            change.songTheme ?? "",
-          );
-          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
-        }
-        const details: { classroom?: "A" | "B" | "C"; speakerCongregation?: string } = {};
-        if (change.classroom !== undefined) details.classroom = change.classroom;
-        if (change.speakerCongregation !== undefined)
-          details.speakerCongregation = change.speakerCongregation;
-        if (Object.keys(details).length > 0) {
-          const result = await updateMeetingAssignmentDetails({ assignmentId, ...details });
-          if (!result.ok) throw new Error(result.error ?? es.errorGuardar);
-        }
-        done += 1;
-        setSaveProgress({ done, total: entries.length });
       }
       setPending({});
+      setSaveProgress({ done: items.length, total: items.length });
       await refresh();
       setJustSaved(true);
       setSaveProgress(null);
@@ -738,9 +724,8 @@ export function MeetingProgramSection({
       window.setTimeout(() => setJustSaved(false), 6000);
     } catch (error) {
       setError(error instanceof Error ? error.message : es.errorGuardar);
-      // Mantém o progresso (mostra onde parou) para o Reintentar continuar.
       setSaveFailed(true);
-      setFailedLabel(failed);
+      setFailedLabel(null);
     } finally {
       setSaving(false);
     }

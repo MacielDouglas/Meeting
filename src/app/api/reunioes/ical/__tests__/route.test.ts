@@ -150,6 +150,7 @@ describe("GET /api/reunioes/ical", () => {
     expect(response.headers.get("Content-Disposition")).toBe(
       'attachment; filename="reuniao-midweek-2026-09-21.ics"',
     );
+    expect(response.headers.get("Cache-Control")).toBe("private, max-age=60, must-revalidate");
     const body = await response.text();
     expect(body).toContain("BEGIN:VCALENDAR");
     expect(body).toContain("VERSION:2.0");
