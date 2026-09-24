@@ -52,7 +52,11 @@ export function JwpubImportButton({ label = es.importarJwpub }: { label?: string
 
   return (
     <div className="flex flex-col gap-2">
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <input
         ref={fileRef}
         type="file"

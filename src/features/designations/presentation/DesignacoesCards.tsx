@@ -44,7 +44,7 @@ function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
               key={`${item.sectorKey}-${item.sectorName}`}
               className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
             >
-              <Icon aria-hidden size={18} className="shrink-0 text-accent" />
+              <Icon aria-hidden size={18} className="shrink-0 text-muted-foreground" />
               <span className="min-w-0 flex-1 truncate font-medium">{item.sectorName}</span>
               <span
                 title={`${item.personNames.join(" · ")}${item.isFamily ? ` · ${es.familiaMinuscula}` : ""}`}

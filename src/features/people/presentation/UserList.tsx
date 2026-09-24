@@ -81,7 +81,7 @@ export function UserList({ users, currentUserId, isOwner }: UserListProps) {
                     value={user.role}
                     disabled={pendingId === user.id}
                     onChange={(event) => void handleRoleChange(user.id, event.target.value)}
-                    className="h-10 rounded-lg bg-secondary px-2 text-sm outline-none disabled:opacity-50"
+                    className="h-10 rounded-lg bg-secondary px-2 text-sm outline-none focus:border focus:border-ring disabled:opacity-50"
                   >
                     {ROLE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>

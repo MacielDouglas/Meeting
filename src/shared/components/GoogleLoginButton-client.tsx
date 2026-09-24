@@ -60,7 +60,7 @@ export function GoogleLoginButton({ className }: { className?: string }) {
         className="flex h-14 w-full items-center justify-center gap-3 rounded-2xl bg-accent px-6 font-display text-lg font-semibold text-accent-ink shadow-[0_12px_32px_-12px_rgb(0_0_0/0.45)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-70"
       >
         {isLoading ? (
-          <FaMeetup aria-hidden size={22} className="animate-pulse" />
+          <FaMeetup aria-hidden size={22} className="motion-safe:animate-pulse" />
         ) : (
           <GoogleMark className="h-6 w-6 shrink-0 rounded-full bg-white p-0.5" />
         )}

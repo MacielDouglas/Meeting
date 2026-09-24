@@ -166,7 +166,7 @@ export function PublicTalkPicker({
             type="button"
             onClick={backFromTalks}
             aria-label={es.volver}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-secondary text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
           >
             <FaChevronLeft aria-hidden size={14} />
           </button>

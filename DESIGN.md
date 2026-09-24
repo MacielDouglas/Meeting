@@ -16,10 +16,13 @@ colors:
   tinta-acento-escuro: "#0a0a0b"
   exito: "#12805c"
   exito-suave: "#def5e9"
+  exito-en-suave: "#0f6e4f"
   alerta: "#9a6200"
   alerta-suave: "#fdeecd"
+  alerta-en-suave: "#8a5800"
   perigo: "#d92d20"
   perigo-suave: "#fde4e2"
+  perigo-en-suave: "#c0271b"
   tinta-perigo: "#ffffff"
 typography:
   display:
@@ -128,9 +131,10 @@ Branco e tinta no claro; preto profundo no escuro. Um único azul funcional, com
 - **Êxito** (claro #12805c / escuro #3ddc97) e **Êxito Suave**: confirmações e programas confirmados.
 - **Alerta** (claro #9a6200 / escuro #ffb224) e **Alerta Suave**: avisos de sorteio e observações.
 - **Perigo** (claro #d92d20 / escuro #f97066), **Perigo Suave** e **Tinta Perigo**: erros e ações destrutivas.
+- **Texto sobre suave** (`exito-en-suave` #0f6e4f, `alerta-en-suave` #8a5800, `perigo-en-suave` #c0271b; no escuro, os próprios semáforos): única cor de texto permitida sobre a caixa `*-soft` — os pares base reprovam em 4,5:1.
 
 ### Cores de domínio (sancionadas, não são drift)
-- **Seções**: Tesoros #3c7f8b, Maestros #d68f00, Vida Cristiana #bf2f13, Discurso Público #2f4868, Atalaya #4d654d — pastilha plana na cor, rótulo na cor da seção. Rótulos em caixa normal. Preservadas como verdade de domínio.
+- **Seções**: Tesoros #3c7f8b, Maestros #d68f00, Vida Cristiana #bf2f13, Discurso Público #2f4868, Atalaya #4d654d — pastilha plana na cor, rótulo na cor da seção **no claro**; no escuro o rótulo vai em foreground (hex escuros reprovam sobre pista) e a cor viva fica só no emblema. Rótulos em caixa normal. Preservadas como verdade de domínio.
 - **Sexo**: rosa (`text-rose-500`) e céu (`text-sky-500`) nos avatares da lista — convenção de domínio, fora do sistema.
 
 ### Named Rules

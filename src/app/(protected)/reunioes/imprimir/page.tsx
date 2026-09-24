@@ -165,7 +165,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
               {meetingScheduleData.congregationName && (
                 <p className="text-lg font-bold">{meetingScheduleData.congregationName}</p>
               )}
-              <h2 className="text-xl font-bold uppercase">
+              <h2 className="text-xl font-semibold">
                 {kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"}
               </h2>
               <p className="text-sm text-neutral-600">
@@ -181,7 +181,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                 <div key={part.id}>
                   {part.showSection && (
                     <h3
-                      className="px-4 py-1 text-sm font-bold uppercase text-white"
+                      className="px-4 py-1 text-sm font-semibold text-white"
                       style={{ backgroundColor: meta.color }}
                     >
                       {meta.label}

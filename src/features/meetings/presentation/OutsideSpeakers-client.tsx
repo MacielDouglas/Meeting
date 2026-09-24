@@ -255,7 +255,7 @@ export function OutsideSpeakersClient({
         <div className="flex flex-col gap-4">
           {groups.map((group) => (
             <section key={group.congregation} aria-label={group.congregation}>
-              <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-accent">
+              <h3 className="flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-foreground">
                 {group.congregation}
                 {group.isSystem && <Badge>{es.sistema}</Badge>}
               </h3>
@@ -280,12 +280,12 @@ export function OutsideSpeakersClient({
                         ) : null}
                       </span>
                       {canManage && (
-                        <span className="flex shrink-0 gap-1">
+                        <span className="flex shrink-0 gap-2">
                           <button
                             type="button"
                             onClick={() => startEdit(speaker)}
                             aria-label={`${es.editarLabel} a ${speaker.name}`}
-                            className="rounded-lg px-2 py-1 font-display text-xs font-medium text-accent"
+                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-accent"
                           >
                             {es.editarLabel}
                           </button>
@@ -293,7 +293,7 @@ export function OutsideSpeakersClient({
                             type="button"
                             disabled={deleteMutation.isPending}
                             onClick={() => deleteMutation.mutate(speaker.id)}
-                            className="rounded-lg px-2 py-1 font-display text-xs font-medium text-danger"
+                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-danger"
                           >
                             {es.eliminar}
                           </button>

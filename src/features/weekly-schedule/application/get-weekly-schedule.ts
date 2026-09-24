@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { getWeekRange, type WeeklySchedule } from "@/features/weekly-schedule/domain/schedule";
 
@@ -39,33 +40,36 @@ export function buildPlaceholderSchedule(reference: Date = new Date()): WeeklySc
   };
 }
 
-export async function getWeeklySchedule(reference: Date = new Date()): Promise<WeeklySchedule> {
-  const { weekStart, weekEnd } = getWeekRange(reference);
-  try {
-    const settings = await getMeetingSchedule();
-    return {
-      weekStart,
-      weekEnd,
-      midweek: {
-        id: `midweek-${weekStart}`,
-        kind: "midweek",
-        date: dateForWeekday(weekStart, settings.midweekDay),
-        time: settings.midweekTime,
-        location: "Salón del Reino",
-        theme: "Reunión entre semana",
-        parts: [],
-      },
-      weekend: {
-        id: `weekend-${weekEnd}`,
-        kind: "weekend",
-        date: dateForWeekday(weekStart, settings.weekendDay),
-        time: settings.weekendTime,
-        location: "Salón del Reino",
-        theme: "Reunión de fin de semana",
-        parts: [],
-      },
-    };
-  } catch {
-    return buildPlaceholderSchedule(reference);
-  }
-}
+// cache(): chamadas sem argumento (padrão do app) deduplicam por request.
+export const getWeeklySchedule = cache(
+  async (reference: Date = new Date()): Promise<WeeklySchedule> => {
+    const { weekStart, weekEnd } = getWeekRange(reference);
+    try {
+      const settings = await getMeetingSchedule();
+      return {
+        weekStart,
+        weekEnd,
+        midweek: {
+          id: `midweek-${weekStart}`,
+          kind: "midweek",
+          date: dateForWeekday(weekStart, settings.midweekDay),
+          time: settings.midweekTime,
+          location: "Salón del Reino",
+          theme: "Reunión entre semana",
+          parts: [],
+        },
+        weekend: {
+          id: `weekend-${weekEnd}`,
+          kind: "weekend",
+          date: dateForWeekday(weekStart, settings.weekendDay),
+          time: settings.weekendTime,
+          location: "Salón del Reino",
+          theme: "Reunión de fin de semana",
+          parts: [],
+        },
+      };
+    } catch {
+      return buildPlaceholderSchedule(reference);
+    }
+  },
+);

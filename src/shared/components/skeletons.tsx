@@ -1,7 +1,12 @@
 import { cn } from "@/shared/lib/utils";
 
 function Pulse({ className }: { className?: string }) {
-  return <div aria-hidden className={cn("animate-pulse rounded-lg bg-secondary", className)} />;
+  return (
+    <div
+      aria-hidden
+      className={cn("motion-safe:animate-pulse rounded-lg bg-secondary", className)}
+    />
+  );
 }
 
 /**

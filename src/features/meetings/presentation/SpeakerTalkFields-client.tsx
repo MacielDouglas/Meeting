@@ -81,7 +81,7 @@ export function SpeakerTalkFields({ talks, outlines, onChange }: SpeakerTalkFiel
               type="button"
               onClick={() => onChange(talks.filter((t) => t.key !== talk.key))}
               aria-label={es.eliminar}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-danger"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-danger"
             >
               <FaXmark aria-hidden size={14} />
             </button>
@@ -91,7 +91,7 @@ export function SpeakerTalkFields({ talks, outlines, onChange }: SpeakerTalkFiel
       <button
         type="button"
         onClick={() => talks.length < 20 && onChange([...talks, newTalkDraft()])}
-        className="self-start rounded-lg bg-secondary px-3 py-1.5 font-display text-xs font-medium text-muted-foreground"
+        className="self-start rounded-lg bg-secondary px-3 min-h-11 font-display font-medium text-muted-foreground"
       >
         + {es.anadirDiscurso}
       </button>

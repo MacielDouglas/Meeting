@@ -52,13 +52,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="es"
-      // O theme-init.js e extensões ajustam classes do <html> antes da hidratação;
+      // O script de tema e extensões ajustam classes do <html> antes da hidratação;
       // React deve aceitar o atributo do cliente sem reclamar.
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
-        {/* Aplica o tema salvo antes da primeira pintura (evita flash claro/escuro). */}
+        {/* Tema salvo antes da primeira pintura (evita flash claro/escuro);
+            síncrono e no início do body, antes do shell. */}
         <script src="/theme-init.js" />
         <QueryProvider>
           <div className="app-shell flex flex-col gap-6">

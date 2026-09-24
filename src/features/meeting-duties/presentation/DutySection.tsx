@@ -251,8 +251,10 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
           {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
           {missingDates.length > 0 && (
             <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
-              <p className="mb-1 text-xs font-semibold text-warning">{es.diasSinPrograma}</p>
-              <p className="text-xs text-warning">{missingDates.join(", ")}</p>
+              <p className="mb-1 text-xs font-semibold text-warning-on-soft">
+                {es.diasSinPrograma}
+              </p>
+              <p className="text-xs text-warning-on-soft">{missingDates.join(", ")}</p>
             </div>
           )}
 
@@ -261,7 +263,7 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
               {overlapDates.length > 0 && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                  className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger-on-soft"
                 >
                   {overlapDates.sort()[0]}: {es.tablaDuplicada}
                 </div>

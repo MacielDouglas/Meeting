@@ -16,18 +16,19 @@ export function CleaningHistoryBadge({
 }: CleaningHistoryBadgeProps) {
   if (history.length === 0) return null;
 
+  const summary = history.map((h) => `${h.sectorName} (${h.assignmentDate})`).join(", ");
+
   return (
-    <span
-      className="flex items-center gap-0.5"
-      title={history.map((h) => `${h.sectorName} (${h.assignmentDate})`).join(", ")}
-    >
+    <span className="flex items-center gap-0.5" title={summary}>
+      <span className="sr-only">{summary}</span>
       {history.map((h) => {
         const Icon = getSectorIcon(typeKey, h.sectorKey);
         const isSameSector = h.sectorKey === currentSectorKey;
         return (
           <span
             key={`${h.sectorKey}-${h.assignmentDate}`}
-            className={isSameSector ? "text-danger" : "text-accent"}
+            aria-hidden
+            className={isSameSector ? "text-warning" : "text-muted-foreground"}
             title={`${h.sectorName} — ${h.assignmentDate}`}
           >
             <Icon size={12} />

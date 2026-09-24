@@ -14,12 +14,11 @@ const DUTY_ICONS: Record<string, IconType> = {
   platform: FcPodiumWithSpeaker,
 };
 
-/** Cor por posto para ajudar a identificar (plataforma já é multicolorida). */
 const DUTY_ICON_COLORS: Record<string, string> = {
-  usher: "text-sky-600 dark:text-sky-400",
-  microphone: "text-amber-600 dark:text-amber-400",
-  sound: "text-violet-600 dark:text-violet-400",
-  video: "text-rose-600 dark:text-rose-400",
+  usher: "text-muted-foreground",
+  microphone: "text-muted-foreground",
+  sound: "text-muted-foreground",
+  video: "text-muted-foreground",
   platform: "",
 };
 

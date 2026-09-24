@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { updateCleaningAssignment } from "@/features/cleaning/application/cleaning-program-actions";
 import {
@@ -35,6 +36,7 @@ interface PersonSelectModalProps {
 
 const PAGE_SIZE = 60;
 const HISTORY_PER_PERSON = 5;
+const EMPTY_HISTORIES = new Map<string, PersonCleaningHistory[]>();
 
 function sortPersons(
   eligible: EligiblePerson[],
@@ -70,15 +72,11 @@ export function PersonSelectModal({
   onClose,
   onUpdated,
 }: PersonSelectModalProps) {
-  const [persons, setPersons] = useState<EligiblePerson[]>([]);
-  const [histories, setHistories] = useState<Map<string, PersonCleaningHistory[]>>(new Map());
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
-  const [hasMore, setHasMore] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -88,38 +86,33 @@ export function PersonSelectModal({
     return () => clearTimeout(t);
   }, [search]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      try {
-        const eligible = await listEligiblePersons(requiredSex, {
-          search: debouncedSearch || undefined,
-          limit,
-        });
-        if (cancelled) return;
-        setHasMore(eligible.length >= limit);
+  const eligibleQuery = useQuery({
+    queryKey: ["eligible-persons", requiredSex, allowYoung, debouncedSearch, limit],
+    queryFn: () =>
+      listEligiblePersons(requiredSex, {
+        search: debouncedSearch || undefined,
+        limit,
+      }),
+    placeholderData: (previousData) => previousData,
+  });
+  const eligible = useMemo(() => eligibleQuery.data ?? [], [eligibleQuery.data]);
+  const eligibleIds = useMemo(() => eligible.map((p) => p.id), [eligible]);
 
-        const historyMap = await getManyPersonCleaningHistories(
-          eligible.map((p) => p.id),
-          HISTORY_PER_PERSON,
-        );
-        if (cancelled) return;
-
-        setPersons(sortPersons(eligible, historyMap, allowYoung));
-        setHistories(historyMap);
-      } catch {
-        if (!cancelled) setError(es.errorCargarPersonas);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [requiredSex, allowYoung, debouncedSearch, limit]);
+  const historiesQuery = useQuery({
+    queryKey: ["person-cleaning-histories", eligibleIds],
+    queryFn: () => getManyPersonCleaningHistories(eligibleIds, HISTORY_PER_PERSON),
+    enabled: eligibleIds.length > 0,
+    placeholderData: (previousData) => previousData,
+  });
+  const histories = historiesQuery.data ?? EMPTY_HISTORIES;
+  const persons = useMemo(
+    () => sortPersons(eligible, histories, allowYoung),
+    [eligible, histories, allowYoung],
+  );
+  const hasMore = eligible.length >= limit;
+  const loading = eligibleQuery.isPending || (eligibleIds.length > 0 && historiesQuery.isPending);
+  const displayError =
+    error ?? (eligibleQuery.isError || historiesQuery.isError ? es.errorCargarPersonas : null);
 
   async function handleSelect(personId: string) {
     setSaving(true);
@@ -166,9 +159,9 @@ export function PersonSelectModal({
           />
         </label>
 
-        {error && (
+        {displayError && (
           <p role="alert" className="text-sm text-danger">
-            {error}
+            {displayError}
           </p>
         )}
 
@@ -198,7 +191,7 @@ export function PersonSelectModal({
                     }
                     className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                       person.id === currentPersonId
-                        ? "bg-accent/10 ring-1 ring-accent"
+                        ? "bg-accent/10 text-foreground ring-1 ring-accent"
                         : isYoungBlocked
                           ? "opacity-40"
                           : "hover:bg-secondary"
@@ -207,7 +200,7 @@ export function PersonSelectModal({
                     <span className="flex-1">
                       {person.firstName} {person.lastName}
                       {person.young && (
-                        <span className="ml-1 rounded-md bg-warning-soft px-1.5 py-0.5 text-xs font-medium text-warning">
+                        <span className="ml-1 rounded-md bg-warning-soft px-1.5 py-0.5 text-xs font-medium text-warning-on-soft">
                           joven
                         </span>
                       )}
@@ -245,7 +238,7 @@ export function PersonSelectModal({
             type="button"
             disabled={saving}
             onClick={() => setLimit((l) => Math.min(l + PAGE_SIZE, 200))}
-            className="mt-1 text-sm text-accent hover:underline disabled:opacity-50"
+            className="mt-1 min-h-11 px-3 py-2 text-sm text-accent hover:underline disabled:opacity-50"
           >
             {es.mostrarMas}
           </button>

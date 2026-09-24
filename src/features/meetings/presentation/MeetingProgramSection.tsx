@@ -1,7 +1,9 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import type { CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { IconType } from "react-icons";
 import {
   FaBookOpen,
@@ -258,8 +260,6 @@ export function MeetingProgramSection({
   // Esboço do fim de semana também encena antes de salvar (mesmo modelo mental).
   // A escolha nasce no modal do discurso público; o topo não seleciona mais.
   const [pendingOutlineId, setPendingOutlineId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState(false);
   const [loadToken, setLoadToken] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveProgress, setSaveProgress] = useState<{ done: number; total: number } | null>(null);
@@ -322,48 +322,44 @@ export function MeetingProgramSection({
     );
   }, [kind, workbook, midweekTime, weekendTime, outline, article, songMap]);
 
+  // Programa salvo via TanStack Query: cache entre montagens (staleTime 1h),
+  // dedupe e invalidação explícita; loadToken força uma chave nova no Reintentar.
+  const programQuery = useQuery({
+    queryKey: ["meeting-program", kind, weekStart, loadToken],
+    queryFn: () => getMeetingProgram(kind, weekStart),
+  });
+  const queryClient = useQueryClient();
+  const loading = programQuery.isPending;
+  const loadError = programQuery.isError;
+
+  // Aplica o programa buscado: dados novos sempre (é o caminho do refresh pós-salvar);
+  // sincronização completa (discurso, encenação, rascunho) só quando a chave muda.
+  const loadKey = `${kind}|${weekStart}|${loadToken}`;
+  const lastLoadKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    // loadToken só existe para o Reintentar forçar nova carga.
-    void loadToken;
-    let cancelled = false;
-    async function load() {
-      setLoading(true);
-      setError(null);
-      setLoadError(false);
-      try {
-        const result = await getMeetingProgram(kind, weekStart);
-        if (cancelled) return;
-        setSaved(result?.assignments ?? null);
-        setProgramId(result?.program.id ?? null);
-        setProgramException({
-          exceptionType: result?.program.exceptionType ?? "",
-          exceptionLabel: result?.program.exceptionLabel ?? "",
-        });
-        // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
-        // semana sem programa, sem carregar escolha de outra semana).
-        setOutlineId(result?.program.outlineId ?? "");
-        setPending({});
-        setPendingOutlineId(null);
-        // Rede de segurança: restaura o rascunho encenado desta semana.
-        const stored = readStoredDraft(draftStorageKey(kind, weekStart));
-        if (stored) {
-          setPending(stored.pending);
-          setPendingOutlineId(stored.outlineId);
-        }
-      } catch {
-        if (!cancelled) {
-          setSaved(null);
-          setLoadError(true);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    const data = programQuery.data;
+    if (data === undefined) return;
+    setSaved(data?.assignments ?? null);
+    setProgramId(data?.program.id ?? null);
+    setProgramException({
+      exceptionType: data?.program.exceptionType ?? "",
+      exceptionLabel: data?.program.exceptionLabel ?? "",
+    });
+    if (lastLoadKeyRef.current === loadKey) return;
+    lastLoadKeyRef.current = loadKey;
+    setError(null);
+    // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
+    // semana sem programa, sem carregar escolha de outra semana).
+    setOutlineId(data?.program.outlineId ?? "");
+    setPending({});
+    setPendingOutlineId(null);
+    // Rede de segurança: restaura o rascunho encenado desta semana.
+    const stored = readStoredDraft(draftStorageKey(kind, weekStart));
+    if (stored) {
+      setPending(stored.pending);
+      setPendingOutlineId(stored.outlineId);
     }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [kind, weekStart, loadToken]);
+  }, [programQuery.data, loadKey, kind, weekStart]);
 
   // Espelha o rascunho em sessionStorage; voltar à semana o restaura.
   useEffect(() => {
@@ -742,13 +738,9 @@ export function MeetingProgramSection({
   }
 
   async function refresh() {
-    const fresh = await getMeetingProgram(kind, weekStart);
-    setSaved(fresh?.assignments ?? null);
-    setProgramId(fresh?.program.id ?? null);
-    setProgramException({
-      exceptionType: fresh?.program.exceptionType ?? "",
-      exceptionLabel: fresh?.program.exceptionLabel ?? "",
-    });
+    // Invalida a chave da semana: refetch devolve dado fresco e o efeito de
+    // aplicação atualiza programa/atribuições sem mexer na encenação.
+    await queryClient.invalidateQueries({ queryKey: ["meeting-program", kind, weekStart] });
   }
 
   // Calcula `showSection` fora do JSX de forma pura: a primeira parte de
@@ -884,11 +876,11 @@ export function MeetingProgramSection({
 
       {error && (
         <div role="alert" className="rounded-xl border border-danger/30 bg-danger-soft p-3">
-          <p className="text-sm text-danger">{error}</p>
+          <p className="text-sm text-danger-on-soft">{error}</p>
           {saveFailed && (
             <>
               {failedLabel ? (
-                <p className="mt-1 text-xs text-danger">
+                <p className="mt-1 text-xs text-danger-on-soft">
                   {es.falloEn}: {failedLabel}
                 </p>
               ) : null}
@@ -903,7 +895,7 @@ export function MeetingProgramSection({
       )}
       {modelSyncAvailable && !loading && (
         <div role="status" className="rounded-xl border border-warning/30 bg-warning-soft p-3">
-          <p className="text-sm text-warning">{es.modeloCambiado}</p>
+          <p className="text-sm text-warning-on-soft">{es.modeloCambiado}</p>
           <div className="mt-2">
             <Button size="sm" disabled={saving} onClick={() => void handleSyncModel()}>
               {saving ? es.guardando : es.sincronizar}
@@ -1084,8 +1076,8 @@ export function MeetingProgramSection({
                         <SectionIcon aria-hidden size={30} />
                       </span>
                       <span
-                        className="font-display text-2xl font-semibold leading-tight tracking-tight"
-                        style={{ color: meta.color }}
+                        className="section-label font-display text-2xl font-semibold leading-tight tracking-tight"
+                        style={{ "--section-color": meta.color } as CSSProperties}
                       >
                         {meta.label}
                       </span>

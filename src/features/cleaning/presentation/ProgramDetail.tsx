@@ -173,11 +173,12 @@ export function ProgramDetail({
             </span>
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           {program.status === "draft" && (
             <Button
               size="sm"
               variant="outline"
+              className="h-11 w-11 px-0"
               onClick={() => void handleStatusChange("confirmed")}
               title="Confirmar programa"
               aria-label="Confirmar programa"
@@ -189,6 +190,7 @@ export function ProgramDetail({
             <Button
               size="sm"
               variant="outline"
+              className="h-11 w-11 px-0"
               onClick={() => void handleStatusChange("archived")}
               title="Archivar programa"
               aria-label="Archivar programa"
@@ -199,6 +201,7 @@ export function ProgramDetail({
             <Button
               size="sm"
               variant="outline"
+              className="h-11 w-11 px-0"
               onClick={() => void handleStatusChange("confirmed")}
               title="Reabrir programa archivado"
               aria-label="Reabrir programa archivado"
@@ -209,7 +212,7 @@ export function ProgramDetail({
           <Button
             size="sm"
             variant="outline"
-            className="text-danger"
+            className="h-11 w-11 px-0 text-danger"
             onClick={() => setConfirmDelete(true)}
             title="Eliminar programa"
             aria-label="Eliminar programa"
@@ -235,7 +238,7 @@ export function ProgramDetail({
                   type="button"
                   disabled={deletingDay === date}
                   onClick={() => void handleDeleteDay(date)}
-                  className="text-xs text-danger hover:underline disabled:opacity-50"
+                  className="min-h-11 px-3 text-xs text-danger hover:underline disabled:opacity-50"
                   title={`Eliminar el día ${date}`}
                 >
                   {deletingDay === date ? "Eliminando…" : "Eliminar día"}
@@ -266,7 +269,7 @@ export function ProgramDetail({
                       <button
                         type="button"
                         onClick={() => setEditingAssignment(assignment)}
-                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                        className="grid h-11 w-11 shrink-0 place-items-center -my-1 -mr-2 text-muted-foreground hover:text-foreground"
                         title="Cambiar persona"
                         aria-label={`Cambiar persona en ${assignment.sectorName}`}
                       >
@@ -283,9 +286,9 @@ export function ProgramDetail({
 
       {messages.length > 0 && (
         <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
-          <p className="mb-1 text-xs font-semibold text-warning">Observaciones</p>
+          <p className="mb-1 text-xs font-semibold text-warning-on-soft">Observaciones</p>
           {messages.map((msg) => (
-            <p key={msg.date} className="text-xs text-warning">
+            <p key={msg.date} className="text-xs text-warning-on-soft">
               {msg.date}: {msg.message}
             </p>
           ))}

@@ -50,7 +50,7 @@ function PublicLanding() {
             key={item.label}
             className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-card-foreground"
           >
-            <item.icon aria-hidden size={18} className="shrink-0 text-accent" />
+            <item.icon aria-hidden size={18} className="shrink-0 text-muted-foreground" />
             {item.label}
           </li>
         ))}
@@ -63,9 +63,10 @@ function PublicLanding() {
 }
 
 export default async function HomePage() {
-  const [user, schedule] = await Promise.all([getCurrentUser(), getWeeklySchedule()]);
-
+  const user = await getCurrentUser();
   if (!user) return <PublicLanding />;
+  // Programa só é necessário com sessão: visitante não paga a query.
+  const schedule = await getWeeklySchedule();
 
   return (
     <main className="page-stack">

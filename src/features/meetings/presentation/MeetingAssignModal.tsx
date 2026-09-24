@@ -283,7 +283,7 @@ export function MeetingAssignModal({
                 inputMode="numeric"
                 placeholder={es.numCancion}
                 aria-label={es.numCancion}
-                className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border-ring"
+                className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
               />
               <button
                 type="button"
@@ -294,7 +294,7 @@ export function MeetingAssignModal({
               </button>
             </div>
             {staged?.songNumber ? (
-              <p className="text-sm font-medium text-accent">
+              <p className="text-sm font-medium text-foreground">
                 Canción {staged.songNumber}
                 {staged.songTheme ? ` · ${staged.songTheme}` : ""}
               </p>
@@ -314,7 +314,7 @@ export function MeetingAssignModal({
                 key={option}
                 type="button"
                 onClick={() => handleClassroomStage(option)}
-                className={`h-11 w-12 rounded-lg text-xs font-semibold ${room === option ? "bg-accent text-accent-ink" : "bg-secondary text-muted-foreground"}`}
+                className={`h-11 w-12 rounded-lg text-xs font-semibold ${room === option ? "bg-accent/10 text-foreground ring-1 ring-accent" : "bg-secondary text-muted-foreground"}`}
               >
                 {option}
               </button>
@@ -367,7 +367,7 @@ export function MeetingAssignModal({
               placeholder={`Buscar ${labels.main.toLowerCase()}…`}
               aria-label={`Buscar ${labels.main.toLowerCase()}`}
               maxLength={60}
-              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
+              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
             />
             <div className="flex rounded-xl bg-secondary p-1">
               <button
@@ -406,7 +406,7 @@ export function MeetingAssignModal({
                         className={`flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 ${
                           staged?.personId === p.id ||
                           (withHelperFlow && selectedTitular?.id === p.id)
-                            ? "bg-accent/10 ring-1 ring-accent"
+                            ? "bg-accent/10 text-foreground ring-1 ring-accent"
                             : ""
                         }`}
                       >
@@ -461,7 +461,7 @@ export function MeetingAssignModal({
               placeholder={`Buscar ${labels.helper.toLowerCase()}…`}
               aria-label={`Buscar ${labels.helper.toLowerCase()}`}
               maxLength={60}
-              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none"
+              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
             />
             {helperQuery.isPending ? (
               <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
@@ -489,7 +489,9 @@ export function MeetingAssignModal({
                         onClick={() => handlePickHelper(h)}
                         aria-pressed={staged?.helperPersonId === h.id}
                         className={`flex min-h-12 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 ${
-                          staged?.helperPersonId === h.id ? "bg-accent/10 ring-1 ring-accent" : ""
+                          staged?.helperPersonId === h.id
+                            ? "bg-accent/10 text-foreground ring-1 ring-accent"
+                            : ""
                         }`}
                       >
                         <span className="flex-1">

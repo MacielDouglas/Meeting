@@ -20,17 +20,17 @@ async function SiteHeaderData() {
 function SiteHeaderFallback() {
   return (
     <div aria-hidden className="flex h-11 items-center gap-3">
-      <div className="h-11 w-11 animate-pulse rounded-xl bg-secondary" />
+      <div className="h-11 w-11 motion-safe:animate-pulse rounded-xl bg-secondary" />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <div className="h-5 w-28 animate-pulse rounded-lg bg-secondary" />
-        <div className="h-3 w-20 animate-pulse rounded-lg bg-secondary" />
+        <div className="h-5 w-28 motion-safe:animate-pulse rounded-lg bg-secondary" />
+        <div className="h-3 w-20 motion-safe:animate-pulse rounded-lg bg-secondary" />
       </div>
       <div className="hidden flex-1 items-center gap-1 sm:flex">
-        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
-        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
-        <div className="h-9 flex-1 animate-pulse rounded-xl bg-secondary" />
+        <div className="h-9 flex-1 motion-safe:animate-pulse rounded-xl bg-secondary" />
+        <div className="h-9 flex-1 motion-safe:animate-pulse rounded-xl bg-secondary" />
+        <div className="h-9 flex-1 motion-safe:animate-pulse rounded-xl bg-secondary" />
       </div>
-      <div className="h-11 w-11 animate-pulse rounded-xl bg-secondary" />
+      <div className="h-11 w-11 motion-safe:animate-pulse rounded-xl bg-secondary" />
     </div>
   );
 }

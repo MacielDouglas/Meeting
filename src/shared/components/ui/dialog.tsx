@@ -98,7 +98,7 @@ function DialogClose({ className, ...props }: React.ComponentProps<typeof Dialog
     <DialogPrimitive.Close
       data-slot="dialog-close"
       className={cn(
-        "inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
+        "inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-input bg-background px-4 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50",
         className,
       )}
       {...props}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   createDesignationSector,
   deleteDesignationSector,
@@ -15,6 +15,7 @@ import { Card, CardTitle } from "@/shared/components/ui/card";
 import { Switch } from "@/shared/components/ui/switch";
 
 function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
+  const hintId = useId();
   const [value, setValue] = useState(sector.slots.map((s) => s.label).join(", "));
   const [pending, setPending] = useState(false);
 
@@ -33,7 +34,7 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">
+      <span id={hintId} className="text-xs text-muted-foreground">
         Plazas dentro del sector (ej.: Sector A, Sector B — o Cámara A, Cámara B). Separa con comas.
       </span>
       <div className="flex gap-2">
@@ -41,7 +42,9 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Ej.: Sector A, Sector B"
-          className="h-10 flex-1 rounded-lg bg-background px-3 text-sm outline-none"
+          aria-label="Plazas dentro del sector"
+          aria-describedby={hintId}
+          className="h-10 flex-1 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
         />
         <Button variant="outline" disabled={pending} onClick={() => void handleSave()}>
           Guardar
@@ -83,7 +86,11 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
       onSubmit={(e) => void handleSubmit(e)}
       className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
     >
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">Nombre del sector (ej.: Cámara)</span>
         <input
@@ -91,7 +98,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
           onChange={(e) => setName(e.target.value)}
           required
           maxLength={80}
-          className="h-10 rounded-lg bg-background px-3 text-sm outline-none"
+          className="h-10 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
         />
       </label>
       <div className="grid grid-cols-2 gap-2">
@@ -103,7 +110,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
             max={50}
             value={peopleCount}
             onChange={(e) => setPeopleCount(e.target.value)}
-            className="h-10 rounded-lg bg-background px-3 text-sm outline-none"
+            className="h-10 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -112,7 +119,7 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
             value={slots}
             onChange={(e) => setSlots(e.target.value)}
             placeholder="Cámara A, Cámara B"
-            className="h-10 rounded-lg bg-background px-3 text-sm outline-none"
+            className="h-10 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
           />
         </label>
       </div>
@@ -198,7 +205,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
                   peopleCount: e.target.value === "" ? null : Number(e.target.value),
                 })
               }
-              className="h-10 w-24 rounded-lg bg-secondary px-3 text-sm outline-none"
+              className="h-10 w-24 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
             />
           </label>
 
@@ -208,7 +215,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
             <button
               type="button"
               onClick={() => void deleteDesignationSector({ id: sector.id })}
-              className="self-start text-xs font-medium text-danger"
+              className="min-h-11 self-start px-3 text-xs font-medium text-danger"
             >
               Eliminar sector
             </button>

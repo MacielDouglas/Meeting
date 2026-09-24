@@ -97,7 +97,7 @@ export function WatchtowerImportModal({
           </DialogDescription>
         </DialogHeader>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning-on-soft">
             Este contenido ({inspected.symbol}, {inspected.articles?.length ?? 0} artículos){" "}
             {es.yaExisteSubstituir}. {es.deseaSubstituir}
           </p>
@@ -114,7 +114,11 @@ export function WatchtowerImportModal({
             ))}
           </ul>
         )}
-        {saveError && <p className="text-sm text-danger">{saveError}</p>}
+        {saveError && (
+          <p role="alert" className="text-sm text-danger">
+            {saveError}
+          </p>
+        )}
         <DialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
@@ -174,7 +178,7 @@ export function WatchtowerSection({
                   onClick={() => setSelected({ issue, article })}
                   className="block w-full rounded-xl bg-secondary p-3 text-left"
                 >
-                  <p className="text-xs font-medium text-accent">{article.weekLabel}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{article.weekLabel}</p>
                   <p className="text-sm font-semibold">{article.title}</p>
                   <div className="mt-1">
                     <SongLine
@@ -313,7 +317,11 @@ function ArticleModal({
         </DialogHeader>
         {editing ? (
           <form onSubmit={(event) => void handleSave(event)} className="flex flex-col gap-2">
-            {formError && <p className="text-sm text-danger">{formError}</p>}
+            {formError && (
+              <p role="alert" className="text-sm text-danger">
+                {formError}
+              </p>
+            )}
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{es.weekLabel}</span>
               <input
@@ -321,7 +329,7 @@ function ArticleModal({
                 onChange={(event) => setWeekLabel(event.target.value)}
                 required
                 maxLength={80}
-                className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+                className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
@@ -331,7 +339,7 @@ function ArticleModal({
                 onChange={(event) => setTitle(event.target.value)}
                 required
                 maxLength={200}
-                className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+                className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
               />
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -343,7 +351,7 @@ function ArticleModal({
                   max={1000}
                   value={openingSong}
                   onChange={(event) => setOpeningSong(event.target.value)}
-                  className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+                  className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
                 />
               </label>
               <label className="flex flex-col gap-1 text-sm">
@@ -354,7 +362,7 @@ function ArticleModal({
                   max={1000}
                   value={closingSong}
                   onChange={(event) => setClosingSong(event.target.value)}
-                  className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none"
+                  className="h-10 w-full rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
                 />
               </label>
             </div>

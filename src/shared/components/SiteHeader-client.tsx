@@ -80,7 +80,7 @@ export function SiteHeader({
   }, []);
 
   useEffect(() => {
-    // Primeira aplicação pula: o theme-init.js já deixou a classe certa no
+    // Primeira aplicação pula: o script de tema já deixou a classe certa no
     // <html> antes da hidratação; reaplicar aqui causaria flash e escrita
     // redundante no armazenamento.
     if (!appliedTheme.current) {
@@ -183,7 +183,7 @@ export function SiteHeader({
       >
         <FaMeetup aria-hidden size={26} />
       </Link>
-      <div className="flex min-w-0 shrink-0 flex-col">
+      <div className="flex min-w-0 flex-col">
         <p className="font-display text-2xl font-semibold leading-none tracking-tight">Meeting</p>
         {congregationName.trim() !== "" && (
           <p className="max-w-40 truncate text-xs text-muted-foreground sm:max-w-48">
@@ -222,7 +222,7 @@ export function SiteHeader({
       <div className="ml-auto flex shrink-0 items-center gap-2 sm:ml-0">
         <button
           type="button"
-          // Tema é valor client-only (classe do <html> via theme-init.js):
+          // Tema é valor client-only (classe do <html> via script de tema):
           // o server sempre chuta "light"; o client assume sem remendar.
           suppressHydrationWarning
           aria-label={theme === "dark" ? es.switchToLight : es.switchToDark}

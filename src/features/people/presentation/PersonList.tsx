@@ -31,7 +31,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={es.searchPeople}
             aria-label={es.searchPeople}
-            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:border focus:border-ring"
           />
         </div>
         {canCreate && (
@@ -60,6 +60,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
                   size={28}
                   className={cn(person.sex === "female" ? "text-rose-500" : "text-sky-500")}
                 />
+                <span className="sr-only">{person.sex === "female" ? "Mujer" : "Hombre"}</span>
                 <span className="text-base">{getFullName(person)}</span>
               </Link>
             </li>

@@ -1,4 +1,5 @@
 import { asc, desc, eq } from "drizzle-orm";
+import { cache } from "react";
 import { requirePrivilegedUser } from "@/features/auth/application/session";
 import {
   DEFAULT_MEETING_SCHEDULE,
@@ -19,7 +20,9 @@ function toWeekDay(value: number): WeekDay {
   return Math.min(6, Math.max(0, value)) as WeekDay;
 }
 
-export async function getMeetingSchedule(): Promise<MeetingSchedule> {
+// cache(): horários lidos uma vez por request, mesmo com chamadas repetidas
+// (header, página, getWeeklySchedule, getMyWeek).
+export const getMeetingSchedule = cache(async (): Promise<MeetingSchedule> => {
   const db = getDb();
   try {
     const rows = await db
@@ -64,7 +67,7 @@ export async function getMeetingSchedule(): Promise<MeetingSchedule> {
       weekendTime: row.weekendTime,
     };
   }
-}
+});
 
 export interface SpecialEventItem {
   id: string;

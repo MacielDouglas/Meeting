@@ -45,7 +45,7 @@ function SongText({ text, theme }: { text: string | undefined; theme: string | n
 function PartCard({ part }: { part: WorkbookContentPart }) {
   return (
     <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
-      <p className="text-xs font-medium text-accent">
+      <p className="text-xs font-medium text-foreground">
         {part.number}. {part.title}
         {part.duration ? ` ${part.duration}` : ""}
       </p>
@@ -79,7 +79,7 @@ function MeetingSections({ meeting }: { meeting: WorkbookContentMeeting }) {
         if (!parts || parts.length === 0) return null;
         return (
           <div key={key} className="flex flex-col gap-1">
-            <p className="text-xs font-semibold text-accent">{SECTION_LABELS[key]}</p>
+            <p className="text-xs font-semibold text-muted-foreground">{SECTION_LABELS[key]}</p>
             {parts.map((part) => (
               <PartCard key={`${key}-${part.number}`} part={part} />
             ))}
@@ -141,7 +141,7 @@ export function WorkbookImportModal({
           <DialogDescription>{weeks.length} semanas</DialogDescription>
         </DialogHeader>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
+          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning-on-soft">
             Este contenido ({inspected.symbol}, {weeks.length} semanas) {es.yaExisteSubstituir}.{" "}
             {es.deseaSubstituir}
           </p>
@@ -160,7 +160,11 @@ export function WorkbookImportModal({
             ))}
           </ul>
         )}
-        {saveError && <p className="text-sm text-danger">{saveError}</p>}
+        {saveError && (
+          <p role="alert" className="text-sm text-danger">
+            {saveError}
+          </p>
+        )}
         <DialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
@@ -269,7 +273,7 @@ export function WorkbookSection({
                   onClick={() => setSelectedWeek({ issue, week })}
                   className="block w-full rounded-xl bg-secondary p-3 text-left"
                 >
-                  <p className="text-xs font-medium text-accent">{week.week}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{week.week}</p>
                   <p className="text-sm font-semibold">{week.meeting?.BibleReading ?? "—"}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {week.meeting?.song?.[0]?.openingSong ?? "—"} →{" "}

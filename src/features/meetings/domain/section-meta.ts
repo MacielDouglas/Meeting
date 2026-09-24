@@ -9,7 +9,7 @@ export interface SectionMeta {
   color: string;
 }
 
-export const DEFAULT_SECTION_COLOR = "#3f3f46";
+export const DEFAULT_SECTION_COLOR = "#63636b";
 
 const SECTION_META: Record<string, SectionMeta> = {
   "TESOROS DE LA BIBLIA": { label: "Tesoros de la Biblia", color: "#3c7f8b" },

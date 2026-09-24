@@ -21,10 +21,13 @@
   --accent-ink: #ffffff;
   --success: #12805c;
   --success-soft: #def5e9;
+  --success-on-soft: #0f6e4f;
   --warning: #9a6200;
   --warning-soft: #fdeecd;
+  --warning-on-soft: #8a5800;
   --danger: #d92d20;
   --danger-soft: #fde4e2;
+  --danger-on-soft: #c0271b;
   --danger-ink: #ffffff;
   --session: #ffffff;
   --session-fg: #111113;
@@ -54,10 +57,13 @@
   --color-accent-ink: var(--accent-ink);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-success-on-soft: var(--success-on-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --color-warning-on-soft: var(--warning-on-soft);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-danger-on-soft: var(--danger-on-soft);
   --color-danger-ink: var(--danger-ink);
   --color-session: var(--session);
   --color-session-fg: var(--session-fg);
@@ -92,10 +98,13 @@
     --accent-ink: #0a0a0b;
     --success: #3ddc97;
     --success-soft: #0e2e23;
+    --success-on-soft: #3ddc97;
     --warning: #ffb224;
     --warning-soft: #33230a;
+    --warning-on-soft: #ffb224;
     --danger: #f97066;
     --danger-soft: #3a1410;
+    --danger-on-soft: #f97066;
     --danger-ink: #0a0a0b;
     --session: #000000;
     --session-fg: #ffffff;
@@ -127,10 +136,13 @@
   --accent-ink: #0a0a0b;
   --success: #3ddc97;
   --success-soft: #0e2e23;
+  --success-on-soft: #3ddc97;
   --warning: #ffb224;
   --warning-soft: #33230a;
+  --warning-on-soft: #ffb224;
   --danger: #f97066;
   --danger-soft: #3a1410;
+  --danger-on-soft: #f97066;
   --danger-ink: #0a0a0b;
   --session: #000000;
   --session-fg: #ffffff;
@@ -144,7 +156,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
@@ -154,9 +166,29 @@ body {
   color: var(--accent-ink);
 }
 
+/* Foco visível único: anel no acento funcional em todo controle interativo.
+   Regra com seletor elemento+pseudo vence `outline-none` do Tailwind no
+   foco por teclado; com mouse, quem definiu `focus:border-ring` mantém a borda. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* iOS amplia a tela ao focar campos com menos de 16px; campos de digitação
    nascem em 1rem (respeita zoom do usuário, que usa rem). Selects compactos
-   em fileiras mantêm o tamanho denso de propósito. */
+   em fileiras mantêm o tamanho denso de propósito. `input:not([type])` cobre
+   os inputs sem type (default text) que perderiam para a classe `.text-sm`. */
+input:not([type]),
 input[type="text"],
 input[type="search"],
 input[type="date"],
@@ -174,6 +206,23 @@ textarea {
 
 .section-emblem > svg {
   filter: none;
+}
+
+/* Rótulo do cabeçalho de seção do programa: cor TheocBase no claro; no
+   escuro o texto vai em foreground (a cor viva só na pastilha do emblema),
+   porque hex escuros sobre pista reprovam em AA. */
+.section-label {
+  color: var(--section-color, var(--foreground));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) .section-label {
+    color: var(--foreground);
+  }
+}
+
+:root.dark .section-label {
+  color: var(--foreground);
 }
 
 /* Painel herói da home: preto piano nos dois temas, com sombra de elevação. */

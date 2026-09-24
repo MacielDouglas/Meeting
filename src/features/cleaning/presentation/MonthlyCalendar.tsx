@@ -130,10 +130,28 @@ export function MonthlyCalendar({
           const hasProgram = programDates.has(dateStr);
 
           let bgClass = "";
-          if (isAssembly) bgClass = "bg-danger-soft text-danger";
+          if (isAssembly) bgClass = "bg-danger-soft text-danger-on-soft";
           else if (isSelected) bgClass = "bg-accent text-accent-ink";
-          else if (hasProgram) bgClass = "bg-success-soft text-success";
+          else if (hasProgram) bgClass = "bg-success-soft text-success-on-soft";
           else if (isMeeting) bgClass = "bg-accent/10 text-accent";
+
+          let ringClass = "";
+          if (isAssembly) ringClass = "ring-1 ring-inset ring-danger";
+          else if (isMeeting) ringClass = "ring-1 ring-inset ring-accent/50";
+
+          const numberClass = hasProgram
+            ? "underline decoration-success/60 underline-offset-4"
+            : "";
+
+          const stateLabel = isAssembly
+            ? "asamblea"
+            : isSelected
+              ? "seleccionado"
+              : hasProgram
+                ? "con programa"
+                : isMeeting
+                  ? "reunión"
+                  : "";
 
           const isBlocked = disableProgramDates && hasProgram;
           const day = cell.day;
@@ -144,10 +162,13 @@ export function MonthlyCalendar({
               disabled={isBlocked}
               onClick={() => onDateClick(dateStr)}
               aria-disabled={isBlocked}
-              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass}`}
+              aria-label={`${day} de ${monthNames[month].toLowerCase()}${
+                stateLabel ? `, ${stateLabel}` : ""
+              }`}
+              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass} ${ringClass}`}
               title={isAssembly ? (info?.assemblyType ?? "") : hasProgram ? programDateHint : ""}
             >
-              {day}
+              <span className={numberClass}>{day}</span>
               {isMeeting && !isAssembly && (
                 <span className="absolute bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent" />
               )}

@@ -168,7 +168,7 @@ export function DutyProgramDetail({
             </span>
           </p>
         </div>
-        <div className="flex gap-1">
+        <div className="flex flex-wrap gap-2">
           {program.status === "draft" && (
             <Button
               size="sm"

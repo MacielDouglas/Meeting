@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { cn } from "@/shared/lib/utils";
 
 export interface ChipOption<T extends string> {
@@ -20,9 +21,12 @@ export function ChipSelect<T extends string>({
   value,
   onChange,
 }: ChipSelectProps<T>) {
+  const labelId = useId();
   return (
-    <div className="flex flex-col gap-1 py-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
+    <fieldset aria-labelledby={labelId} className="flex flex-col gap-1 py-1">
+      <span id={labelId} className="text-sm text-muted-foreground">
+        {label}
+      </span>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
@@ -41,6 +45,6 @@ export function ChipSelect<T extends string>({
           </button>
         ))}
       </div>
-    </div>
+    </fieldset>
   );
 }

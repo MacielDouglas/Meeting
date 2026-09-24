@@ -105,7 +105,11 @@ function SectorForm({
       onSubmit={(e) => void handleSubmit(e)}
       className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
     >
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">Nombre del sector</span>
         <input
@@ -122,7 +126,7 @@ function SectorForm({
           value={task}
           onChange={(e) => setTask(e.target.value)}
           rows={3}
-          className="rounded-lg bg-background px-3 py-2 text-sm outline-none focus:border focus:border-ring"
+          className="rounded-lg bg-background px-3 py-2 text-base outline-none focus:border focus:border-ring"
         />
       </label>
       <div className="grid grid-cols-2 gap-2">
@@ -135,7 +139,7 @@ function SectorForm({
             value={peopleCount}
             onChange={(e) => setPeopleCount(e.target.value)}
             placeholder="—"
-            className="h-10 rounded-lg bg-background px-3 text-sm outline-none"
+            className="h-10 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
           />
         </label>
         <label className="flex flex-col gap-1 text-sm">
@@ -143,7 +147,7 @@ function SectorForm({
           <select
             value={requiredSex}
             onChange={(e) => setRequiredSex(e.target.value as RequiredSex)}
-            className="h-10 rounded-lg bg-background px-2 text-sm outline-none"
+            className="h-10 rounded-lg bg-background px-2 text-sm outline-none focus:border focus:border-ring"
           >
             {SEX_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -215,7 +219,7 @@ function SectorIcon({
   return (
     <span
       aria-hidden
-      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-accent"
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-muted-foreground"
     >
       <Icon size={20} />
     </span>
@@ -354,7 +358,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                   <button
                     type="button"
                     onClick={() => setSelected({ typeKey: cleaning.key, sector })}
-                    className="min-w-0 flex-1 truncate text-left text-sm font-semibold"
+                    className="min-h-11 min-w-0 flex-1 truncate py-1 text-left text-sm font-semibold"
                   >
                     {sector.name}{" "}
                     {sector.isDefault && (

@@ -375,7 +375,7 @@ export function CleaningDesignationSection({
               {rangeOverlapDates.length > 0 && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+                  className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger-on-soft"
                 >
                   {rangeOverlapPrograms[0]
                     ? `${rangeOverlapPrograms[0].startDate} — ${rangeOverlapPrograms[0].endDate}: ${es.tablaDuplicada}`
@@ -406,7 +406,7 @@ export function CleaningDesignationSection({
           {selectedType !== "per_meeting" && duplicateSelectedDates.length > 0 && (
             <div
               role="alert"
-              className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger"
+              className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger-on-soft"
             >
               {duplicateSelectedDates.sort()[0]}: {es.tablaDuplicada}
             </div>
@@ -420,9 +420,9 @@ export function CleaningDesignationSection({
           {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
           {resultMessages.length > 0 && (
             <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
-              <p className="mb-1 text-xs font-semibold text-warning">{es.avisosSorteo}</p>
+              <p className="mb-1 text-xs font-semibold text-warning-on-soft">{es.avisosSorteo}</p>
               {resultMessages.map((msg) => (
-                <p key={`${msg.date}-${msg.message}`} className="text-xs text-warning">
+                <p key={`${msg.date}-${msg.message}`} className="text-xs text-warning-on-soft">
                   {msg.date}: {msg.message}
                 </p>
               ))}

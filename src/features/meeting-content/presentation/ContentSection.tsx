@@ -123,31 +123,34 @@ function ImportModal({
   }
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Revisar el contenido del .jwpub"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 p-0 sm:items-center sm:p-4"
     >
-      <div className="flex max-h-full w-full max-w-lg flex-col gap-3 overflow-hidden rounded-none bg-background p-4 sm:rounded-2xl">
-        <h2 className="font-display text-lg font-semibold tracking-tight">
+      <DialogContent className="max-h-[85dvh] gap-3 overflow-hidden p-4">
+        <DialogTitle className="font-display text-lg font-semibold tracking-tight">
           {kindLabel(inspected.kind)} · {languageLabel(inspected.language)} · {items.length}{" "}
           elementos
-        </h2>
+        </DialogTitle>
         {inspected.hadExisting ? (
-          <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
+          <DialogDescription className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning-on-soft">
             Este contenido ({kindLabel(inspected.kind).toLowerCase()}, {items.length} elementos,{" "}
             {languageLabel(inspected.language).toLowerCase()}) {es.yaExisteSubstituir} (
             {inspected.existingCount} registros). {es.deseaSubstituir}
-          </p>
+          </DialogDescription>
         ) : (
-          <p className="text-sm text-muted-foreground">{es.revisarContenido}</p>
+          <DialogDescription className="text-sm text-muted-foreground">
+            {es.revisarContenido}
+          </DialogDescription>
         )}
-        {saveError && <p className="text-sm text-danger">{saveError}</p>}
-        <ul className="flex flex-1 flex-col gap-1 overflow-y-auto">
+        {saveError && (
+          <p role="alert" className="text-sm text-danger">
+            {saveError}
+          </p>
+        )}
+        <ul className="flex max-h-[50dvh] flex-col gap-1 overflow-y-auto">
           {items.map((item) => (
             <li
               key={item.key}
@@ -161,7 +164,7 @@ function ImportModal({
                 value={item.number}
                 onChange={(event) => updateItem(item.key, "number", event.target.value)}
                 aria-label={`${es.numeroLabel} ${item.number}`}
-                className="h-8 w-16 shrink-0 rounded bg-background px-2 text-sm outline-none"
+                className="h-11 w-16 shrink-0 rounded bg-background px-2 text-sm focus:border focus:border-ring"
               />
               <input
                 value={item.theme}
@@ -169,13 +172,13 @@ function ImportModal({
                 required
                 maxLength={200}
                 aria-label={`${es.temaLabel} del elemento ${item.number}`}
-                className="h-8 min-w-0 flex-1 rounded bg-background px-2 text-sm outline-none"
+                className="h-11 min-w-0 flex-1 rounded bg-background px-2 text-sm focus:border focus:border-ring"
               />
               <button
                 type="button"
                 onClick={() => removeItem(item.key)}
                 aria-label={`${es.eliminar} el elemento ${item.number}`}
-                className="shrink-0 text-xs font-medium text-danger"
+                className="-my-1 grid h-11 w-11 shrink-0 place-items-center text-xs font-medium text-danger"
               >
                 X
               </button>
@@ -190,8 +193,8 @@ function ImportModal({
             {es.cancel}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -236,7 +239,11 @@ function SmartImportCard({
         Sube cualquier archivo .jwpub de tu dispositivo: cánticos, bosquejos o Atalaya. La app
         identifica el tipo y abre la revisión en la pestaña correcta.
       </p>
-      {error && <p className="text-sm text-danger">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       {status && <p className="text-sm text-success">{status}</p>}
       <input
         ref={fileRef}
@@ -391,7 +398,11 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
             onSubmit={(event) => void handleCreate(event)}
             className="flex flex-col gap-2 rounded-xl bg-secondary p-3"
           >
-            {formError && <p className="text-sm text-danger">{formError}</p>}
+            {formError && (
+              <p role="alert" className="text-sm text-danger">
+                {formError}
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1 text-sm">
                 <span className="text-muted-foreground">{es.numeroLabel}</span>
@@ -678,7 +689,7 @@ export function ContentSection({
             type="button"
             aria-pressed={subTab === item.value}
             onClick={() => setSubTab(item.value)}
-            className={`-mb-px border-b-2 px-1 pb-2 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            className={`-mb-px min-h-11 border-b-2 px-1 pt-3 pb-2 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               subTab === item.value
                 ? "border-accent text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
