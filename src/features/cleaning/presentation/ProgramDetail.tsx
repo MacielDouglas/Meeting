@@ -12,16 +12,16 @@ import type {
   CleaningProgramItem,
 } from "@/features/cleaning/application/cleaning-program-queries";
 import { getSectorIcon } from "@/features/cleaning/domain/cleaning-sector-icons";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { DownloadCleaningPdfButton } from "./DownloadCleaningPdfButton-client";
 import { PersonSelectModal } from "./PersonSelectModal";
@@ -309,22 +309,22 @@ export function ProgramDetail({
       )}
 
       {confirmDelete && (
-        <AlertDialog
+        <Dialog
           open
           onOpenChange={(open) => {
             if (!open) setConfirmDelete(false);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Eliminar programa</AlertDialogTitle>
-              <AlertDialogDescription>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Eliminar programa</DialogTitle>
+              <DialogDescription>
                 ¿Eliminar este programa y las {assignments.length} {es.designacionesLabel}? Esta
                 acción no se puede deshacer.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={deleting}>{es.cancel}</AlertDialogCancel>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose disabled={deleting}>{es.cancel}</DialogClose>
               <Button
                 className="bg-danger text-danger-ink"
                 disabled={deleting}
@@ -332,9 +332,9 @@ export function ProgramDetail({
               >
                 {deleting ? "Eliminando…" : es.eliminar}
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

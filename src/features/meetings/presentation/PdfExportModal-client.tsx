@@ -15,15 +15,15 @@ import {
   MEETING_PDF_FILE_PREFIXES,
   MEETING_PDF_LABELS_ES,
 } from "@/features/meetings/pdf/meeting-pdf-i18n";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -195,17 +195,17 @@ export function PdfExportModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="leading-snug">{es.crearPdf}</AlertDialogTitle>
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="leading-snug">{es.crearPdf}</DialogTitle>
           <p className="font-display text-sm font-medium text-muted-foreground">{es.eligeRango}</p>
-        </AlertDialogHeader>
+        </DialogHeader>
 
         <fieldset className="flex rounded-xl bg-secondary p-1">
           <legend className="sr-only">{es.crearPdf}</legend>
@@ -284,8 +284,8 @@ export function PdfExportModal({
           </p>
         )}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel className="mt-0 flex-1">{es.cancel}</AlertDialogCancel>
+        <DialogFooter>
+          <DialogClose className="mt-0 flex-1">{es.cancel}</DialogClose>
           <Button
             disabled={!rangeStart || generating}
             onClick={() => void handleGenerate()}
@@ -293,8 +293,8 @@ export function PdfExportModal({
           >
             {generating ? es.generandoPdf : es.generarPdf}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

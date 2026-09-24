@@ -39,6 +39,7 @@ import {
   type BuiltPart,
   buildMidweekParts,
   buildWeekendParts,
+  classifySavedPart,
   type WorkbookWeekLike,
 } from "@/features/meetings/domain/build-meeting-program";
 import {
@@ -47,18 +48,17 @@ import {
 } from "@/features/meetings/domain/match-meeting-content";
 import { sectionMetaOf } from "@/features/meetings/domain/section-meta";
 import { CardSkeleton } from "@/shared/components/skeletons";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { MONTH_SHORT_ES, WEEKDAY_FULL_ES, WEEKDAY_SHORT_ES } from "@/shared/lib/format-date";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
@@ -168,13 +168,13 @@ const SECTION_ICONS: Record<string, IconType> = {
   "ESTUDIO DE LA ATALAYA": FaBookOpen,
 };
 
-/** Partes fixas: só leitura, sem botão de designação. */
+/** Partes fixas: só leitura, sem botão de designação. O cântico final
+    ("y oración") designa a oração e fica de fora desta lista. */
 const ALWAYS_DISPLAY_ONLY_KEYS = new Set([
   "opening-comments",
   "middle-song",
   "concluding-comments",
   "watchtower-song",
-  "closing-song",
 ]);
 
 interface PartDisplay {
@@ -575,6 +575,7 @@ export function MeetingProgramSection({
           helperPersonName: s.helperPersonName ?? "",
           classroom: s.classroom ?? "A",
           speakerCongregation: s.speakerCongregation ?? "",
+          ...classifySavedPart(s.partKey, s.title, s.subtitle, kind),
         }),
       );
     }
@@ -607,7 +608,7 @@ export function MeetingProgramSection({
         songTheme: s?.songTheme ?? t.songTheme,
       });
     });
-  }, [saved, template, pending]);
+  }, [saved, template, pending, kind]);
 
   const dirtyIds = useMemo(() => new Set(Object.keys(pending)), [pending]);
   const dirtyCount = dirtyIds.size + (pendingOutlineId !== null ? 1 : 0);
@@ -781,12 +782,15 @@ export function MeetingProgramSection({
     // interatividade, sem o bloqueio de `saving` para o número não piscar).
     // Cânticos ficam de fora: nunca exibem "Sin asignar", então não contam.
     const flags = displayPartsWithSections.map((part) => {
+      // Cânticos não contam (nunca exibem "Sin asignar") — exceto o final,
+      // que designa a pessoa da oração e grita a vaga como as demais.
+      const prayerSong = part.key === "closing-song";
+      const songPart = part.key.includes("song") || part.songNumber != null;
       const countable =
         canManage &&
         programId !== null &&
         !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
-        !part.key.includes("song") &&
-        part.songNumber == null;
+        (!songPart || prayerSong);
       const display = partDisplay.get(part.id);
       return {
         countable,
@@ -1006,8 +1010,10 @@ export function MeetingProgramSection({
               const isDirty = dirtyIds.has(part.id);
               const infoBits = [display.subtitle].filter(Boolean);
               const hasAssignee = display.line1 !== "—" || display.line2 !== "";
-              // Nomes só aparecem com designado; cânticos nunca mostram "Sin asignar".
-              const showNames = hasAssignee || (!isSongPart && interactive);
+              // Nomes só aparecem com designado; cânticos nunca mostram "Sin asignar",
+              // exceto o final, que designa a oração e grita a vaga como as demais.
+              const showNames =
+                hasAssignee || ((!isSongPart || part.key === "closing-song") && interactive);
               const names = hasAssignee
                 ? `${display.line1}${display.line2 ? ` · ${display.line2}` : ""}`
                 : es.sinAsignar;
@@ -1206,27 +1212,30 @@ export function MeetingProgramSection({
       )}
 
       {navRequest && (
-        <AlertDialog
+        <Dialog
           open
           onOpenChange={(open) => {
             if (!open) setNavRequest(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{es.descartarTitulo}</AlertDialogTitle>
-              <AlertDialogDescription>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{es.descartarTitulo}</DialogTitle>
+              <DialogDescription>
                 {dirtyCount} {es.sinGuardar}: {dirtySummary}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{es.seguirEditando}</AlertDialogCancel>
-              <AlertDialogAction onClick={() => discardAndNavigate(navRequest)}>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose>{es.seguirEditando}</DialogClose>
+              <Button
+                className="border-transparent bg-danger text-danger-ink"
+                onClick={() => discardAndNavigate(navRequest)}
+              >
                 {es.descartar} ({dirtyCount})
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       {editing && !editing.id.startsWith("tpl-") && (
@@ -1238,8 +1247,9 @@ export function MeetingProgramSection({
           isSong={Boolean(editing.songNumber || editing.key.includes("song"))}
           // Só partes com capability permitem escolher pessoa (cântico inicial,
           // palavras de introdução e cântico do meio ficam só com o cântico).
-          // O cântico da Atalaia continua só com o cântico. O cântico inicial
-          // do fim de semana é opcional e só escolhe o número.
+          // O cântico da Atalaia continua só com o cântico; o final designa
+          // a oração (filtro prayer). O cântico inicial do fim de semana é
+          // opcional e só escolhe o número.
           allowPerson={
             editing.key !== "watchtower-song" &&
             Boolean(editing.capability) &&

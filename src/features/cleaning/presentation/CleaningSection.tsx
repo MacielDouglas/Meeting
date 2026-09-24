@@ -29,17 +29,17 @@ import {
 } from "@/features/cleaning/application/actions";
 import type { CleaningSectorItem, CleaningTypeItem } from "@/features/cleaning/application/queries";
 import type { CleaningTypeKey, RequiredSex } from "@/features/cleaning/domain/cleaning-defaults";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { Switch } from "@/shared/components/ui/switch";
 
 const SEX_OPTIONS: { value: RequiredSex; label: string }[] = [
@@ -240,26 +240,26 @@ function SectorModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-3">
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3">
             <SectorIcon typeKey={typeKey} sectorKey={sector.key} />
             {sector.name}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
+          </DialogTitle>
+          <DialogDescription>
             {sector.peopleCount != null ? `${sector.peopleCount} persona(s)` : "Cant. libre"}
             {" · "}
             {sexLabel(sector.requiredSex)}
             {" · "}
             {youngLabel(sector.allowYoung)}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
         {editing ? (
           <SectorForm
             typeKey={typeKey}
@@ -280,7 +280,7 @@ function SectorModal({
         ) : (
           <p className="text-sm">{sector.task || "Sin tarea registrada."}</p>
         )}
-        <AlertDialogFooter className="flex-col sm:flex-row">
+        <DialogFooter className="flex-col sm:flex-row">
           {!editing && !confirmingDelete && (
             <>
               <Button variant="outline" onClick={() => setEditing(true)}>
@@ -307,11 +307,11 @@ function SectorModal({
               Volver
             </Button>
           ) : (
-            !editing && <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            !editing && <DialogClose>Cancelar</DialogClose>
           )}
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

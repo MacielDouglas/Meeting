@@ -19,13 +19,13 @@ import {
   type PublicTalkSelection,
 } from "@/features/meetings/presentation/PublicTalkPicker-client";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { formatDateBR } from "@/shared/lib/format-date";
 
@@ -255,19 +255,19 @@ export function MeetingAssignModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="leading-snug">{title}</AlertDialogTitle>
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="leading-snug">{title}</DialogTitle>
           {subtitle && (
             <p className="font-display text-sm font-medium text-muted-foreground">{subtitle}</p>
           )}
-        </AlertDialogHeader>
+        </DialogHeader>
         {(currentPersonName || currentHelperName) && (
           <p className="text-sm text-muted-foreground">
             {es.actual}: <span className="font-medium text-foreground">{currentPersonName}</span>
@@ -516,7 +516,7 @@ export function MeetingAssignModal({
           </div>
         )}
 
-        <AlertDialogFooter>
+        <DialogFooter>
           {withHelperFlow && step === "helper" && (
             <button
               type="button"
@@ -527,7 +527,7 @@ export function MeetingAssignModal({
               {es.volver}
             </button>
           )}
-          <AlertDialogCancel className="mt-0 flex-1">{es.cancel}</AlertDialogCancel>
+          <DialogClose className="mt-0 flex-1">{es.cancel}</DialogClose>
           {!isPublicTalk && (
             <button
               type="button"
@@ -538,8 +538,8 @@ export function MeetingAssignModal({
               {es.asignar}
             </button>
           )}
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

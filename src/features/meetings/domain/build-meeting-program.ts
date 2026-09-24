@@ -69,7 +69,7 @@ export interface ClassifiedMinistry {
  * Classifica a parte de "Seamos mejores maestros" pelo título da apostila:
  * - Empiece conversaciones: titular + ajudante (mesmo sexo ou família)
  * - Haga revisitas / Haga discípulos: titular + ajudante (mesmo sexo)
- * - Qué dirías: sem ajudante, ancião ou servo ministerial
+ * - Análisis con el auditorio / Qué dirías: sem ajudante, ancião ou servo ministerial
  * - Explique sus creencias (Escenificación): titular + ajudante (mesmo sexo ou família)
  * - Explique sus creencias (discurso) / Discurso: sem ajudante, better_speech
  */
@@ -88,7 +88,7 @@ export function classifyMinistryPart(input: {
     }
     return { capability: "ministrySpeech", needsHelper: false };
   }
-  if (title.includes("que dirias")) {
+  if (title.includes("que dirias") || title.includes("analisis")) {
     return { capability: "ministryElder", needsHelper: false };
   }
   if (title.includes("empiece conversaciones")) {
@@ -104,6 +104,50 @@ export function classifyMinistryPart(input: {
     return { capability: "ministrySpeech", needsHelper: false };
   }
   return { capability: "ministry", needsHelper: true };
+}
+
+/**
+ * Recupera capability/needsHelper de uma parte salva quando a apostila da
+ * semana não está importada (sem modelo para mesclar). Espelha os modelos
+ * de `buildMidweekParts`/`buildWeekendParts` pela chave salva.
+ */
+export function classifySavedPart(
+  partKey: string,
+  title: string,
+  subtitle: string,
+  kind: "midweek" | "weekend",
+): { capability?: string; needsHelper?: boolean } {
+  if (partKey.startsWith("ministry-")) {
+    const classified = classifyMinistryPart({ title, assignment: subtitle });
+    return { capability: classified.capability, needsHelper: classified.needsHelper };
+  }
+  if (partKey.startsWith("living-")) return { capability: "living" };
+  switch (partKey) {
+    case "president":
+      return {
+        capability: kind === "midweek" ? "president" : "weekendPresident",
+        needsHelper: false,
+      };
+    case "opening-song":
+      return kind === "weekend" ? { capability: "weekendOpening" } : {};
+    case "treasures-talk":
+      return { capability: "treasuresTalk" };
+    case "treasures-gems":
+      return { capability: "pearlsQuest" };
+    case "treasures-reading":
+      return { capability: "bibleReading" };
+    case "congregation-study":
+      return { capability: "congregationStudy", needsHelper: true };
+    case "public-talk":
+      return { capability: "publicTalk" };
+    case "watchtower-study":
+      return { capability: "watchtowerStudy", needsHelper: true };
+    case "watchtower-song":
+    case "closing-song":
+      return { capability: "prayer" };
+    default:
+      return {};
+  }
 }
 
 export function addMinutes(time: string, minutes: number): string {

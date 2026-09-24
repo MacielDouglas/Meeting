@@ -27,17 +27,17 @@ import {
   WorkbookImportModal,
   WorkbookSection,
 } from "@/features/meeting-content/presentation/WorkbookSection";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 
 const LANGUAGES: { value: ContentLanguage; label: string }[] = [
@@ -127,6 +127,9 @@ function ImportModal({
       role="dialog"
       aria-modal="true"
       aria-label="Revisar el contenido del .jwpub"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-stretch justify-center bg-black/60 p-0 sm:items-center sm:p-4"
     >
       <div className="flex max-h-full w-full max-w-lg flex-col gap-3 overflow-hidden rounded-none bg-background p-4 sm:rounded-2xl">
@@ -491,21 +494,21 @@ function EntryModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
             {singular} {item.number}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
+          </DialogTitle>
+          <DialogDescription>
             {item.language === "es" ? "Español" : item.language === "pt" ? "Portugués" : "Inglés"}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
         {editing ? (
           <EditRow item={item} onCancel={onCancelEdit} onSave={onSaveEdit} />
         ) : confirmingDelete ? (
@@ -516,7 +519,7 @@ function EntryModal({
         ) : (
           <p className="text-base">{item.theme}</p>
         )}
-        <AlertDialogFooter className="flex-col sm:flex-row">
+        <DialogFooter className="flex-col sm:flex-row">
           {canManage && !editing && !confirmingDelete && (
             <>
               <Button variant="outline" onClick={onStartEdit}>
@@ -544,11 +547,11 @@ function EntryModal({
               {es.volver}
             </Button>
           ) : (
-            !editing && <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
+            !editing && <DialogClose>{es.cancel}</DialogClose>
           )}
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

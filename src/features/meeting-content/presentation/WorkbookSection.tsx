@@ -13,17 +13,17 @@ import type {
   WorkbookContentPart,
   WorkbookContentWeek,
 } from "@/features/meeting-content/infrastructure/workbook-parser";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 
 const SECTION_LABELS: Record<string, string> = {
@@ -127,19 +127,19 @@ export function WorkbookImportModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
             {inspected.symbol} · {inspected.name}
-          </AlertDialogTitle>
-          <AlertDialogDescription>{weeks.length} semanas</AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogTitle>
+          <DialogDescription>{weeks.length} semanas</DialogDescription>
+        </DialogHeader>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
             Este contenido ({inspected.symbol}, {weeks.length} semanas) {es.yaExisteSubstituir}.{" "}
@@ -161,33 +161,31 @@ export function WorkbookImportModal({
           </ul>
         )}
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
-        <AlertDialogFooter className="flex-col sm:flex-row">
+        <DialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
           </Button>
-          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          <DialogClose>{es.cancel}</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
 function WeekDetailModal({ week, onClose }: { week: WorkbookContentWeek; onClose: () => void }) {
   const meeting = week.meeting ?? ({} as WorkbookContentMeeting);
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{week.week}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {meeting.BibleReading ?? "Sin lectura semanal"}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{week.week}</DialogTitle>
+          <DialogDescription>{meeting.BibleReading ?? "Sin lectura semanal"}</DialogDescription>
+        </DialogHeader>
         <div className="flex flex-col gap-3">
           <div className="rounded-lg bg-secondary px-3 py-2 text-sm">
             <p className="text-xs font-medium text-muted-foreground">{es.canticos}</p>
@@ -215,11 +213,11 @@ function WeekDetailModal({ week, onClose }: { week: WorkbookContentWeek; onClose
             </div>
           )}
         </div>
-        <AlertDialogFooter>
-          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        <DialogFooter>
+          <DialogClose>{es.cancel}</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -288,23 +286,23 @@ export function WorkbookSection({
         <WeekDetailModal week={selectedWeek.week} onClose={() => setSelectedWeek(null)} />
       )}
       {deleteTarget && (
-        <AlertDialog
+        <Dialog
           open
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
                 {es.eliminar} la edición {deleteTarget.symbol}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
+              </DialogTitle>
+              <DialogDescription>
                 ¿Eliminar {deleteTarget.symbol} ({deleteTarget.name})? Las semanas y las partes se
                 eliminarán también. Esta acción no se puede deshacer.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-col sm:flex-row">
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row">
               <Button
                 className="border-transparent bg-danger text-danger-ink"
                 onClick={() => {
@@ -315,10 +313,10 @@ export function WorkbookSection({
               >
                 {es.confirmarExclusion}
               </Button>
-              <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              <DialogClose>{es.cancel}</DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

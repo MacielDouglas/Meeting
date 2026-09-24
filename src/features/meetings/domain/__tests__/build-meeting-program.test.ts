@@ -4,6 +4,7 @@ import {
   buildMidweekParts,
   buildWeekendParts,
   classifyMinistryPart,
+  classifySavedPart,
   extractSongNumber,
   parseDurationMinutes,
 } from "@/features/meetings/domain/build-meeting-program";
@@ -108,6 +109,10 @@ describe("build-meeting-program", () => {
       capability: "ministryElder",
       needsHelper: false,
     });
+    expect(classifyMinistryPart({ title: "Análisis con el auditorio" })).toEqual({
+      capability: "ministryElder",
+      needsHelper: false,
+    });
     expect(
       classifyMinistryPart({
         title: "Explique sus creencias",
@@ -121,6 +126,25 @@ describe("build-meeting-program", () => {
       capability: "ministrySpeech",
       needsHelper: false,
     });
+  });
+
+  it("recupera capability de parte salva sem apostila", () => {
+    expect(classifySavedPart("ministry-2", "Análisis con el auditorio", "", "midweek")).toEqual({
+      capability: "ministryElder",
+      needsHelper: false,
+    });
+    expect(classifySavedPart("closing-song", "Canción 123 y oración", "", "midweek")).toEqual({
+      capability: "prayer",
+    });
+    expect(classifySavedPart("president", "Presidente", "", "weekend")).toEqual({
+      capability: "weekendPresident",
+      needsHelper: false,
+    });
+    expect(classifySavedPart("congregation-study", "Estudio", "", "midweek")).toEqual({
+      capability: "congregationStudy",
+      needsHelper: true,
+    });
+    expect(classifySavedPart("middle-song", "Canción", "", "midweek")).toEqual({});
   });
 
   it("monta fim de semana 9:00 -> 10:45", () => {

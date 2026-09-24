@@ -9,13 +9,13 @@ import {
   type PersonCleaningHistory,
 } from "@/features/cleaning/application/cleaning-program-queries";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { CleaningHistoryBadge } from "./CleaningHistoryBadge";
 
@@ -137,16 +137,16 @@ export function PersonSelectModal({
   const dayUsedSet = useMemo(() => new Set(dayUsedPersonIds), [dayUsedPersonIds]);
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[85dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Designar para {sectorName}</AlertDialogTitle>
-        </AlertDialogHeader>
+      <DialogContent className="max-h-[85dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Designar para {sectorName}</DialogTitle>
+        </DialogHeader>
 
         {currentPersonId && (
           <p className="text-sm text-muted-foreground">
@@ -251,10 +251,10 @@ export function PersonSelectModal({
           </button>
         )}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={saving}>{es.cancel}</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        <DialogFooter>
+          <DialogClose disabled={saving}>{es.cancel}</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

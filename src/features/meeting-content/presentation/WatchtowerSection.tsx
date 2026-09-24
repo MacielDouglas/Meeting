@@ -13,17 +13,17 @@ import type {
   WatchtowerArticleItem,
   WatchtowerIssueItem,
 } from "@/features/meeting-content/application/watchtower-queries";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 
 function SongLine({
@@ -81,21 +81,21 @@ export function WatchtowerImportModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
             {inspected.symbol} · {inspected.name}
-          </AlertDialogTitle>
-          <AlertDialogDescription>
+          </DialogTitle>
+          <DialogDescription>
             {inspected.articles?.length ?? 0} artículos de estudio
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
         {inspected.hadExisting ? (
           <p className="rounded-xl bg-warning-soft px-3 py-2 text-sm text-warning">
             Este contenido ({inspected.symbol}, {inspected.articles?.length ?? 0} artículos){" "}
@@ -115,14 +115,14 @@ export function WatchtowerImportModal({
           </ul>
         )}
         {saveError && <p className="text-sm text-danger">{saveError}</p>}
-        <AlertDialogFooter className="flex-col sm:flex-row">
+        <DialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
             {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
           </Button>
-          <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          <DialogClose>{es.cancel}</DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -210,23 +210,23 @@ export function WatchtowerSection({
         />
       )}
       {deleteTarget && (
-        <AlertDialog
+        <Dialog
           open
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
                 {es.eliminar} la edición {deleteTarget.symbol}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
+              </DialogTitle>
+              <DialogDescription>
                 ¿Eliminar {deleteTarget.symbol} ({deleteTarget.name})? Los artículos se eliminarán
                 también. Esta acción no se puede deshacer.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex-col sm:flex-row">
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row">
               <Button
                 className="border-transparent bg-danger text-danger-ink"
                 onClick={() => {
@@ -237,10 +237,10 @@ export function WatchtowerSection({
               >
                 {es.confirmarExclusion}
               </Button>
-              <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              <DialogClose>{es.cancel}</DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
@@ -300,17 +300,17 @@ function ArticleModal({
   }
 
   return (
-    <AlertDialog
+    <Dialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto">
-        <AlertDialogHeader>
-          <AlertDialogTitle>{article.title}</AlertDialogTitle>
-          <AlertDialogDescription>{article.weekLabel}</AlertDialogDescription>
-        </AlertDialogHeader>
+      <DialogContent className="max-h-[90dvh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{article.title}</DialogTitle>
+          <DialogDescription>{article.weekLabel}</DialogDescription>
+        </DialogHeader>
         {editing ? (
           <form onSubmit={(event) => void handleSave(event)} className="flex flex-col gap-2">
             {formError && <p className="text-sm text-danger">{formError}</p>}
@@ -387,7 +387,7 @@ function ArticleModal({
             />
           </div>
         )}
-        <AlertDialogFooter className="flex-col sm:flex-row">
+        <DialogFooter className="flex-col sm:flex-row">
           {canManage && !editing && !confirmingDelete && (
             <>
               <Button variant="outline" onClick={() => setEditing(true)}>
@@ -414,10 +414,10 @@ function ArticleModal({
               {es.volver}
             </Button>
           ) : (
-            !editing && <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
+            !editing && <DialogClose>{es.cancel}</DialogClose>
           )}
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
