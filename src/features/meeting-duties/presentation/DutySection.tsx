@@ -63,7 +63,11 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
     assignments: DutyAssignmentItem[];
   } | null>(null);
 
-  const { data: programs = [], refetch: refetchPrograms } = useQuery({
+  const {
+    data: programs = [],
+    refetch: refetchPrograms,
+    isError: programsError,
+  } = useQuery({
     queryKey: ["duty-programs"],
     queryFn: () => listDutyPrograms(),
     staleTime: 0,
@@ -248,7 +252,11 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
               {errorMsg}
             </p>
           )}
-          {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
+          {statusMsg && (
+            <p role="status" className="text-sm text-success">
+              {statusMsg}
+            </p>
+          )}
           {missingDates.length > 0 && (
             <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
               <p className="mb-1 text-xs font-semibold text-warning-on-soft">
@@ -300,11 +308,11 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
                             </span>
                             <span className="block text-xs text-muted-foreground">
                               {slot.dutyName}
-                              {editedSlots.has(key) ? " · manual" : ""}
+                              {editedSlots.has(key) ? ` · ${es.manual}` : ""}
                             </span>
                           </span>
                           <select
-                            aria-label={`${slot.postLabel}`}
+                            aria-label={`${day.date} · ${slot.postLabel}`}
                             value={slot.personId ?? ""}
                             onChange={(e) =>
                               handleSlotChange(
@@ -320,7 +328,9 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
                             {slot.candidates.map((c) => (
                               <option key={c.id} value={c.id}>
                                 {c.name}
-                                {slot.conflictIds.includes(c.id) ? " · en el programa" : ""}
+                                {slot.conflictIds.includes(c.id)
+                                  ? ` · ${es.enElProgramaMinuscula}`
+                                  : ""}
                               </option>
                             ))}
                           </select>
@@ -360,6 +370,18 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
             </div>
           )}
 
+          {programsError && programs.length === 0 && (
+            <Card className="flex flex-col gap-3">
+              <p role="alert" className="text-sm text-danger">
+                {es.errorCargarLista}
+              </p>
+              <div>
+                <Button size="sm" variant="outline" onClick={() => void refetchPrograms()}>
+                  {es.reintentar}
+                </Button>
+              </div>
+            </Card>
+          )}
           {programs.length > 0 && (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold">{es.escalasExistentes}</p>

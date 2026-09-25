@@ -101,6 +101,7 @@ export function PersonForm({
         setPending(false);
       }
     } catch {
+      setError(es.errorGuardar);
       setPending(false);
     }
   }
@@ -400,7 +401,7 @@ export function PersonForm({
       </Section>
 
       <Button type="submit" size="lg" disabled={pending}>
-        {pending ? "…" : es.save}
+        {pending ? es.guardando : es.save}
       </Button>
     </form>
   );

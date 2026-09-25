@@ -63,7 +63,7 @@ export default async function ConfiguracionPage({
         <TabNav
           param="tab"
           defaultValue="reunioes"
-          ariaLabel="Secciones de configuración"
+          ariaLabel={es.seccionesConfiguracion}
           items={TABS.map((item) => ({
             value: item.value,
             label: item.label,

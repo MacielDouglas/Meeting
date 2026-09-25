@@ -31,9 +31,9 @@ interface CleaningDesignationSectionProps {
 }
 
 const CLEANING_TYPE_LABELS: Record<string, string> = {
-  per_meeting: "Limpieza en cada reunión",
-  weekly: "Limpieza semanal",
-  general: "Limpieza general",
+  per_meeting: es.limpiezaCadaReunion,
+  weekly: es.limpiezaSemanal,
+  general: es.limpiezaGeneral,
 };
 
 function toISODateInput(d: Date): string {
@@ -122,7 +122,11 @@ export function CleaningDesignationSection({
   // Programas via TanStack Query (sem fetch em useEffect): busca fresca a cada
   // montagem/troca de tipo (`staleTime: 0`) e mantém a lista anterior durante
   // refetch, como antes.
-  const { data: programs = [], refetch: refetchPrograms } = useQuery({
+  const {
+    data: programs = [],
+    refetch: refetchPrograms,
+    isError: programsError,
+  } = useQuery({
     queryKey: ["cleaning-programs", selectedType],
     queryFn: () => listCleaningPrograms(selectedType),
     staleTime: 0,
@@ -417,7 +421,11 @@ export function CleaningDesignationSection({
               {errorMsg}
             </p>
           )}
-          {statusMsg && <p className="text-sm text-success">{statusMsg}</p>}
+          {statusMsg && (
+            <p role="status" className="text-sm text-success">
+              {statusMsg}
+            </p>
+          )}
           {resultMessages.length > 0 && (
             <div className="rounded-lg border border-warning/30 bg-warning-soft p-3">
               <p className="mb-1 text-xs font-semibold text-warning-on-soft">{es.avisosSorteo}</p>
@@ -483,6 +491,18 @@ export function CleaningDesignationSection({
         </div>
       )}
 
+      {!viewingProgram && programsError && programs.length === 0 && (
+        <Card className="flex flex-col gap-3">
+          <p role="alert" className="text-sm text-danger">
+            {es.errorCargarLista}
+          </p>
+          <div>
+            <Button size="sm" variant="outline" onClick={() => void loadPrograms()}>
+              {es.reintentar}
+            </Button>
+          </div>
+        </Card>
+      )}
       {!viewingProgram && programs.length > 0 && (
         <div className="flex flex-col gap-2">
           <p className="text-sm font-semibold">{es.programasExistentes}</p>

@@ -128,7 +128,8 @@ describe("MyEntryCode", () => {
     render(
       <MyEntryCode initial={{ code: "ABC-DEF-GHJ", expiresAt: "2026-10-02T00:00:00.000Z" }} />,
     );
-    expect(screen.getByLabelText(es.codigoEntrada)).toHaveTextContent("ABC-DEF-GHJ");
+    const status = screen.getByRole("status", { name: `Código de entrada: ABC-DEF-GHJ` });
+    expect(status).toHaveTextContent("ABC-DEF-GHJ");
     expect(screen.getByRole("button", { name: es.generarNuevoCodigo })).toBeInTheDocument();
   });
 
@@ -142,6 +143,8 @@ describe("MyEntryCode", () => {
     render(<MyEntryCode initial={null} />);
     await user.click(screen.getByRole("button", { name: es.generarCodigo }));
     expect(createJoinTokenMock).toHaveBeenCalledTimes(1);
-    expect(await screen.findByLabelText(es.codigoEntrada)).toHaveTextContent("XYZ-ABC-DEF");
+    expect(
+      await screen.findByRole("status", { name: `Código de entrada: XYZ-ABC-DEF` }),
+    ).toHaveTextContent("XYZ-ABC-DEF");
   });
 });

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LeaveOrganizationSection } from "@/features/organization/presentation/LeaveOrganizationSection-client";
@@ -44,30 +44,34 @@ describe("MyPersonNameForm", () => {
 });
 
 describe("LeaveOrganizationSection", () => {
-  it("pede confirmação e sai", async () => {
+  async function confirmLeave() {
     const user = userEvent.setup();
-    window.confirm = vi.fn(() => true);
+    await user.click(screen.getByRole("button", { name: es.salirOrganizacion }));
+    const dialog = await screen.findByRole("alertdialog");
+    // O confirmar vive dentro do diálogo (o botão do cartão fica atrás).
+    await user.click(within(dialog).getByRole("button", { name: es.salirOrganizacion }));
+  }
+
+  it("pede confirmação e sai", async () => {
     leaveOrganizationMock.mockResolvedValue({ ok: true });
     render(<LeaveOrganizationSection />);
-    await user.click(screen.getByRole("button", { name: es.salirOrganizacion }));
-    expect(window.confirm).toHaveBeenCalledWith(es.confirmSalirOrganizacion);
+    await confirmLeave();
     expect(leaveOrganizationMock).toHaveBeenCalledTimes(1);
   });
 
   it("cancela sem confirmar", async () => {
     const user = userEvent.setup();
-    window.confirm = vi.fn(() => false);
     render(<LeaveOrganizationSection />);
     await user.click(screen.getByRole("button", { name: es.salirOrganizacion }));
+    await screen.findByRole("alertdialog");
+    await user.click(screen.getByRole("button", { name: es.cancel }));
     expect(leaveOrganizationMock).not.toHaveBeenCalled();
   });
 
   it("mostra alerta quando a action falha", async () => {
-    const user = userEvent.setup();
-    window.confirm = vi.fn(() => true);
     leaveOrganizationMock.mockResolvedValue({ ok: false, error: "El owner no puede salir" });
     render(<LeaveOrganizationSection />);
-    await user.click(screen.getByRole("button", { name: es.salirOrganizacion }));
+    await confirmLeave();
     expect(await screen.findByRole("alert")).toHaveTextContent("El owner no puede salir");
   });
 });

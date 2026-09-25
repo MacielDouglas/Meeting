@@ -8,6 +8,7 @@ import { PageHeader } from "@/shared/components/PageHeader";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { roleLabel } from "@/shared/lib/role-label";
 
 export const metadata: Metadata = { title: es.perfil };
 
@@ -20,14 +21,18 @@ export default async function PerfilPage() {
     <main className="page-stack">
       <PageHeader title={es.perfil} />
 
-      <Card className="flex flex-col gap-2 p-5">
+      <Card className="flex flex-col gap-2">
         <CardTitle>{es.misDatos}</CardTitle>
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user.name}</p>
-            <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+            <p title={user.name} className="truncate text-sm font-medium">
+              {user.name}
+            </p>
+            <p title={user.email} className="truncate text-xs text-muted-foreground">
+              {user.email}
+            </p>
           </div>
-          <Badge variant="secondary">{user.role}</Badge>
+          <Badge variant="secondary">{roleLabel(user.role)}</Badge>
         </div>
       </Card>
 

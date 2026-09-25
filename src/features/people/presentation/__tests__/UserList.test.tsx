@@ -47,8 +47,8 @@ describe("UserList", () => {
     expect(screen.getByText("Ana")).toBeInTheDocument();
     expect(screen.getByText("ana@example.com")).toBeInTheDocument();
     expect(screen.getByText(`${es.linkedPerson}: Ana Paz`)).toBeInTheDocument();
-    expect(screen.getByText("owner")).toBeInTheDocument();
-    expect(screen.getByText("member")).toBeInTheDocument();
+    expect(screen.getByText(es.roleOwner)).toBeInTheDocument();
+    expect(screen.getByText(es.roleMember)).toBeInTheDocument();
   });
 
   it("owner vê seletor só para os outros usuários", () => {
@@ -74,7 +74,7 @@ describe("UserList", () => {
       />,
     );
     expect(screen.getAllByRole("combobox")).toHaveLength(1);
-    expect(screen.getAllByText("owner")).toHaveLength(2);
+    expect(screen.getAllByText(es.roleOwner)).toHaveLength(2);
   });
 
   it("não-owner não vê seletor de papel", () => {
@@ -110,8 +110,11 @@ describe("UserList", () => {
         joinTokenByUserId={{ u2: { code: "ABC-DEF-GHJ", expiresAt: "2026-10-02T00:00:00.000Z" } }}
       />,
     );
-    expect(screen.getByText(/ABC-DEF-GHJ/)).toBeInTheDocument();
-    expect(screen.getByText(/2026-10-02/)).toBeInTheDocument();
+    const codeLine = screen.getByText(/ABC-DEF-GHJ/);
+    expect(codeLine).toBeInTheDocument();
+    expect(codeLine.textContent).toContain(
+      new Date("2026-10-02T00:00:00.000Z").toLocaleDateString("es-ES"),
+    );
   });
 
   it("não-owner não vê códigos mesmo quando existem", () => {

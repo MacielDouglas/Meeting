@@ -38,20 +38,20 @@ describe("PersonList", () => {
     expect(screen.getByText("María López")).toBeInTheDocument();
   });
 
-  it("mostra es.noPeople quando a busca não encontra ninguém", async () => {
+  it("mostra es.ningunaPersona quando a busca não encontra ninguém", async () => {
     const user = userEvent.setup();
     render(<PersonList persons={persons} canCreate={false} />);
     await user.type(screen.getByRole("searchbox", { name: es.searchPeople }), "zzz");
-    expect(screen.getByText(es.noPeople)).toBeInTheDocument();
+    expect(screen.getByText(es.ningunaPersona)).toBeInTheDocument();
     expect(screen.queryByText("Juan Pérez")).not.toBeInTheDocument();
   });
 
-  it("expõe Hombre/Mujer só para leitor de tela", () => {
+  it("expõe Hermano/Hermana só para leitor de tela", () => {
     const { container } = render(<PersonList persons={persons} canCreate={false} />);
     const hidden = Array.from(container.querySelectorAll("span.sr-only")).map(
       (el) => el.textContent,
     );
-    expect(hidden).toEqual(["Hombre", "Mujer"]);
+    expect(hidden).toEqual([es.brother, es.sister]);
   });
 
   it("mostra estado vazio com es.noPeople", () => {

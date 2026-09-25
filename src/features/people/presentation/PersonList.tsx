@@ -46,7 +46,9 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{es.noPeople}</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          {normalized.length > 0 ? es.ningunaPersona : es.noPeople}
+        </p>
       ) : (
         <ul className="flex flex-col">
           {filtered.map((person) => (
@@ -60,7 +62,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
                   size={28}
                   className={cn(person.sex === "female" ? "text-rose-500" : "text-sky-500")}
                 />
-                <span className="sr-only">{person.sex === "female" ? "Mujer" : "Hombre"}</span>
+                <span className="sr-only">{person.sex === "female" ? es.sister : es.brother}</span>
                 <span className="text-base">{getFullName(person)}</span>
               </Link>
             </li>

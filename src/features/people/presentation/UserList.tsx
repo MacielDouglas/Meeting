@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { roleLabel } from "@/shared/lib/role-label";
 
 interface UserListProps {
   users: UserWithRole[];
@@ -29,8 +30,8 @@ interface UserListProps {
 }
 
 const ROLE_OPTIONS = [
-  { value: "admin", label: "Admin" },
-  { value: "member", label: "Member" },
+  { value: "admin", label: es.roleAdmin },
+  { value: "member", label: es.roleMember },
 ] as const;
 
 function LinkPersonForm({
@@ -168,21 +169,25 @@ export function UserList({
               <Card className="flex flex-col gap-2 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{user.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{user.email}</p>
+                    <p title={user.name} className="truncate text-sm font-medium">
+                      {user.name}
+                    </p>
+                    <p title={user.email} className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                     {user.linkedPersonName && (
                       <p className="truncate text-xs text-muted-foreground">
                         {es.linkedPerson}: {user.linkedPersonName}
                       </p>
                     )}
                     {isOwner && joinToken && (
-                      <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
+                      <p className="font-mono text-xs break-all tabular-nums text-muted-foreground">
                         {es.codigoEntrada}: {joinToken.code} · {es.codigoExpira}:{" "}
-                        {joinToken.expiresAt.slice(0, 10)}
+                        {new Date(joinToken.expiresAt).toLocaleDateString("es-ES")}
                       </p>
                     )}
                   </div>
-                  <Badge variant="secondary">{user.role}</Badge>
+                  <Badge variant="secondary">{roleLabel(user.role)}</Badge>
                 </div>
                 {isOwner && user.id !== currentUserId && user.role !== "owner" && (
                   <label className="flex items-center justify-between gap-2 text-sm">

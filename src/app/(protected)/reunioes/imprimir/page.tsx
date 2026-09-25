@@ -71,13 +71,13 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
 
   if (params.view === "slips") {
     if (user.role !== "owner" && user.role !== "admin") redirect("/reunioes");
-    const speakers = await listOutsideSpeakers();
+    const speakers = await listOutsideSpeakers().catch(() => []);
     return (
       <main className="page-stack">
         <div className="print:hidden">
           <PageHeader
-            title="Fichas de oradores"
-            meta={`${speakers.length} orador(es)`}
+            title={es.fichasOradores}
+            meta={speakers.length === 1 ? "1 orador" : `${speakers.length} oradores`}
             actions={
               <Suspense fallback={null}>
                 <PrintButton />
@@ -88,9 +88,9 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
         <Suspense fallback={<PrintFallback />}>
           {speakers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Ningún orador registrado.{" "}
+              {es.ningunOrador}{" "}
               <Link href="/reunioes?tab=oradores" className="text-accent underline">
-                Registrar oradores
+                {es.registrarOradores}
               </Link>
             </p>
           ) : (
@@ -156,13 +156,13 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
     <main className="page-stack">
       <div className="print:hidden">
         <PageHeader
-          title="Impresión del programa"
+          title={es.impresionTitle}
           meta={`${kind === "midweek" ? "Reunión entre semana" : "Reunión de fin de semana"} · semana del ${formatDateBR(weekStart)}`}
           actions={
             <>
               <Link
                 href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
-                className="flex h-11 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground"
+                className="flex h-11 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 Descargar iCal
               </Link>

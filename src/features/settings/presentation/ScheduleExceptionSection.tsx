@@ -10,6 +10,16 @@ import {
 import type { ScheduleExceptionItem } from "@/features/settings/application/queries";
 import { SCHEDULE_EXCEPTION_TYPES } from "@/features/settings/domain/settings";
 import { ChipSelect } from "@/features/settings/presentation/ChipSelect";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
@@ -30,6 +40,7 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [deleting, setDeleting] = useState<ScheduleExceptionItem | null>(null);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -54,9 +65,9 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm(es.confirmDelete)) return;
     const result = await deleteScheduleException({ id });
     if (result.ok) {
+      setDeleting(null);
       router.refresh();
     } else {
       setError(result.error ?? null);
@@ -85,8 +96,8 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
               </div>
               <button
                 type="button"
-                aria-label={es.delete}
-                onClick={() => void handleDelete(item.id)}
+                aria-label={`${es.delete}: ${typeLabel(item.type)} ${item.date}`}
+                onClick={() => setDeleting(item)}
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 <FaTrash aria-hidden />
@@ -134,6 +145,35 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
           {es.createException}
         </Button>
       </form>
+      <AlertDialog
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{es.delete}</AlertDialogTitle>
+            <AlertDialogDescription>{es.confirmDelete}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleting && (
+            <p className="truncate text-sm font-medium">
+              {typeLabel(deleting.type)} · {deleting.date}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                if (deleting) void handleDelete(deleting.id);
+              }}
+            >
+              {es.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

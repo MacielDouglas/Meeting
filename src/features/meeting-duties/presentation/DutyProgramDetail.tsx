@@ -32,9 +32,11 @@ function kindLabel(kind: string): string {
 
 function AssignmentRow({
   assignment,
+  date,
   onChanged,
 }: {
   assignment: DutyAssignmentItem;
+  date: string;
   onChanged: () => void;
 }) {
   const [candidates, setCandidates] = useState<{ id: string; name: string }[] | null>(null);
@@ -67,11 +69,11 @@ function AssignmentRow({
         </span>
         <span className="block truncate text-xs text-muted-foreground">
           {assignment.personName || es.sinAsignar}
-          {assignment.isManual ? " · manual" : ""}
+          {assignment.isManual ? ` · ${es.manual}` : ""}
         </span>
       </span>
       <select
-        aria-label={`${assignment.postLabel || assignment.dutyKey}`}
+        aria-label={`${date} · ${assignment.postLabel || assignment.dutyKey}`}
         disabled={saving}
         value={assignment.personId ?? ""}
         onFocus={() => void ensureCandidates()}
@@ -211,7 +213,12 @@ export function DutyProgramDetail({
             </p>
             <div className="flex flex-col gap-1">
               {dayAssignments.map((assignment) => (
-                <AssignmentRow key={assignment.id} assignment={assignment} onChanged={onRefresh} />
+                <AssignmentRow
+                  key={assignment.id}
+                  assignment={assignment}
+                  date={date}
+                  onChanged={onRefresh}
+                />
               ))}
             </div>
           </div>

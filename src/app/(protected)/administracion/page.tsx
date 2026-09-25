@@ -41,7 +41,7 @@ async function AdminOverview() {
 
   return (
     <div className="section-stack">
-      <Card className="p-5">
+      <Card className="p-4">
         <CardTitle>{es.administracionOrganizacion}</CardTitle>
         <CardDescription>
           {congregationName === "" ? es.sinCongregacion : congregationName}

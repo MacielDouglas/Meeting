@@ -1,6 +1,7 @@
 "use client";
 
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { es } from "@/shared/i18n/es";
 
 const MONTH_NAMES = [
   "Enero",
@@ -75,7 +76,7 @@ export function MonthlyCalendar({
   monthNames = MONTH_NAMES,
   weekdayHeaders = WEEKDAY_HEADERS,
   disableProgramDates = true,
-  programDateHint = "Ya fue creada tabla para aquella semana — edita la tabla existente",
+  programDateHint = es.tablaCreadaHint,
 }: MonthlyCalendarProps) {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfWeek(year, month);
@@ -93,7 +94,7 @@ export function MonthlyCalendar({
           type="button"
           onClick={onPrevMonth}
           className="grid h-11 w-11 place-items-center rounded-xl hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
-          aria-label="Mes anterior"
+          aria-label={es.mesAnterior}
         >
           <FaChevronLeft size={14} />
         </button>
@@ -104,7 +105,7 @@ export function MonthlyCalendar({
           type="button"
           onClick={onNextMonth}
           className="grid h-11 w-11 place-items-center rounded-xl hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
-          aria-label="Próximo mes"
+          aria-label={es.mesSiguiente}
         >
           <FaChevronRight size={14} />
         </button>
@@ -165,7 +166,7 @@ export function MonthlyCalendar({
               aria-label={`${day} de ${monthNames[month].toLowerCase()}${
                 stateLabel ? `, ${stateLabel}` : ""
               }`}
-              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass} ${ringClass}`}
+              className={`relative flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${isBlocked ? "cursor-not-allowed opacity-70" : "hover:opacity-80"} ${bgClass} ${ringClass}`}
               title={isAssembly ? (info?.assemblyType ?? "") : hasProgram ? programDateHint : ""}
             >
               <span className={numberClass}>{day}</span>

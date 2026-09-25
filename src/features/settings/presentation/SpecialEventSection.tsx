@@ -7,6 +7,16 @@ import { createSpecialEvent, deleteSpecialEvent } from "@/features/settings/appl
 import type { SpecialEventItem } from "@/features/settings/application/queries";
 import { SPECIAL_EVENT_TYPES } from "@/features/settings/domain/settings";
 import { ChipSelect } from "@/features/settings/presentation/ChipSelect";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
@@ -31,6 +41,7 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
   const [finalTalkTheme, setFinalTalkTheme] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [deleting, setDeleting] = useState<SpecialEventItem | null>(null);
 
   const isVisit = type === "circuit_visit";
 
@@ -70,9 +81,9 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm(es.confirmDelete)) return;
     const result = await deleteSpecialEvent({ id });
     if (result.ok) {
+      setDeleting(null);
       router.refresh();
     } else {
       setError(result.error ?? null);
@@ -100,8 +111,8 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
               </div>
               <button
                 type="button"
-                aria-label={es.delete}
-                onClick={() => void handleDelete(item.id)}
+                aria-label={`${es.delete}: ${item.title}`}
+                onClick={() => setDeleting(item)}
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 <FaTrash aria-hidden />
@@ -229,6 +240,31 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
           {es.createEvent}
         </Button>
       </form>
+      <AlertDialog
+        open={deleting !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleting(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{es.delete}</AlertDialogTitle>
+            <AlertDialogDescription>{es.confirmDelete}</AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleting && <p className="truncate text-sm font-medium">{deleting.title}</p>}
+          <AlertDialogFooter>
+            <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                if (deleting) void handleDelete(deleting.id);
+              }}
+            >
+              {es.delete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

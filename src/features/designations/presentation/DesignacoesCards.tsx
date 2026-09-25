@@ -49,7 +49,9 @@ function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
               className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
             >
               <Icon aria-hidden size={18} className="shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate font-medium">{item.sectorName}</span>
+              <span title={item.sectorName} className="min-w-0 flex-1 truncate font-medium">
+                {item.sectorName}
+              </span>
               <span
                 title={`${item.personNames.join(" · ")}${item.isFamily ? ` · ${es.familiaMinuscula}` : ""}`}
                 className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
@@ -77,7 +79,10 @@ function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
             className="flex items-center gap-2 border-b border-border py-2 text-sm last:border-b-0"
           >
             <DutyKeyIcon dutyKey={item.dutyKey} />
-            <span className="min-w-0 flex-1 truncate font-medium">
+            <span
+              title={dutyLabel(item.dutyKey, item.dutyName)}
+              className="min-w-0 flex-1 truncate font-medium"
+            >
               {dutyLabel(item.dutyKey, item.dutyName)}
               {item.side ? (
                 <span className="font-normal text-muted-foreground"> · {item.side}</span>

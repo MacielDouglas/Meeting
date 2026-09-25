@@ -19,6 +19,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { SelectField } from "@/shared/components/ui/input";
 import { es } from "@/shared/i18n/es";
+import { roleLabel } from "@/shared/lib/role-label";
 
 export interface InvitationRow extends InvitationItem {
   hasAccount: boolean;
@@ -81,8 +82,7 @@ export function InvitationSection({ initial, persons, userIdByEmail }: Invitatio
   }
 
   function handleAdmitted(row: InvitationRow, userName: string | undefined) {
-    const roleLabel = row.role === "admin" ? es.roleAdmin : es.roleMember;
-    setNotice(`${userName ?? row.email} ${es.admitidoComo} ${roleLabel}.`);
+    setNotice(`${userName ?? row.email} ${es.admitidoComo} ${roleLabel(row.role)}.`);
     setExpandedId(null);
     router.refresh();
   }
@@ -159,14 +159,16 @@ export function InvitationSection({ initial, persons, userIdByEmail }: Invitatio
               <li key={row.id} className="flex flex-col gap-2 rounded-xl bg-secondary px-3 py-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{row.email}</p>
+                    <p className="truncate text-sm font-medium" title={row.email}>
+                      {row.email}
+                    </p>
                     <p className="text-xs tabular-nums text-muted-foreground">
                       {expired
                         ? es.invitacionVencida
-                        : `${es.codigoExpira}: ${row.expiresAt.slice(0, 10)}`}
+                        : `${es.codigoExpira}: ${new Date(row.expiresAt).toLocaleDateString("es-ES")}`}
                     </p>
                   </div>
-                  <Badge variant="secondary">{row.role}</Badge>
+                  <Badge variant="secondary">{roleLabel(row.role)}</Badge>
                 </div>
                 {!expired && (
                   <p className="text-xs text-muted-foreground">

@@ -359,6 +359,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                     type="button"
                     onClick={() => setSelected({ typeKey: cleaning.key, sector })}
                     className="min-h-11 min-w-0 flex-1 truncate py-1 text-left text-sm font-semibold"
+                    title={sector.name}
                   >
                     {sector.name}{" "}
                     {sector.isDefault && (

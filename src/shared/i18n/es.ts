@@ -98,15 +98,15 @@ export const es = {
   unavailableNotes: "Motivo de indisponibilidad",
   unavailableNotesPlaceholder: "Ej.: viaje, turno de trabajo…",
   role: "Rol",
-  roleOwner: "Owner",
-  roleAdmin: "Admin",
-  roleMember: "Member",
+  roleOwner: "Propietario",
+  roleAdmin: "Administrador",
+  roleMember: "Miembro",
   linkedPerson: "Persona vinculada",
   noUsers: "Aún no hay usuarios.",
   loginRequired: "Inicia sesión para ver esta página.",
   configuracion: "Configuración",
   administracion: "Administración",
-  admin: "ADMIN",
+  admin: "Admin",
   administracionDesc: "Gestiona tu organización: usuarios, personas y ajustes de la congregación.",
   administracionOrganizacion: "Organización",
   administracionUsuarios: "Usuarios",
@@ -336,6 +336,7 @@ export const es = {
   semanaSiguiente: "Semana siguiente",
   cargandoPrograma: "Cargando el programa de la semana…",
   errorCargarPrograma: "No se pudo cargar el programa.",
+  errorCargarLista: "No se pudo cargar la lista. Revisa tu conexión e inténtalo de nuevo.",
   cargandoPersonas: "Cargando personas…",
   importarGuiaHint: "Importa la Guía de esta semana para ver las partes aquí.",
   importarBosquejosHint: "Importa los bosquejos en la pestaña Contenido para elegir el tema aquí.",
@@ -381,6 +382,8 @@ export const es = {
   familiaMinuscula: "familia",
   diasSinPrograma: "Días sin programa guardado (conflictos no verificados):",
   enElPrograma: "En el programa",
+  enElProgramaMinuscula: "en el programa",
+  manual: "manual",
   volverLista: "Volver a la lista",
   eliminarEscala: "Eliminar escala",
   confirmarEscala: "Confirmar escala",
@@ -425,6 +428,11 @@ export const es = {
   bosquejoSingular: "Bosquejo",
   confirmarExclusion: "Confirmar eliminación",
   edicionGuardada: "edición guardada",
+  subirJwpubHint:
+    "Sube cualquier archivo .jwpub de tu dispositivo: cánticos, bosquejos o Atalaya. La app identifica el tipo y abre la revisión en la pestaña correcta.",
+  anadir: "Añadir",
+  confirmarBorradoContenido:
+    "¿Borrar todos los elementos ({lista})? Esta acción no se puede deshacer.",
   // Oradores
   cargandoOradores: "Cargando los oradores de fuera…",
   anadePrimerOrador: "Añade el primer orador con el formulario de arriba.",
@@ -435,6 +443,16 @@ export const es = {
   modoEdicion: "Modo edición",
   modoEdicionHint: "Activa para asignar partes y editar oradores",
   activaModoEdicion: "Activa el modo edición para hacer cambios.",
+  // Limpeza / calendário
+  mesAnterior: "Mes anterior",
+  mesSiguiente: "Próximo mes",
+  tablaCreadaHint: "Ya tiene tabla creada — edita la tabla existente",
+  // Configuración
+  seccionesConfiguracion: "Secciones de configuración",
+  // Impresión
+  fichasOradores: "Fichas de oradores",
+  registrarOradores: "Registrar oradores",
+  imprimir: "Imprimir",
 } as const;
 
 export type SpanishDictionary = typeof es;

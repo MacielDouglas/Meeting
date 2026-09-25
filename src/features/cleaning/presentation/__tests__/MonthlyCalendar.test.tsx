@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MonthlyCalendar } from "@/features/cleaning/presentation/MonthlyCalendar";
+import { es } from "@/shared/i18n/es";
 
 const days = [
   {
@@ -70,10 +71,7 @@ describe("MonthlyCalendar", () => {
     const programDay = screen.getByRole("button", { name: "14 de enero, con programa" });
     expect(programDay).toBeDisabled();
     expect(programDay).toHaveAttribute("aria-disabled", "true");
-    expect(programDay).toHaveAttribute(
-      "title",
-      "Ya fue creada tabla para aquella semana — edita la tabla existente",
-    );
+    expect(programDay).toHaveAttribute("title", es.tablaCreadaHint);
     await user.click(programDay);
     expect(props.onDateClick).not.toHaveBeenCalled();
   });

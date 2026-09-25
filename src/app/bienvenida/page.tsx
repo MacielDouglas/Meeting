@@ -23,9 +23,9 @@ async function EntryCodeLoader() {
 }
 
 const STEPS = [
-  { title: es.pasoCodigo, description: es.pasoCodigoDesc },
-  { title: es.pasoOwner, description: es.pasoOwnerDesc },
-  { title: es.pasoPrograma, description: es.pasoProgramaDesc },
+  { id: "codigo", title: es.pasoCodigo, description: es.pasoCodigoDesc },
+  { id: "owner", title: es.pasoOwner, description: es.pasoOwnerDesc },
+  { id: "programa", title: es.pasoPrograma, description: es.pasoProgramaDesc },
 ] as const;
 
 /** Conteúdo ilustrativo com dados fictícios para o visitante conhecer o app. */
@@ -36,7 +36,7 @@ function WelcomeShowcase() {
         <h2 className="font-display text-xl font-semibold tracking-tight">{es.vistaPrevia}</h2>
         <Badge variant="secondary">{es.ejemplo}</Badge>
       </div>
-      <Card className="flex flex-col gap-3 p-5">
+      <Card className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-lg bg-secondary px-2.5 py-1 font-display text-xs font-semibold">
             {es.entreSemana}
@@ -59,13 +59,13 @@ function WelcomeShowcase() {
         </p>
       </Card>
       <div className="tight-stack">
-        <div className="flex items-center gap-3 rounded-2xl bg-accent px-4 py-3 text-accent-ink">
-          <FaBookOpen aria-hidden size={18} className="shrink-0" />
-          <span className="font-display text-base font-semibold">{es.verProgramaCompleto}</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+          <FaBookOpen aria-hidden size={18} className="shrink-0 text-muted-foreground" />
+          <span className="font-display text-base font-medium">{es.verProgramaCompleto}</span>
         </div>
-        <div className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3 text-secondary-foreground">
-          <FaListOl aria-hidden size={18} className="shrink-0" />
-          <span className="font-display text-sm font-semibold">{es.verDiseniosLimpieza}</span>
+        <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3">
+          <FaListOl aria-hidden size={18} className="shrink-0 text-muted-foreground" />
+          <span className="font-display text-sm font-medium">{es.verDiseniosLimpieza}</span>
         </div>
       </div>
     </section>
@@ -89,7 +89,7 @@ export default async function BienvenidaPage() {
         <ol className="flex flex-col gap-2">
           {STEPS.map((step, index) => (
             <li
-              key={step.title}
+              key={step.id}
               className="flex gap-3 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm"
             >
               <span

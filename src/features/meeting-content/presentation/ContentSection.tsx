@@ -27,6 +27,16 @@ import {
   WorkbookImportModal,
   WorkbookSection,
 } from "@/features/meeting-content/presentation/WorkbookSection";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
 import {
@@ -235,21 +245,22 @@ function SmartImportCard({
   return (
     <Card className="flex flex-col gap-3">
       <CardTitle>{es.contenidoReuniones}</CardTitle>
-      <p className="text-sm text-muted-foreground">
-        Sube cualquier archivo .jwpub de tu dispositivo: cánticos, bosquejos o Atalaya. La app
-        identifica el tipo y abre la revisión en la pestaña correcta.
-      </p>
+      <p className="text-sm text-muted-foreground">{es.subirJwpubHint}</p>
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
-      {status && <p className="text-sm text-success">{status}</p>}
+      {status && (
+        <p role="status" className="text-sm text-success">
+          {status}
+        </p>
+      )}
       <input
         ref={fileRef}
         type="file"
         accept=".jwpub"
-        aria-label="Archivo .jwpub"
+        aria-label={es.archivoJwpub}
         className="hidden"
         onChange={(event) => void handleFileSelected(event.target.files?.[0])}
       />
@@ -278,6 +289,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [confirmingClear, setConfirmingClear] = useState(false);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -442,7 +454,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
               />
             </label>
             <div className="flex gap-2">
-              <Button type="submit">Añadir</Button>
+              <Button type="submit">{es.anadir}</Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                 {es.cancel}
               </Button>
@@ -454,23 +466,44 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
               + {es.anadirManual}
             </Button>
             {language !== "all" && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `¿Borrar todos los elementos (${title} · ${language.toUpperCase()})? Esta acción no se puede deshacer.`,
-                    )
-                  ) {
-                    void deleteAllByLanguage({ kind, language });
-                  }
-                }}
-              >
+              <Button variant="outline" onClick={() => setConfirmingClear(true)}>
                 {es.apagarTodos} ({language.toUpperCase()})
               </Button>
             )}
           </div>
         ))}
+      <AlertDialog
+        open={confirmingClear}
+        onOpenChange={(open) => {
+          if (!open) setConfirmingClear(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {es.apagarTodos} ({language.toUpperCase()})
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {es.confirmarBorradoContenido.replace(
+                "{lista}",
+                `${title} · ${language.toUpperCase()}`,
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{es.cancel}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                setConfirmingClear(false);
+                void deleteAllByLanguage({ kind, language });
+              }}
+            >
+              {es.apagarTodos}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

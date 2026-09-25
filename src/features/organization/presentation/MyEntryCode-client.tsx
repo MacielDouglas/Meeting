@@ -41,7 +41,7 @@ export function MyEntryCode({ initial }: { initial: MyJoinToken | null }) {
       {code && (
         <div
           role="status"
-          aria-label={es.codigoEntrada}
+          aria-label={`${es.codigoEntrada}: ${code}`}
           className="flex flex-col items-center gap-1 rounded-xl bg-secondary px-3 py-4"
         >
           <p
@@ -52,7 +52,7 @@ export function MyEntryCode({ initial }: { initial: MyJoinToken | null }) {
           </p>
           {expiresAt && (
             <p className="text-xs tabular-nums text-muted-foreground">
-              {es.codigoExpira}: {expiresAt.slice(0, 10)}
+              {es.codigoExpira}: {new Date(expiresAt).toLocaleDateString("es-ES")}
             </p>
           )}
         </div>

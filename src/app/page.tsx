@@ -24,9 +24,9 @@ async function MyWeekLoader({
 }
 
 const HIGHLIGHTS = [
-  { icon: FaBookOpen, label: es.homeFeatPrograma },
-  { icon: FaUserGroup, label: es.homeFeatDesignaciones },
-  { icon: FaWifi, label: es.homeFeatOffline },
+  { id: "programa", icon: FaBookOpen, label: es.homeFeatPrograma },
+  { id: "designaciones", icon: FaUserGroup, label: es.homeFeatDesignaciones },
+  { id: "offline", icon: FaWifi, label: es.homeFeatOffline },
 ] as const;
 
 /** Landing pública: sem chrome, sem programa — marca, explicação e login. */
@@ -50,7 +50,7 @@ function PublicLanding() {
       <ul className="flex w-full flex-col gap-2">
         {HIGHLIGHTS.map((item) => (
           <li
-            key={item.label}
+            key={item.id}
             className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-left text-sm font-medium text-card-foreground"
           >
             <item.icon aria-hidden size={18} className="shrink-0 text-muted-foreground" />
