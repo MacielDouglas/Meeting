@@ -171,8 +171,13 @@ export function PublicTalkPicker({
             <FaChevronLeft aria-hidden size={14} />
           </button>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{speaker.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
+            <p title={speaker.name} className="truncate text-sm font-semibold">
+              {speaker.name}
+            </p>
+            <p
+              title={`${speaker.congregation || es.sinCongregacion} · ${es.elegirDiscurso}`}
+              className="truncate text-xs text-muted-foreground"
+            >
               {speaker.congregation || es.sinCongregacion} · {es.elegirDiscurso}
             </p>
           </div>
@@ -186,7 +191,9 @@ export function PublicTalkPicker({
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 <span className="w-12 shrink-0 font-semibold">{talk.number}</span>
-                <span className="min-w-0 flex-1 truncate">{talk.theme}</span>
+                <span title={talk.theme} className="min-w-0 flex-1 truncate">
+                  {talk.theme}
+                </span>
               </button>
             </li>
           ))}
@@ -242,8 +249,13 @@ export function PublicTalkPicker({
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{speaker.name}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span title={speaker.name} className="block truncate font-medium">
+                      {speaker.name}
+                    </span>
+                    <span
+                      title={`N.º ${speaker.talks.map((talk) => talk.number).join(", ")}`}
+                      className="block truncate text-xs text-muted-foreground"
+                    >
                       N.º {speaker.talks.map((talk) => talk.number).join(", ")}
                     </span>
                   </span>

@@ -12,6 +12,7 @@ import { Card } from "@/shared/components/ui/card";
 import { FieldRow, SelectField, TextField } from "@/shared/components/ui/input";
 import { Switch } from "@/shared/components/ui/switch";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 interface PersonFormProps {
   mode: "create" | "edit";
@@ -100,7 +101,9 @@ export function PersonForm({
         setError(result.error ?? null);
         setPending(false);
       }
-    } catch {
+    } catch (error) {
+      // redirect() de sucesso precisa atravessar: engoli-lo cancela a navegação.
+      if (isNextRedirectError(error)) throw error;
       setError(es.errorGuardar);
       setPending(false);
     }

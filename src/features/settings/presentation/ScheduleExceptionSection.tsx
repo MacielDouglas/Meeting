@@ -23,6 +23,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const TYPE_OPTIONS = SCHEDULE_EXCEPTION_TYPES.map((item) => ({
   value: item.value,
@@ -65,12 +66,18 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
   }
 
   async function handleDelete(id: string) {
-    const result = await deleteScheduleException({ id });
-    if (result.ok) {
-      setDeleting(null);
-      router.refresh();
-    } else {
-      setError(result.error ?? null);
+    setError(null);
+    try {
+      const result = await deleteScheduleException({ id });
+      if (result.ok) {
+        setDeleting(null);
+        router.refresh();
+      } else {
+        setError(result.error ?? null);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorExcluir);
     }
   }
 
@@ -87,11 +94,16 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
               className="flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
+                <p
+                  title={`${typeLabel(item.type)} · ${item.date}`}
+                  className="truncate text-sm font-medium"
+                >
                   {typeLabel(item.type)} · {item.date}
                 </p>
                 {item.notes && (
-                  <p className="truncate text-xs text-muted-foreground">{item.notes}</p>
+                  <p title={item.notes} className="truncate text-xs text-muted-foreground">
+                    {item.notes}
+                  </p>
                 )}
               </div>
               <button

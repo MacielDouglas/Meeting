@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const SECTION_LABELS: Record<string, string> = {
   "TREASURES FROM GODS WORD": "Tesoros de la Palabra de Dios",
@@ -237,6 +238,27 @@ export function WorkbookSection({
     week: WorkbookContentWeek;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<WorkbookIssueItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDeleteIssue() {
+    if (!deleteTarget || deleting) return;
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const result = await deleteWorkbookIssue({ id: deleteTarget.id });
+      if (result.ok) {
+        setDeleteTarget(null);
+      } else {
+        setDeleteError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setDeleteError(es.errorExcluir);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -293,7 +315,10 @@ export function WorkbookSection({
         <Dialog
           open
           onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
+            if (!open && !deleting) {
+              setDeleteTarget(null);
+              setDeleteError(null);
+            }
           }}
         >
           <DialogContent>
@@ -307,17 +332,19 @@ export function WorkbookSection({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex-col sm:flex-row">
+              {deleteError && (
+                <p role="alert" className="text-sm text-danger">
+                  {deleteError}
+                </p>
+              )}
               <Button
                 className="border-transparent bg-danger text-danger-ink"
-                onClick={() => {
-                  void deleteWorkbookIssue({ id: deleteTarget.id }).then(() =>
-                    setDeleteTarget(null),
-                  );
-                }}
+                disabled={deleting}
+                onClick={() => void handleDeleteIssue()}
               >
-                {es.confirmarExclusion}
+                {deleting ? es.guardando : es.confirmarExclusion}
               </Button>
-              <DialogClose>{es.cancel}</DialogClose>
+              <DialogClose disabled={deleting}>{es.cancel}</DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>

@@ -31,6 +31,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={es.searchPeople}
             aria-label={es.searchPeople}
+            maxLength={80}
             className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground focus:border focus:border-ring"
           />
         </div>

@@ -66,6 +66,7 @@ import {
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
 import { MONTH_SHORT_ES, WEEKDAY_FULL_ES, WEEKDAY_SHORT_ES } from "@/shared/lib/format-date";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
 import { PdfExportModal } from "./PdfExportModal-client";
 
@@ -437,24 +438,29 @@ export function MeetingProgramSection({
     setSaving(true);
     setError(null);
     setJustSaved(false);
-    const payload = buildTemplatePayload();
-    const result = await saveMeetingProgram(
-      kind,
-      weekStart,
-      payload.date,
-      payload.parts,
-      payload.outlineId,
-      { exceptionType: "", exceptionLabel: "" },
-    );
-    if (!result.ok) {
-      setError(result.error ?? es.errorGuardar);
+    try {
+      const payload = buildTemplatePayload();
+      const result = await saveMeetingProgram(
+        kind,
+        weekStart,
+        payload.date,
+        payload.parts,
+        payload.outlineId,
+        { exceptionType: "", exceptionLabel: "" },
+      );
+      if (!result.ok) {
+        setError(result.error ?? es.errorGuardar);
+        return;
+      }
+      setOutlineId(pendingOutlineId ?? outlineId);
+      setPendingOutlineId(null);
+      await refresh();
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(error instanceof Error ? error.message : es.errorGuardar);
+    } finally {
       setSaving(false);
-      return;
     }
-    setOutlineId(pendingOutlineId ?? outlineId);
-    setPendingOutlineId(null);
-    await refresh();
-    setSaving(false);
   }
 
   // Programas salvos antes de uma mudança no modelo (ex.: nova parte
@@ -488,31 +494,36 @@ export function MeetingProgramSection({
     if (!canEdit || blocked || !programId || template.length === 0 || saving) return;
     setSaving(true);
     setError(null);
-    const payload = buildTemplatePayload();
-    const result = await saveMeetingProgram(
-      kind,
-      weekStart,
-      payload.date,
-      payload.parts,
-      payload.outlineId,
-      {
-        exceptionType: programException.exceptionType as
-          | ""
-          | "no_meeting"
-          | "circuit_visit"
-          | "convention"
-          | "virtual_convention"
-          | "special",
-        exceptionLabel: programException.exceptionLabel,
-      },
-    );
-    if (!result.ok) {
-      setError(result.error ?? es.errorSincronizar);
+    try {
+      const payload = buildTemplatePayload();
+      const result = await saveMeetingProgram(
+        kind,
+        weekStart,
+        payload.date,
+        payload.parts,
+        payload.outlineId,
+        {
+          exceptionType: programException.exceptionType as
+            | ""
+            | "no_meeting"
+            | "circuit_visit"
+            | "convention"
+            | "virtual_convention"
+            | "special",
+          exceptionLabel: programException.exceptionLabel,
+        },
+      );
+      if (!result.ok) {
+        setError(result.error ?? es.errorSincronizar);
+        return;
+      }
+      await refresh();
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(error instanceof Error ? error.message : es.errorSincronizar);
+    } finally {
       setSaving(false);
-      return;
     }
-    await refresh();
-    setSaving(false);
   }
 
   /** Trocar de reunião/semana com pendências abre o diálogo (nada se perde em silêncio). */
@@ -1057,6 +1068,7 @@ export function MeetingProgramSection({
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
+                      title={display.title}
                       className={
                         part.key === "public-talk"
                           ? "block truncate text-base font-semibold text-session-fg"

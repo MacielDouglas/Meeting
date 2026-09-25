@@ -89,7 +89,10 @@ function LandingPreview() {
                   >
                     <part.Icon size={20} />
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                  <span
+                    title={part.title}
+                    className="min-w-0 flex-1 truncate text-sm font-semibold text-white"
+                  >
                     {part.title}
                   </span>
                   <span className="shrink-0 text-sm font-medium text-white/70">

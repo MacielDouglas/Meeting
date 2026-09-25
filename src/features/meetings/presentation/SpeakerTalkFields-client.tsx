@@ -66,6 +66,7 @@ export function SpeakerTalkFields({ talks, outlines, onChange }: SpeakerTalkFiel
             inputMode="numeric"
             placeholder={es.numDiscurso}
             aria-label={es.numDiscurso}
+            maxLength={4}
             className="h-9 w-24 shrink-0 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
           />
           <input

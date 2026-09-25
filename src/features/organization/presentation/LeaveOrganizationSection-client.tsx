@@ -15,6 +15,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 export function LeaveOrganizationSection() {
   const [confirming, setConfirming] = useState(false);
@@ -31,7 +32,8 @@ export function LeaveOrganizationSection() {
         setPending(false);
       }
       // Sucesso redireciona às boas-vindas no server (NEXT_REDIRECT).
-    } catch {
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
       setError(es.errorGuardar);
       setPending(false);
     }

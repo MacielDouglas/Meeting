@@ -182,8 +182,7 @@ export function UserList({
                     )}
                     {isOwner && joinToken && (
                       <p className="font-mono text-xs break-all tabular-nums text-muted-foreground">
-                        {es.codigoEntrada}: {joinToken.code} · {es.codigoExpira}:{" "}
-                        {new Date(joinToken.expiresAt).toLocaleDateString("es-ES")}
+                        {`${es.codigoEntrada}: ${joinToken.code} · ${es.codigoExpira}: ${new Date(joinToken.expiresAt).toLocaleDateString("es-ES")}`}
                       </p>
                     )}
                   </div>

@@ -52,7 +52,7 @@ export function MyEntryCode({ initial }: { initial: MyJoinToken | null }) {
           </p>
           {expiresAt && (
             <p className="text-xs tabular-nums text-muted-foreground">
-              {es.codigoExpira}: {new Date(expiresAt).toLocaleDateString("es-ES")}
+              {`${es.codigoExpira}: ${new Date(expiresAt).toLocaleDateString("es-ES")}`}
             </p>
           )}
         </div>

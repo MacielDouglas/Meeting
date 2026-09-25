@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { CleaningHistoryBadge } from "./CleaningHistoryBadge";
 
 interface PersonSelectModalProps {
@@ -115,14 +116,21 @@ export function PersonSelectModal({
     error ?? (eligibleQuery.isError || historiesQuery.isError ? es.errorCargarPersonas : null);
 
   async function handleSelect(personId: string) {
+    if (saving) return;
     setSaving(true);
     setError(null);
-    const result = await updateCleaningAssignment(assignmentId, personId);
-    if (result.ok) {
-      onUpdated();
-      onClose();
-    } else {
-      setError(result.error ?? es.errorGuardar);
+    try {
+      const result = await updateCleaningAssignment(assignmentId, personId);
+      if (result.ok) {
+        onUpdated();
+        onClose();
+      } else {
+        setError(result.error ?? es.errorGuardar);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorGuardar);
+    } finally {
       setSaving(false);
     }
   }

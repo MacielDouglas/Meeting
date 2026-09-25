@@ -283,6 +283,7 @@ export function MeetingAssignModal({
                 inputMode="numeric"
                 placeholder={es.numCancion}
                 aria-label={es.numCancion}
+                maxLength={4}
                 className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
               />
               <button

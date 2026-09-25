@@ -19,6 +19,7 @@ import type { MeetingSchedule } from "@/features/settings/domain/settings";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { MonthlyCalendar } from "./MonthlyCalendar";
 import { ProgramDetail } from "./ProgramDetail";
 
@@ -308,8 +309,14 @@ export function CleaningDesignationSection({
   }
 
   async function handleViewProgram(program: CleaningProgramItem) {
-    const detail = await getCleaningProgramDetail(program.id);
-    setViewingProgram(detail);
+    setErrorMsg(null);
+    try {
+      const detail = await getCleaningProgramDetail(program.id);
+      setViewingProgram(detail);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setErrorMsg(es.errorCargarLista);
+    }
   }
 
   const selectedCount =

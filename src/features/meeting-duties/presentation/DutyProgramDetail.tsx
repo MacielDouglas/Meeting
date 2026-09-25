@@ -14,6 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { DownloadDutyPdfButton } from "./DownloadDutyPdfButton-client";
 import { DutyKeyIcon } from "./DutyKeyIcon";
 
@@ -41,6 +42,7 @@ function AssignmentRow({
 }) {
   const [candidates, setCandidates] = useState<{ id: string; name: string }[] | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   async function ensureCandidates() {
     if (candidates !== null) return;
@@ -52,44 +54,62 @@ function AssignmentRow({
 
   async function handleChange(personId: string | null) {
     setSaving(true);
-    await updateDutyAssignment(assignment.id, personId);
-    setSaving(false);
-    onChanged();
+    setRowError(null);
+    try {
+      const result = await updateDutyAssignment(assignment.id, personId);
+      if (!result.ok) {
+        setRowError(result.error ?? es.errorGuardar);
+      } else {
+        onChanged();
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setRowError(es.errorGuardar);
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm">
-      <DutyKeyIcon dutyKey={assignment.dutyKey} />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">
-          {assignment.postLabel || assignment.dutyKey}
-          {assignment.side ? (
-            <span className="font-normal text-muted-foreground"> · {assignment.side}</span>
-          ) : null}
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm">
+        <DutyKeyIcon dutyKey={assignment.dutyKey} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-medium">
+            {assignment.postLabel || assignment.dutyKey}
+            {assignment.side ? (
+              <span className="font-normal text-muted-foreground"> · {assignment.side}</span>
+            ) : null}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            {assignment.personName || es.sinAsignar}
+            {assignment.isManual ? ` · ${es.manual}` : ""}
+          </span>
         </span>
-        <span className="block truncate text-xs text-muted-foreground">
-          {assignment.personName || es.sinAsignar}
-          {assignment.isManual ? ` · ${es.manual}` : ""}
-        </span>
-      </span>
-      <select
-        aria-label={`${date} · ${assignment.postLabel || assignment.dutyKey}`}
-        disabled={saving}
-        value={assignment.personId ?? ""}
-        onFocus={() => void ensureCandidates()}
-        onChange={(e) => void handleChange(e.target.value === "" ? null : e.target.value)}
-        className="h-9 max-w-36 rounded-lg border border-input bg-background px-1 text-xs outline-none focus:border-ring disabled:opacity-50"
-      >
-        <option value="">{es.sinAsignar}</option>
-        {(candidates ?? []).map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.name}
-          </option>
-        ))}
-        {assignment.personId && !(candidates ?? []).some((c) => c.id === assignment.personId) && (
-          <option value={assignment.personId}>{assignment.personName}</option>
-        )}
-      </select>
+        <select
+          aria-label={`${date} · ${assignment.postLabel || assignment.dutyKey}`}
+          disabled={saving}
+          value={assignment.personId ?? ""}
+          onFocus={() => void ensureCandidates()}
+          onChange={(e) => void handleChange(e.target.value === "" ? null : e.target.value)}
+          className="h-9 max-w-36 rounded-lg border border-input bg-background px-1 text-xs outline-none focus:border-ring disabled:opacity-50"
+        >
+          <option value="">{es.sinAsignar}</option>
+          {(candidates ?? []).map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+          {assignment.personId && !(candidates ?? []).some((c) => c.id === assignment.personId) && (
+            <option value={assignment.personId}>{assignment.personName}</option>
+          )}
+        </select>
+      </div>
+      {rowError && (
+        <p role="alert" className="text-xs text-danger">
+          {rowError}
+        </p>
+      )}
     </div>
   );
 }
@@ -104,6 +124,7 @@ export function DutyProgramDetail({
 }: DutyProgramDetailProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const grouped = new Map<string, DutyAssignmentItem[]>();
   for (const a of assignments) {
@@ -115,18 +136,35 @@ export function DutyProgramDetail({
 
   async function handleStatus(status: "draft" | "confirmed" | "archived") {
     setBusy(true);
-    await updateDutyProgramStatus(program.id, status);
-    setBusy(false);
+    setError(null);
+    try {
+      const result = await updateDutyProgramStatus(program.id, status);
+      if (!result.ok) setError(result.error ?? es.errorGuardar);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorGuardar);
+    } finally {
+      setBusy(false);
+    }
     onRefresh();
   }
 
   async function handleDelete() {
     setBusy(true);
-    const result = await deleteDutyProgram(program.id);
-    setBusy(false);
-    if (result.ok) {
-      onDeleted();
-      onClose();
+    setError(null);
+    try {
+      const result = await deleteDutyProgram(program.id);
+      if (result.ok) {
+        onDeleted();
+        onClose();
+      } else {
+        setError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorExcluir);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -146,6 +184,11 @@ export function DutyProgramDetail({
           })),
         }))}
       />
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold">

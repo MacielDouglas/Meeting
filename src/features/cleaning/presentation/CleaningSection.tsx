@@ -41,6 +41,8 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { Switch } from "@/shared/components/ui/switch";
+import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const SEX_OPTIONS: { value: RequiredSex; label: string }[] = [
   { value: "any", label: "Cualquiera" },
@@ -95,6 +97,9 @@ function SectorForm({
       } else {
         setError(result.error ?? "No se pudo guardar.");
       }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorGuardar);
     } finally {
       setPending(false);
     }
@@ -126,6 +131,7 @@ function SectorForm({
           value={task}
           onChange={(e) => setTask(e.target.value)}
           rows={3}
+          maxLength={2000}
           className="rounded-lg bg-background px-3 py-2 text-base outline-none focus:border focus:border-ring"
         />
       </label>
@@ -237,10 +243,26 @@ function SectorModal({
 }) {
   const [editing, setEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   async function handleDelete() {
-    const result = await deleteCleaningSector({ id: sector.id });
-    if (result.ok) onClose();
+    if (deleting) return;
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const result = await deleteCleaningSector({ id: sector.id });
+      if (result.ok) {
+        onClose();
+      } else {
+        setDeleteError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setDeleteError(es.errorExcluir);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -278,9 +300,16 @@ function SectorModal({
             onDone={() => setEditing(false)}
           />
         ) : confirmingDelete ? (
-          <p className="text-sm">
-            Eliminar el sector “{sector.name}”? Esta acción no se puede deshacer.
-          </p>
+          <>
+            <p className="text-sm">
+              Eliminar el sector “{sector.name}”? Esta acción no se puede deshacer.
+            </p>
+            {deleteError && (
+              <p role="alert" className="text-sm text-danger">
+                {deleteError}
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-sm">{sector.task || "Sin tarea registrada."}</p>
         )}
@@ -301,17 +330,22 @@ function SectorModal({
           {confirmingDelete && (
             <Button
               className="border-transparent bg-danger text-danger-ink"
+              disabled={deleting}
               onClick={() => void handleDelete()}
             >
-              Confirmar eliminación
+              {deleting ? es.guardando : es.confirmarExclusion}
             </Button>
           )}
           {confirmingDelete ? (
-            <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
-              Volver
+            <Button
+              variant="outline"
+              disabled={deleting}
+              onClick={() => setConfirmingDelete(false)}
+            >
+              {es.volver}
             </Button>
           ) : (
-            !editing && <DialogClose>Cancelar</DialogClose>
+            !editing && <DialogClose>{es.cancel}</DialogClose>
           )}
         </DialogFooter>
       </DialogContent>
@@ -321,14 +355,34 @@ function SectorModal({
 
 export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
   const [restoring, setRestoring] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState<CleaningTypeKey | null>(null);
   const [selected, setSelected] = useState<{
     typeKey: CleaningTypeKey;
     sector: CleaningSectorItem;
   } | null>(null);
 
+  async function runToggle(action: Promise<{ ok: boolean; error?: string }>) {
+    setActionError(null);
+    try {
+      const result = await action;
+      if (!result.ok) setActionError(result.error ?? es.errorGuardar);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setActionError(es.errorGuardar);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
+      {actionError && (
+        <p
+          role="alert"
+          className="rounded-xl border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
+        >
+          {actionError}
+        </p>
+      )}
       {initial.map((cleaning) => (
         <Card key={cleaning.key} className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -340,7 +394,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
               label={`Activar ${cleaning.label}`}
               checked={cleaning.enabled}
               onCheckedChange={(checked) =>
-                void toggleCleaningType({ key: cleaning.key, enabled: checked })
+                void runToggle(toggleCleaningType({ key: cleaning.key, enabled: checked }))
               }
             />
           </div>
@@ -372,7 +426,7 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                     label={`Activar sector ${sector.name}`}
                     checked={sector.enabled}
                     onCheckedChange={(checked) =>
-                      void toggleCleaningSector({ id: sector.id, enabled: checked })
+                      void runToggle(toggleCleaningSector({ id: sector.id, enabled: checked }))
                     }
                   />
                 </div>
@@ -408,9 +462,16 @@ export function CleaningSection({ initial }: { initial: CleaningTypeItem[] }) {
                 disabled={restoring === cleaning.key}
                 onClick={() => {
                   setRestoring(cleaning.key);
-                  void restoreDefaultCleaningSectors({ key: cleaning.key }).finally(() =>
-                    setRestoring(null),
-                  );
+                  setActionError(null);
+                  void restoreDefaultCleaningSectors({ key: cleaning.key })
+                    .then((result) => {
+                      if (!result.ok) setActionError(result.error ?? es.errorGuardar);
+                    })
+                    .catch((error: unknown) => {
+                      if (isNextRedirectError(error)) throw error;
+                      setActionError(es.errorGuardar);
+                    })
+                    .finally(() => setRestoring(null));
                 }}
               >
                 {restoring === cleaning.key ? "Restaurando…" : "Recuperar sectores predeterminados"}

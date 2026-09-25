@@ -27,7 +27,7 @@ export function JwpubImportButton({ label = es.importarJwpub }: { label?: string
   const [inspected, setInspected] = useState<SmartInspected | null>(null);
 
   async function handleFileSelected(file: File | undefined) {
-    if (!file) return;
+    if (!file || reading) return;
     setError(null);
     setReading(true);
     try {

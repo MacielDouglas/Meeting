@@ -232,6 +232,9 @@ export function OutsideSpeakersClient({
                   onChange={(e) => setForm((previous) => ({ ...previous, phone: e.target.value }))}
                   placeholder={es.telefonoOpcional}
                   aria-label={es.telefonoLabel}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
                   maxLength={40}
                   className="h-9 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
                 />
@@ -249,7 +252,7 @@ export function OutsideSpeakersClient({
               {editingId ? es.guardarCambios : es.anadirOrador}
             </Button>
             {editingId && (
-              <Button variant="ghost" onClick={resetForm}>
+              <Button variant="ghost" disabled={saveMutation.isPending} onClick={resetForm}>
                 {es.descartar}
               </Button>
             )}
@@ -291,17 +294,18 @@ export function OutsideSpeakersClient({
                         <span className="flex shrink-0 gap-2">
                           <button
                             type="button"
+                            disabled={saveMutation.isPending || deleteMutation.isPending}
                             onClick={() => startEdit(speaker)}
                             aria-label={`${es.editarLabel} a ${speaker.name}`}
-                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-accent"
+                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-accent disabled:opacity-50"
                           >
                             {es.editarLabel}
                           </button>
                           <button
                             type="button"
-                            disabled={deleteMutation.isPending}
+                            disabled={deleteMutation.isPending || saveMutation.isPending}
                             onClick={() => deleteMutation.mutate(speaker.id)}
-                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-danger"
+                            className="min-h-11 rounded-lg px-2 py-1 font-display text-xs font-medium text-danger disabled:opacity-50"
                           >
                             {es.eliminar}
                           </button>

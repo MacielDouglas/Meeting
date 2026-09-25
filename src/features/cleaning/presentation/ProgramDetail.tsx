@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { DownloadCleaningPdfButton } from "./DownloadCleaningPdfButton-client";
 import { PersonSelectModal } from "./PersonSelectModal";
 
@@ -58,6 +59,7 @@ export function ProgramDetail({
   const [editingAssignment, setEditingAssignment] = useState<CleaningAssignmentItem | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [deletingDay, setDeletingDay] = useState<string | null>(null);
   const [dayError, setDayError] = useState<string | null>(null);
 
@@ -91,30 +93,57 @@ export function ProgramDetail({
   }
 
   async function handleDelete() {
+    if (deleting) return;
+    setError(null);
     setDeleting(true);
-    const result = await deleteCleaningProgram(program.id);
-    if (result.ok) {
-      onDeleted();
-      onClose();
+    try {
+      const result = await deleteCleaningProgram(program.id);
+      if (result.ok) {
+        onDeleted();
+        onClose();
+      } else {
+        setError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorExcluir);
+    } finally {
+      setDeleting(false);
     }
-    setDeleting(false);
   }
 
   async function handleStatusChange(status: "confirmed" | "archived") {
-    await updateProgramStatus(program.id, status);
-    onRefresh();
+    setError(null);
+    try {
+      const result = await updateProgramStatus(program.id, status);
+      if (result.ok) {
+        onRefresh();
+      } else {
+        setError(result.error ?? es.errorGuardar);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorGuardar);
+    }
   }
 
   async function handleDeleteDay(date: string) {
+    if (deletingDay) return;
     setDeletingDay(date);
     setDayError(null);
-    const result = await deleteCleaningDay(program.id, date);
-    if (result.ok) {
-      onRefresh();
-    } else {
-      setDayError(result.error ?? "No se pudo eliminar el día. Inténtalo de nuevo.");
+    try {
+      const result = await deleteCleaningDay(program.id, date);
+      if (result.ok) {
+        onRefresh();
+      } else {
+        setDayError(result.error ?? "No se pudo eliminar el día. Inténtalo de nuevo.");
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setDayError(es.errorGuardar);
+    } finally {
+      setDeletingDay(null);
     }
-    setDeletingDay(null);
   }
 
   const dayUsedPersonIds = editingAssignment
@@ -227,6 +256,11 @@ export function ProgramDetail({
           {dayError}
         </p>
       )}
+      {error && !confirmDelete && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       {sortedDates.map((date) => {
         const dayAssignments = grouped.get(date) ?? [];
         return (
@@ -254,15 +288,21 @@ export function ProgramDetail({
                     className="flex items-center gap-2 rounded-lg bg-secondary px-2 py-1.5 text-sm"
                   >
                     <Icon size={16} className="shrink-0 text-accent" />
-                    <span className="w-32 shrink-0 truncate text-xs text-muted-foreground">
+                    <span
+                      title={assignment.sectorName}
+                      className="w-32 shrink-0 truncate text-xs text-muted-foreground"
+                    >
                       {assignment.sectorName}
                     </span>
-                    <span className="flex-1 truncate">
+                    <span
+                      title={assignment.personName || es.sinAsignar}
+                      className="flex-1 truncate"
+                    >
                       {assignment.personName || (
-                        <em className="text-muted-foreground">Sin designación</em>
+                        <em className="text-muted-foreground">{es.sinAsignar}</em>
                       )}
                       {assignment.isFamily && (
-                        <span className="ml-1 text-xs text-warning">(familia)</span>
+                        <span className="ml-1 text-xs text-warning">({es.familiaMinuscula})</span>
                       )}
                     </span>
                     {canEdit && (
@@ -326,6 +366,11 @@ export function ProgramDetail({
                 acción no se puede deshacer.
               </DialogDescription>
             </DialogHeader>
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
             <DialogFooter>
               <DialogClose disabled={deleting}>{es.cancel}</DialogClose>
               <Button

@@ -59,10 +59,16 @@ export function JoinTokenSection({ initial, persons }: JoinTokenSectionProps) {
               <li key={row.id} className="flex flex-col gap-2 rounded-xl bg-secondary px-3 py-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{row.userName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{row.userEmail}</p>
+                    <p title={row.userName} className="truncate text-sm font-medium">
+                      {row.userName}
+                    </p>
+                    <p title={row.userEmail} className="truncate text-xs text-muted-foreground">
+                      {row.userEmail}
+                    </p>
                   </div>
-                  <Badge variant="secondary">{row.expiresAt.slice(0, 10)}</Badge>
+                  <Badge variant="secondary">
+                    {es.codigoExpira}: {new Date(row.expiresAt).toLocaleDateString("es-ES")}
+                  </Badge>
                 </div>
                 <p className="font-mono text-lg font-semibold tracking-[0.2em] tabular-nums">
                   {row.code}

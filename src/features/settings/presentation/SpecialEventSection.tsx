@@ -20,6 +20,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const TYPE_OPTIONS = SPECIAL_EVENT_TYPES.map((item) => ({ value: item.value, label: item.label }));
 
@@ -81,12 +82,18 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
   }
 
   async function handleDelete(id: string) {
-    const result = await deleteSpecialEvent({ id });
-    if (result.ok) {
-      setDeleting(null);
-      router.refresh();
-    } else {
-      setError(result.error ?? null);
+    setError(null);
+    try {
+      const result = await deleteSpecialEvent({ id });
+      if (result.ok) {
+        setDeleting(null);
+        router.refresh();
+      } else {
+        setError(result.error ?? null);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorExcluir);
     }
   }
 
@@ -103,8 +110,13 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
               className="flex items-center justify-between gap-2 rounded-xl bg-secondary px-3 py-2"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{item.title}</p>
-                <p className="truncate text-xs text-muted-foreground">
+                <p title={item.title} className="truncate text-sm font-medium">
+                  {item.title}
+                </p>
+                <p
+                  title={`${typeLabel(item.type)} · ${item.startDate}${item.endDate ? ` — ${item.endDate}` : ""} · ${item.startTime}`}
+                  className="truncate text-xs text-muted-foreground"
+                >
                   {typeLabel(item.type)} · {item.startDate}
                   {item.endDate ? ` — ${item.endDate}` : ""} · {item.startTime}
                 </p>

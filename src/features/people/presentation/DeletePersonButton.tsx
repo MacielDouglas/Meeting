@@ -14,6 +14,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 export function DeletePersonButton({
   personId,
@@ -36,7 +37,8 @@ export function DeletePersonButton({
         setPending(false);
       }
       // Sucesso redireciona no server (NEXT_REDIRECT).
-    } catch {
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
       setError(es.errorExcluir);
       setPending(false);
     }

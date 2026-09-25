@@ -45,11 +45,15 @@ function WelcomeShowcase() {
         </div>
         <ul className="flex flex-col">
           <li className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-b-0">
-            <span className="truncate font-medium">Tesoros de la Biblia (10 min)</span>
+            <span title="Tesoros de la Biblia (10 min)" className="min-w-0 truncate font-medium">
+              Tesoros de la Biblia (10 min)
+            </span>
             <span className="shrink-0 text-muted-foreground">Hno. Ejemplo</span>
           </li>
           <li className="flex items-center justify-between gap-3 border-b border-border py-2 text-sm last:border-b-0">
-            <span className="truncate font-medium">Seamos mejores maestros (4 min)</span>
+            <span title="Seamos mejores maestros (4 min)" className="min-w-0 truncate font-medium">
+              Seamos mejores maestros (4 min)
+            </span>
             <span className="shrink-0 text-muted-foreground">Hna. Ejemplo</span>
           </li>
         </ul>

@@ -13,20 +13,29 @@ import type { DesignationSectorItem } from "@/features/designations/application/
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardTitle } from "@/shared/components/ui/card";
 import { Switch } from "@/shared/components/ui/switch";
+import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
   const hintId = useId();
   const [value, setValue] = useState(sector.slots.map((s) => s.label).join(", "));
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSave() {
+    if (pending) return;
+    setError(null);
     setPending(true);
     try {
       const slots = value
         .split(",")
         .map((part) => part.trim())
         .filter(Boolean);
-      await saveDesignationSlots({ sectorId: sector.id, slots });
+      const result = await saveDesignationSlots({ sectorId: sector.id, slots });
+      if (!result.ok) setError(result.error ?? es.errorGuardar);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setError(es.errorGuardar);
     } finally {
       setPending(false);
     }
@@ -37,6 +46,11 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
       <span id={hintId} className="text-xs text-muted-foreground">
         Plazas dentro del sector (ej.: Sector A, Sector B — o Cámara A, Cámara B). Separa con comas.
       </span>
+      {error && (
+        <p role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      )}
       <div className="flex gap-2">
         <input
           value={value}
@@ -44,6 +58,7 @@ function SlotsEditor({ sector }: { sector: DesignationSectorItem }) {
           placeholder="Ej.: Sector A, Sector B"
           aria-label="Plazas dentro del sector"
           aria-describedby={hintId}
+          maxLength={500}
           className="h-10 flex-1 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
         />
         <Button variant="outline" disabled={pending} onClick={() => void handleSave()}>
@@ -138,10 +153,30 @@ function NewSectorForm({ onDone }: { onDone: () => void }) {
 export function DesignationSection({ initial }: { initial: DesignationSectorItem[] }) {
   const [showForm, setShowForm] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const isPreview = initial.length > 0 && initial[0].id.startsWith("default-");
+
+  async function runAction(action: Promise<{ ok: boolean; error?: string }>) {
+    setActionError(null);
+    try {
+      const result = await action;
+      if (!result.ok) setActionError(result.error ?? es.errorGuardar);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setActionError(es.errorGuardar);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
+      {actionError && (
+        <p
+          role="alert"
+          className="rounded-xl border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-on-soft"
+        >
+          {actionError}
+        </p>
+      )}
       <Card className="flex flex-col gap-2">
         <CardTitle>Designaciones — todas las reuniones</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -154,8 +189,18 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
             variant="outline"
             disabled={seeding}
             onClick={() => {
+              if (seeding) return;
               setSeeding(true);
-              void seedDefaultDesignationSectors().finally(() => setSeeding(false));
+              setActionError(null);
+              void seedDefaultDesignationSectors()
+                .then((result) => {
+                  if (!result.ok) setActionError(result.error ?? es.errorGuardar);
+                })
+                .catch((error: unknown) => {
+                  if (isNextRedirectError(error)) throw error;
+                  setActionError(es.errorGuardar);
+                })
+                .finally(() => setSeeding(false));
             }}
           >
             {seeding ? "Activando…" : "Activar sectores predeterminados"}
@@ -185,7 +230,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
               label={`Activar ${sector.name}`}
               checked={sector.enabled}
               onCheckedChange={(checked) =>
-                void toggleDesignationSector({ id: sector.id, enabled: checked })
+                void runAction(toggleDesignationSector({ id: sector.id, enabled: checked }))
               }
             />
           </div>
@@ -200,10 +245,12 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
               placeholder="—"
               key={`${sector.id}-${sector.peopleCount}`}
               onBlur={(e) =>
-                void updateDesignationSectorPeopleCount({
-                  id: sector.id,
-                  peopleCount: e.target.value === "" ? null : Number(e.target.value),
-                })
+                void runAction(
+                  updateDesignationSectorPeopleCount({
+                    id: sector.id,
+                    peopleCount: e.target.value === "" ? null : Number(e.target.value),
+                  }),
+                )
               }
               className="h-10 w-24 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
             />
@@ -214,7 +261,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
           {!sector.isDefault && !sector.id.startsWith("default-") && (
             <button
               type="button"
-              onClick={() => void deleteDesignationSector({ id: sector.id })}
+              onClick={() => void runAction(deleteDesignationSector({ id: sector.id }))}
               className="min-h-11 self-start px-3 text-xs font-medium text-danger"
             >
               Eliminar sector

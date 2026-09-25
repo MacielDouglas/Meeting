@@ -29,6 +29,7 @@ export const es = {
   weekLabel: "Semana",
   home: "Inicio",
   menu: "Menú",
+  navegacionPrincipal: "Navegación principal",
   closeMenu: "Cerrar menú",
   switchToDark: "Cambiar a modo oscuro",
   switchToLight: "Cambiar a modo claro",

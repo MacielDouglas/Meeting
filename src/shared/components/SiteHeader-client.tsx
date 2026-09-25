@@ -219,7 +219,7 @@ export function SiteHeader({
       </div>
 
       <nav
-        aria-label="Navegación principal"
+        aria-label={es.navegacionPrincipal}
         className="ml-1 hidden min-w-0 flex-1 flex-wrap items-center justify-end gap-1 sm:flex"
       >
         {visibleItems

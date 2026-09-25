@@ -49,6 +49,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const LANGUAGES: { value: ContentLanguage; label: string }[] = [
   { value: "es", label: "Español" },
@@ -289,6 +290,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
 
   const filtered = useMemo(() => {
@@ -302,30 +304,48 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
 
   async function handleCreate(event: React.FormEvent) {
     event.preventDefault();
+    if (creating) return;
     setFormError(null);
-    const result = await createManualItem({
-      kind,
-      number: Number(number),
-      theme: theme.trim(),
-      language: formLanguage,
-    });
-    if (result.ok) {
-      setNumber("");
-      setTheme("");
-      setShowForm(false);
-    } else {
-      setFormError(result.error ?? es.errorGuardar);
+    setCreating(true);
+    try {
+      const result = await createManualItem({
+        kind,
+        number: Number(number),
+        theme: theme.trim(),
+        language: formLanguage,
+      });
+      if (result.ok) {
+        setNumber("");
+        setTheme("");
+        setShowForm(false);
+      } else {
+        setFormError(result.error ?? es.errorGuardar);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setFormError(es.errorGuardar);
+    } finally {
+      setCreating(false);
     }
   }
 
-  async function handleUpdate(item: SongItem | OutlineItem) {
-    const result = await updateManualItem({
-      kind,
-      id: item.id,
-      number: item.number,
-      theme: item.theme,
-    });
-    if (result.ok) setEditingId(null);
+  async function handleUpdate(item: SongItem | OutlineItem): Promise<boolean> {
+    try {
+      const result = await updateManualItem({
+        kind,
+        id: item.id,
+        number: item.number,
+        theme: item.theme,
+      });
+      if (result.ok) {
+        setEditingId(null);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      return false;
+    }
   }
 
   const title = kind === "songs" ? es.canticos : es.bosquejosDiscursos;
@@ -344,6 +364,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
           onChange={(event) => setSearch(event.target.value)}
           placeholder={es.buscarNumeroTema}
           aria-label={es.buscarNumeroTema}
+          maxLength={80}
           className="h-10 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none"
         />
         <select
@@ -391,7 +412,7 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
           onStartEdit={() => setEditingId(selected.id)}
           onCancelEdit={() => setEditingId(null)}
           onSaveEdit={(numberValue, themeValue) =>
-            void handleUpdate({ ...selected, number: numberValue, theme: themeValue })
+            handleUpdate({ ...selected, number: numberValue, theme: themeValue })
           }
           onDeleted={() => {
             setSelectedId(null);
@@ -454,7 +475,9 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
               />
             </label>
             <div className="flex gap-2">
-              <Button type="submit">{es.anadir}</Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? es.guardando : es.anadir}
+              </Button>
               <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                 {es.cancel}
               </Button>
@@ -525,16 +548,32 @@ function EntryModal({
   editing: boolean;
   onStartEdit: () => void;
   onCancelEdit: () => void;
-  onSaveEdit: (number: number, theme: string) => void;
+  onSaveEdit: (number: number, theme: string) => Promise<boolean>;
   onDeleted: () => void;
   onClose: () => void;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [deletingItem, setDeletingItem] = useState(false);
   const singular = kind === "songs" ? es.canticoSingular : es.bosquejoSingular;
 
   async function handleDelete() {
-    const result = await deleteItem({ kind, id: item.id });
-    if (result.ok) onDeleted();
+    if (deletingItem) return;
+    setModalError(null);
+    setDeletingItem(true);
+    try {
+      const result = await deleteItem({ kind, id: item.id });
+      if (result.ok) {
+        onDeleted();
+      } else {
+        setModalError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setModalError(es.errorExcluir);
+    } finally {
+      setDeletingItem(false);
+    }
   }
 
   return (
@@ -554,12 +593,26 @@ function EntryModal({
           </DialogDescription>
         </DialogHeader>
         {editing ? (
-          <EditRow item={item} onCancel={onCancelEdit} onSave={onSaveEdit} />
+          <EditRow
+            item={item}
+            onCancel={onCancelEdit}
+            onSave={async (numberValue, themeValue) => {
+              const ok = await onSaveEdit(numberValue, themeValue);
+              if (!ok) setModalError(es.errorGuardar);
+            }}
+          />
         ) : confirmingDelete ? (
-          <p className="text-sm">
-            ¿Eliminar {singular.toLowerCase()} {item.number} (“{item.theme}”)? Esta acción no se
-            puede deshacer.
-          </p>
+          <>
+            <p className="text-sm">
+              ¿Eliminar {singular.toLowerCase()} {item.number} (“{item.theme}”)? Esta acción no se
+              puede deshacer.
+            </p>
+            {modalError && (
+              <p role="alert" className="text-sm text-danger">
+                {modalError}
+              </p>
+            )}
+          </>
         ) : (
           <p className="text-base">{item.theme}</p>
         )}
@@ -571,7 +624,10 @@ function EntryModal({
               </Button>
               <Button
                 className="border-transparent bg-danger text-danger-ink"
-                onClick={() => setConfirmingDelete(true)}
+                onClick={() => {
+                  setModalError(null);
+                  setConfirmingDelete(true);
+                }}
                 aria-label={`${es.eliminar} ${singular.toLowerCase()} ${item.number}`}
               >
                 <FaTrashAlt aria-hidden size={16} />
@@ -581,13 +637,18 @@ function EntryModal({
           {confirmingDelete && (
             <Button
               className="border-transparent bg-danger text-danger-ink"
+              disabled={deletingItem}
               onClick={() => void handleDelete()}
             >
-              {es.confirmarExclusion}
+              {deletingItem ? es.guardando : es.confirmarExclusion}
             </Button>
           )}
           {confirmingDelete ? (
-            <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
+            <Button
+              variant="outline"
+              disabled={deletingItem}
+              onClick={() => setConfirmingDelete(false)}
+            >
               {es.volver}
             </Button>
           ) : (
@@ -606,7 +667,7 @@ function EditRow({
 }: {
   item: SongItem | OutlineItem;
   onCancel: () => void;
-  onSave: (number: number, theme: string) => void;
+  onSave: (number: number, theme: string) => Promise<void>;
 }) {
   const [number, setNumber] = useState(String(item.number));
   const [theme, setTheme] = useState(item.theme);

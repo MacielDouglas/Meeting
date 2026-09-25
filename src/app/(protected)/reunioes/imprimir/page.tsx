@@ -164,7 +164,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
                 href={`/api/reunioes/ical?kind=${kind}&week=${weekStart}`}
                 className="flex h-11 items-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                Descargar iCal
+                {es.descargarICal}
               </Link>
               <Suspense fallback={null}>
                 <PrintButton />

@@ -16,6 +16,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { DownloadDutyPdfButton } from "./DownloadDutyPdfButton-client";
 import { DutyKeyIcon } from "./DutyKeyIcon";
 import { DutyProgramDetail } from "./DutyProgramDetail";
@@ -191,8 +192,14 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
   }
 
   async function handleViewProgram(program: DutyProgramItem) {
-    const detail = await getDutyProgramDetail(program.id);
-    setViewingProgram(detail);
+    setErrorMsg(null);
+    try {
+      const detail = await getDutyProgramDetail(program.id);
+      setViewingProgram(detail);
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setErrorMsg(es.errorCargarLista);
+    }
   }
 
   return (

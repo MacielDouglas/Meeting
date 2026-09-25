@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
+import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 function SongLine({
   label,
@@ -138,10 +139,31 @@ export function WatchtowerSection({
   canManage: boolean;
 }) {
   const [deleteTarget, setDeleteTarget] = useState<WatchtowerIssueItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [selected, setSelected] = useState<{
     issue: WatchtowerIssueItem;
     article: WatchtowerArticleItem;
   } | null>(null);
+
+  async function handleDeleteIssue() {
+    if (!deleteTarget || deleting) return;
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      const result = await deleteWatchtowerIssue({ id: deleteTarget.id });
+      if (result.ok) {
+        setDeleteTarget(null);
+      } else {
+        setDeleteError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setDeleteError(es.errorExcluir);
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -217,7 +239,10 @@ export function WatchtowerSection({
         <Dialog
           open
           onOpenChange={(open) => {
-            if (!open) setDeleteTarget(null);
+            if (!open && !deleting) {
+              setDeleteTarget(null);
+              setDeleteError(null);
+            }
           }}
         >
           <DialogContent>
@@ -231,17 +256,19 @@ export function WatchtowerSection({
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex-col sm:flex-row">
+              {deleteError && (
+                <p role="alert" className="text-sm text-danger">
+                  {deleteError}
+                </p>
+              )}
               <Button
                 className="border-transparent bg-danger text-danger-ink"
-                onClick={() => {
-                  void deleteWatchtowerIssue({ id: deleteTarget.id }).then(() =>
-                    setDeleteTarget(null),
-                  );
-                }}
+                disabled={deleting}
+                onClick={() => void handleDeleteIssue()}
               >
-                {es.confirmarExclusion}
+                {deleting ? es.guardando : es.confirmarExclusion}
               </Button>
-              <DialogClose>{es.cancel}</DialogClose>
+              <DialogClose disabled={deleting}>{es.cancel}</DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -275,6 +302,7 @@ function ArticleModal({
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deletingArticle, setDeletingArticle] = useState(false);
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -299,8 +327,22 @@ function ArticleModal({
   }
 
   async function handleDelete() {
-    const result = await deleteWatchtowerArticle({ id: article.id });
-    if (result.ok) onDeleted();
+    if (deletingArticle) return;
+    setFormError(null);
+    setDeletingArticle(true);
+    try {
+      const result = await deleteWatchtowerArticle({ id: article.id });
+      if (result.ok) {
+        onDeleted();
+      } else {
+        setFormError(result.error ?? es.errorExcluir);
+      }
+    } catch (error) {
+      if (isNextRedirectError(error)) throw error;
+      setFormError(es.errorExcluir);
+    } finally {
+      setDeletingArticle(false);
+    }
   }
 
   return (
@@ -376,9 +418,16 @@ function ArticleModal({
             </div>
           </form>
         ) : confirmingDelete ? (
-          <p className="text-sm">
-            ¿Eliminar el estudio “{article.title}”? Esta acción no se puede deshacer.
-          </p>
+          <>
+            <p className="text-sm">
+              ¿Eliminar el estudio “{article.title}”? Esta acción no se puede deshacer.
+            </p>
+            {formError && (
+              <p role="alert" className="text-sm text-danger">
+                {formError}
+              </p>
+            )}
+          </>
         ) : (
           <div className="flex flex-col gap-1">
             <SongLine
@@ -412,13 +461,18 @@ function ArticleModal({
           {confirmingDelete && (
             <Button
               className="border-transparent bg-danger text-danger-ink"
+              disabled={deletingArticle}
               onClick={() => void handleDelete()}
             >
-              {es.confirmarExclusion}
+              {deletingArticle ? es.guardando : es.confirmarExclusion}
             </Button>
           )}
           {confirmingDelete ? (
-            <Button variant="outline" onClick={() => setConfirmingDelete(false)}>
+            <Button
+              variant="outline"
+              disabled={deletingArticle}
+              onClick={() => setConfirmingDelete(false)}
+            >
               {es.volver}
             </Button>
           ) : (
