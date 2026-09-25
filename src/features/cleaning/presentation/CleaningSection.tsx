@@ -164,15 +164,15 @@ function SectorForm({
         </label>
       </div>
       <div className="flex items-center justify-between py-1.5 text-sm">
-        <span className="text-muted-foreground">Permite joven</span>
-        <Switch label="Permite joven" checked={allowYoung} onCheckedChange={setAllowYoung} />
+        <span className="text-muted-foreground">{es.permiteJoven}</span>
+        <Switch label={es.permiteJoven} checked={allowYoung} onCheckedChange={setAllowYoung} />
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {initial ? "Guardar" : "Añadir sector"}
+          {initial ? es.save : es.nuevoSector}
         </Button>
         <Button type="button" variant="outline" onClick={onDone}>
-          Cancelar
+          {es.cancel}
         </Button>
       </div>
     </form>
@@ -180,13 +180,13 @@ function SectorForm({
 }
 
 function sexLabel(sex: RequiredSex): string {
-  if (sex === "male") return "Sexo: masculino";
-  if (sex === "female") return "Sexo: femenino";
-  return "Sexo: cualquiera";
+  if (sex === "male") return es.sexoMasculino;
+  if (sex === "female") return es.sexoFemenino;
+  return es.sexoCualquiera;
 }
 
 function youngLabel(allowYoung: boolean): string {
-  return allowYoung ? "Joven: sí" : "Solo adulto";
+  return allowYoung ? es.jovenSi : es.soloAdulto;
 }
 
 const SECTOR_ICONS: Record<string, ComponentType<{ size?: number; className?: string }>> = {

@@ -169,7 +169,7 @@ export function WorkbookImportModal({
         )}
         <DialogFooter className="flex-col sm:flex-row">
           <Button disabled={saving} onClick={() => void handleSave()}>
-            {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
+            {saving ? es.guardando : inspected.hadExisting ? es.reemplazar : es.save}
           </Button>
           <DialogClose>{es.cancel}</DialogClose>
         </DialogFooter>

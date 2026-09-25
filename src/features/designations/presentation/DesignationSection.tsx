@@ -178,7 +178,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
         </p>
       )}
       <Card className="flex flex-col gap-2">
-        <CardTitle>Designaciones — todas las reuniones</CardTitle>
+        <CardTitle>{es.designacionesTodasReuniones}</CardTitle>
         <p className="text-sm text-muted-foreground">
           Activa o desactiva sectores. Los sectores desactivados filtran las habilidades en el
           registro de Personas (ej.: desactivar Video oculta la opción Video). Acomodadores y
@@ -203,7 +203,7 @@ export function DesignationSection({ initial }: { initial: DesignationSectorItem
                 .finally(() => setSeeding(false));
             }}
           >
-            {seeding ? "Activando…" : "Activar sectores predeterminados"}
+            {seeding ? es.activando : es.activarSectores}
           </Button>
         )}
       </Card>

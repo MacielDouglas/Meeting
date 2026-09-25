@@ -31,7 +31,7 @@ export function SignInButton() {
     <div className="flex flex-col gap-2">
       <Button onClick={handleSignIn} disabled={isLoading} size="lg">
         <FaGoogle aria-hidden />
-        {isLoading ? "Cargando…" : es.signInWithGoogle}
+        {isLoading ? es.cargando : es.signInWithGoogle}
       </Button>
       {error && (
         <p role="alert" className="text-sm text-danger">

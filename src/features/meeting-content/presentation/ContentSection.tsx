@@ -53,9 +53,9 @@ import { es } from "@/shared/i18n/es";
 import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
 const LANGUAGES: { value: ContentLanguage; label: string }[] = [
-  { value: "es", label: "Español" },
-  { value: "pt", label: "Portugués" },
-  { value: "en", label: "Inglés" },
+  { value: "es", label: es.idiomaEspanol },
+  { value: "pt", label: es.idiomaPortugues },
+  { value: "en", label: es.idiomaIngles },
 ];
 
 function LanguageBadge({ language }: { language: ContentLanguage }) {
@@ -72,9 +72,9 @@ function kindLabel(kind: "songs" | "outlines"): string {
 }
 
 function languageLabel(language: ContentLanguage): string {
-  if (language === "es") return "Español";
-  if (language === "pt") return "Portugués";
-  return "Inglés";
+  if (language === "es") return es.idiomaEspanol;
+  if (language === "pt") return es.idiomaPortugues;
+  return es.idiomaIngles;
 }
 
 type SmartInspected = Extract<AnyInspectResult, { ok: true }>;
@@ -199,7 +199,7 @@ function ImportModal({
         </ul>
         <div className="flex gap-2">
           <Button disabled={saving || items.length === 0} onClick={() => void handleSave()}>
-            {saving ? es.guardando : inspected.hadExisting ? "Reemplazar" : es.save}
+            {saving ? es.guardando : inspected.hadExisting ? es.reemplazar : es.save}
           </Button>
           <Button type="button" variant="outline" onClick={onClose}>
             {es.cancel}
@@ -601,7 +601,11 @@ function EntryModal({
             {singular} {item.number}
           </DialogTitle>
           <DialogDescription>
-            {item.language === "es" ? "Español" : item.language === "pt" ? "Portugués" : "Inglés"}
+            {item.language === "es"
+              ? es.idiomaEspanol
+              : item.language === "pt"
+                ? es.idiomaPortugues
+                : es.idiomaIngles}
           </DialogDescription>
         </DialogHeader>
         {editing ? (
@@ -730,10 +734,10 @@ function EditRow({
 type ContentSubTab = "sentinela" | "apostila" | "esbocos" | "canticos";
 
 const SUBTABS: { value: ContentSubTab; label: string }[] = [
-  { value: "sentinela", label: "Atalaya" },
-  { value: "apostila", label: "Guía" },
-  { value: "esbocos", label: "Bosquejos" },
-  { value: "canticos", label: "Cánticos" },
+  { value: "sentinela", label: es.subtabSentinela },
+  { value: "apostila", label: es.subtabApostila },
+  { value: "esbocos", label: es.subtabEsbocos },
+  { value: "canticos", label: es.subtabCanticos },
 ];
 
 export function ContentSection({

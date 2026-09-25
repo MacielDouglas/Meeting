@@ -20,9 +20,9 @@ export const metadata: Metadata = { title: es.configuracion };
 type ConfigTab = "reunioes" | "limpeza" | "designacoes";
 
 const TABS: { value: ConfigTab; label: string }[] = [
-  { value: "reunioes", label: "Reuniones" },
-  { value: "limpeza", label: "Limpieza" },
-  { value: "designacoes", label: "Designaciones" },
+  { value: "reunioes", label: es.tabReuniones },
+  { value: "limpeza", label: es.cleaning },
+  { value: "designacoes", label: es.tabDesignaciones },
 ];
 
 export default async function ConfiguracionPage({
