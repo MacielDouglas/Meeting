@@ -838,10 +838,10 @@ export function MeetingProgramSection({
             type="button"
             aria-pressed={kind === option.value}
             onClick={() => handleKindChange(option.value)}
-            className={`h-8 flex-1 rounded-lg font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
+            className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
               kind === option.value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-background font-semibold text-foreground shadow-sm"
+                : "font-medium text-muted-foreground hover:text-foreground"
             }`}
           >
             {option.label}
@@ -921,7 +921,11 @@ export function MeetingProgramSection({
       {saving && !programId && (
         <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
       )}
-      {!canEdit && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
+      {!canEdit && (
+        <p className="text-xs text-muted-foreground">
+          {canManage ? es.activaModoEdicion : es.soloLectura}
+        </p>
+      )}
 
       {override.kind !== "none" && !blocked && !loading && !loadError && (
         <SpecialEventBanner

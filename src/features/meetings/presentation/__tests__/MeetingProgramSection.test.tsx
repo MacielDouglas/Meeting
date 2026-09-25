@@ -126,6 +126,16 @@ describe("MeetingProgramSection", () => {
 
     expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
+    expect(screen.getByText(es.activaModoEdicion)).toBeInTheDocument();
+  });
+
+  it("sin permiso de gestión muestra solo lectura aunque el modo edición esté activo", async () => {
+    vi.mocked(getMeetingProgram).mockResolvedValue(null);
+    renderSection({ canManage: false });
+
+    expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
     expect(screen.getByText(es.soloLectura)).toBeInTheDocument();
+    expect(screen.queryByText(es.activaModoEdicion)).not.toBeInTheDocument();
   });
 });

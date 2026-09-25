@@ -51,10 +51,10 @@ export function ReunioesEditModeToggle() {
   const editMode = useReunioesEditMode();
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-input bg-background px-3 py-2">
+    <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{es.modoEdicion}</p>
-        <p className="truncate text-xs text-muted-foreground">{es.modoEdicionHint}</p>
+        <p className="text-xs text-muted-foreground">{es.modoEdicionHint}</p>
       </div>
       <Switch label={es.modoEdicion} checked={editMode} onCheckedChange={setReunioesEditMode} />
     </div>

@@ -363,6 +363,7 @@ export const es = {
   editarLabel: "Editar",
   modoEdicion: "Modo edición",
   modoEdicionHint: "Activa para asignar partes y editar oradores",
+  activaModoEdicion: "Activa el modo edición para hacer cambios.",
 } as const;
 
 export type SpanishDictionary = typeof es;

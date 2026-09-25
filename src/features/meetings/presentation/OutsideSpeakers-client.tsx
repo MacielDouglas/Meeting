@@ -187,7 +187,9 @@ export function OutsideSpeakersClient({
         </p>
       )}
 
-      {canManage && !editMode && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
+      {canManage && !editMode && (
+        <p className="text-xs text-muted-foreground">{es.activaModoEdicion}</p>
+      )}
 
       {canEdit && (
         <Card className="flex flex-col gap-2 p-3">
