@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FaTrashAlt } from "react-icons/fa";
+import { FaBookOpen, FaTrashAlt } from "react-icons/fa";
 import type { AnyInspectResult } from "@/features/meeting-content/application/actions";
 import {
   deleteWatchtowerArticle,
@@ -13,6 +13,7 @@ import type {
   WatchtowerArticleItem,
   WatchtowerIssueItem,
 } from "@/features/meeting-content/application/watchtower-queries";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import {
@@ -168,11 +169,11 @@ export function WatchtowerSection({
   return (
     <div className="flex flex-col gap-3">
       {initial.length === 0 && (
-        <Card className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">
-            Todavía no hay ediciones importadas. Usa “Importar .jwpub” para añadir la Atalaya.
-          </p>
-        </Card>
+        <EmptyState
+          icon={<FaBookOpen aria-hidden size={22} />}
+          title={es.sinEdiciones}
+          description={es.anadirAtalayaHint}
+        />
       )}
       {initial.map((issue) => (
         <Card key={issue.id} className="flex flex-col gap-2">

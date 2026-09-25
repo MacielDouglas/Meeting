@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getSectorIcon } from "@/features/cleaning/domain/cleaning-sector-icons";
 import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
@@ -146,10 +147,12 @@ function DesignacoesCard({
   day,
   lead,
   highlightName,
+  canManage,
 }: {
   day: DesignacoesCardDay;
   lead: boolean;
   highlightName: string | null;
+  canManage: boolean;
 }) {
   const empty = day.cleaning.length === 0 && day.duties.length === 0;
   return (
@@ -174,7 +177,17 @@ function DesignacoesCard({
       </div>
 
       {empty && !day.notice ? (
-        <p className="mt-4 text-sm text-muted-foreground">{es.sinDesignacionesDia}</p>
+        <div className="mt-4 flex flex-col items-start gap-2">
+          <p className="text-sm text-muted-foreground">{es.sinDesignacionesDia}</p>
+          {canManage ? (
+            <Link
+              href="/asignar"
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {es.asignar}
+            </Link>
+          ) : null}
+        </div>
       ) : (
         <div className="mt-4 flex flex-col gap-4">
           {day.notice ? (
@@ -201,9 +214,11 @@ function DesignacoesCard({
 export function DesignacoesCards({
   days,
   highlightName = null,
+  canManage = false,
 }: {
   days: DesignacoesCardDay[];
   highlightName?: string | null;
+  canManage?: boolean;
 }) {
   return (
     <div className="section-stack">
@@ -213,6 +228,7 @@ export function DesignacoesCards({
           day={day}
           lead={index === 0}
           highlightName={highlightName}
+          canManage={canManage}
         />
       ))}
     </div>

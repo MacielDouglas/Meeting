@@ -221,7 +221,12 @@ export function PublicTalkPicker({
         </p>
       )}
       {speakers.length === 0 && (
-        <p className="px-1 text-xs text-muted-foreground">{es.registrarOradoresHint}</p>
+        <p className="px-1 text-sm text-muted-foreground">
+          {es.registrarOradoresHint}{" "}
+          <Link href="/reunioes?tab=oradores" className="font-medium text-accent underline">
+            {es.anadirOrador}
+          </Link>
+        </p>
       )}
       {query.length >= 2 && result.speakers.length === 0 && (
         <p className="px-1 text-sm text-muted-foreground">{es.sinOradorCoincide}</p>

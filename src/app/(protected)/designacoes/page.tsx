@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { FaListOl } from "react-icons/fa";
 import { getCurrentUser } from "@/features/auth/application/session";
 import {
   listCleaningAssignmentsForDates,
@@ -22,9 +23,9 @@ import {
   getMeetingSchedule,
   listPublicSpecialEvents,
 } from "@/features/settings/application/queries";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { WeekCardsSkeleton } from "@/shared/components/skeletons";
-import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 
@@ -214,21 +215,22 @@ async function DesignacoesCardsSection({
 
   return (
     <>
-      <DesignacoesCards days={days} highlightName={highlightName} />
+      <DesignacoesCards days={days} highlightName={highlightName} canManage={canManage} />
       {days.length === 0 ? (
-        <Card className="flex flex-col gap-3 p-4">
-          <p className="text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>
-          {canManage ? (
-            <div>
+        <EmptyState
+          icon={<FaListOl aria-hidden size={22} />}
+          title={es.sinDesignacionesProxima}
+          action={
+            canManage ? (
               <Link
                 href="/asignar"
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {es.asignar}
               </Link>
-            </div>
-          ) : null}
-        </Card>
+            ) : undefined
+          }
+        />
       ) : null}
     </>
   );

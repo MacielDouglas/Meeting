@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FaKey } from "react-icons/fa6";
 import { redeemJoinToken } from "@/features/organization/application/organization-actions";
 import type { PendingJoinTokenItem } from "@/features/organization/application/organization-queries";
 import {
@@ -9,6 +10,7 @@ import {
   type AdmitPersonSubmit,
 } from "@/features/organization/presentation/AdmitPersonForm-client";
 import type { PersonOption } from "@/features/people/application/queries";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
@@ -50,7 +52,7 @@ export function JoinTokenSection({ initial, persons }: JoinTokenSectionProps) {
       )}
 
       {initial.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{es.sinTokens}</p>
+        <EmptyState icon={<FaKey aria-hidden size={22} />} title={es.sinTokens} />
       ) : (
         <ul className="flex flex-col gap-2">
           {initial.map((row) => {

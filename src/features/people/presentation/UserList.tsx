@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FaTrash } from "react-icons/fa6";
+import { FaCircleUser, FaTrash } from "react-icons/fa6";
 import { removeUserFromOrganization } from "@/features/organization/application/organization-actions";
 import { linkUserToPerson, updateUserRole } from "@/features/people/application/actions";
 import type { PersonOption, UserWithRole } from "@/features/people/application/queries";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -145,9 +147,18 @@ export function UserList({
 
   if (users.length === 0) {
     return (
-      <Card>
-        <p className="text-sm text-muted-foreground">{es.noUsers}</p>
-      </Card>
+      <EmptyState
+        icon={<FaCircleUser aria-hidden size={22} />}
+        title={es.noUsers}
+        action={
+          <Link
+            href="/administracion"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+          >
+            {es.invitar}
+          </Link>
+        }
+      />
     );
   }
 

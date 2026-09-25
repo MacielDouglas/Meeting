@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { FaCircleUser, FaMagnifyingGlass, FaUserPlus } from "react-icons/fa6";
 import { getFullName, type PersonSummary } from "@/features/people/domain/person";
+import { EmptyState } from "@/shared/components/EmptyState";
+import { Button } from "@/shared/components/ui/button";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -47,9 +49,31 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {normalized.length > 0 ? es.ningunaPersona : es.noPeople}
-        </p>
+        normalized.length > 0 ? (
+          <EmptyState
+            title={es.ningunaPersona}
+            action={
+              <Button variant="outline" onClick={() => setQuery("")}>
+                {es.limpiarBusqueda}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={<FaCircleUser aria-hidden size={22} />}
+            title={es.noPeople}
+            action={
+              canCreate ? (
+                <Link
+                  href="/administracion/personas/nueva"
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+                >
+                  {es.newPerson}
+                </Link>
+              ) : undefined
+            }
+          />
+        )
       ) : (
         <ul className="flex flex-col">
           {filtered.map((person) => (

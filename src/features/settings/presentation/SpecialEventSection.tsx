@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { FaTrash } from "react-icons/fa6";
+import { FaCalendarDay, FaTrash } from "react-icons/fa6";
 import { createSpecialEvent, deleteSpecialEvent } from "@/features/settings/application/actions";
 import type { SpecialEventItem } from "@/features/settings/application/queries";
 import { SPECIAL_EVENT_TYPES } from "@/features/settings/domain/settings";
 import { ChipSelect } from "@/features/settings/presentation/ChipSelect";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
@@ -101,7 +102,7 @@ export function SpecialEventSection({ events }: { events: SpecialEventItem[] }) 
     <Card className="flex flex-col gap-2">
       <CardTitle>{es.specialEvents}</CardTitle>
       {events.length === 0 ? (
-        <CardDescription>{es.noSpecialEvents}</CardDescription>
+        <EmptyState icon={<FaCalendarDay aria-hidden size={22} />} title={es.noSpecialEvents} />
       ) : (
         <ul className="flex flex-col gap-2">
           {events.map((item) => (

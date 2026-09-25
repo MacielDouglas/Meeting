@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { FaEnvelope } from "react-icons/fa6";
 import {
   cancelInvitation,
   createInvitation,
@@ -14,6 +15,7 @@ import {
   type AdmitPersonSubmit,
 } from "@/features/organization/presentation/AdmitPersonForm-client";
 import type { PersonOption } from "@/features/people/application/queries";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
@@ -148,7 +150,7 @@ export function InvitationSection({ initial, persons, userIdByEmail }: Invitatio
       </form>
 
       {initial.length === 0 ? (
-        <p className="text-sm text-muted-foreground">{es.sinInvitaciones}</p>
+        <EmptyState icon={<FaEnvelope aria-hidden size={22} />} title={es.sinInvitaciones} />
       ) : (
         <ul className="flex flex-col gap-2">
           {initial.map((row) => {

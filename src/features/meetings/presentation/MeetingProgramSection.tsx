@@ -1153,6 +1153,9 @@ export function MeetingProgramSection({
           {displayParts.length === 0 && (
             <div className="flex flex-col gap-2 px-0 py-4">
               <p className="text-sm font-medium text-session-fg">{es.programaNoEncontrado}</p>
+              {canEdit && template.length === 0 && (
+                <p className="text-sm text-session-mute">{es.importarGuiaHint}</p>
+              )}
             </div>
           )}
         </Card>

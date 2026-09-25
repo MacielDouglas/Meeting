@@ -1,7 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
+import { GiBroom } from "react-icons/gi";
 import { createCleaningProgram } from "@/features/cleaning/application/cleaning-program-actions";
 import {
   type CleaningAssignmentItem,
@@ -16,6 +18,7 @@ import type {
   SpecialEventItem,
 } from "@/features/settings/application/queries";
 import type { MeetingSchedule } from "@/features/settings/domain/settings";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { Button } from "@/shared/components/ui/button";
 import { Card } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
@@ -348,9 +351,18 @@ export function CleaningDesignationSection({
       )}
 
       {enabledTypes.length === 0 && (
-        <Card className="flex flex-col gap-1">
-          <p className="text-sm text-muted-foreground">{es.ningunTipoLimpieza}</p>
-        </Card>
+        <EmptyState
+          icon={<GiBroom aria-hidden size={22} />}
+          title={es.ningunTipoLimpieza}
+          action={
+            <Link
+              href="/administracion/configuracion?tab=limpeza"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {es.configuracion}
+            </Link>
+          }
+        />
       )}
 
       {enabledTypes.length > 0 && !viewingProgram && (
@@ -509,6 +521,9 @@ export function CleaningDesignationSection({
             </Button>
           </div>
         </Card>
+      )}
+      {!viewingProgram && !programsError && programs.length === 0 && (
+        <p className="text-sm text-muted-foreground">{es.sinProgramasLimpieza}</p>
       )}
       {!viewingProgram && programs.length > 0 && (
         <div className="flex flex-col gap-2">

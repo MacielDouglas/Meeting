@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { FaTrash } from "react-icons/fa6";
+import { FaCalendarXmark, FaTrash } from "react-icons/fa6";
 import {
   createScheduleException,
   deleteScheduleException,
@@ -10,6 +10,7 @@ import {
 import type { ScheduleExceptionItem } from "@/features/settings/application/queries";
 import { SCHEDULE_EXCEPTION_TYPES } from "@/features/settings/domain/settings";
 import { ChipSelect } from "@/features/settings/presentation/ChipSelect";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { isNextRedirectError } from "@/shared/lib/redirect-error";
 
@@ -85,7 +86,7 @@ export function ScheduleExceptionSection({ exceptions }: { exceptions: ScheduleE
     <Card className="flex flex-col gap-2">
       <CardTitle>{es.scheduleExceptions}</CardTitle>
       {exceptions.length === 0 ? (
-        <CardDescription>{es.noExceptions}</CardDescription>
+        <EmptyState icon={<FaCalendarXmark aria-hidden size={22} />} title={es.noExceptions} />
       ) : (
         <ul className="flex flex-col gap-2">
           {exceptions.map((item) => (

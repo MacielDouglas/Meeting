@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { FaListOl } from "react-icons/fa";
-import { FaBookOpen, FaChevronDown, FaLocationDot } from "react-icons/fa6";
+import {
+  FaBookOpen,
+  FaCalendarCheck,
+  FaChevronDown,
+  FaCircleUser,
+  FaLocationDot,
+} from "react-icons/fa6";
 import { GiBroom } from "react-icons/gi";
 import { dutyLabel } from "@/features/meeting-duties/domain/duty-labels";
 import { DutyKeyIcon } from "@/features/meeting-duties/presentation/DutyKeyIcon";
@@ -16,7 +22,7 @@ import {
   type MyWeekMeeting,
   urgencyLabel,
 } from "@/features/weekly-schedule/domain/my-week";
-import { Card } from "@/shared/components/ui/card";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 import { cn } from "@/shared/lib/utils";
@@ -283,25 +289,37 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
           {es.eres} <span className="font-medium text-foreground">{myWeek.personName}</span>
         </p>
       ) : (
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">
-            {es.usuarioNoVinculado}{" "}
-            {canLinkAccount ? (
-              <Link href="/administracion/personas" className="font-medium text-accent underline">
+        <EmptyState
+          icon={<FaCircleUser aria-hidden size={22} />}
+          title={es.usuarioNoVinculado}
+          description={canLinkAccount ? undefined : es.pideAdminVinculo}
+          action={
+            canLinkAccount ? (
+              <Link
+                href="/administracion/personas"
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
                 {es.vincularEnPersonas}
               </Link>
-            ) : (
-              es.pideAdminVinculo
-            )}
-          </p>
-        </Card>
+            ) : undefined
+          }
+        />
       )}
 
       {lead ? <LeadHero meeting={lead} today={today} isMale={myWeek.isMale} /> : null}
       {!lead ? (
-        <Card className="p-4">
-          <p className="text-sm text-muted-foreground">{es.semanaVacia}</p>
-        </Card>
+        <EmptyState
+          icon={<FaCalendarCheck aria-hidden size={22} />}
+          title={es.semanaVacia}
+          action={
+            <Link
+              href="/reunioes"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {es.verPrograma}
+            </Link>
+          }
+        />
       ) : null}
       {rest.map((meeting) => (
         <MeetingAccordion

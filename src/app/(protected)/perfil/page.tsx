@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { FaCircleUser } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { LeaveOrganizationSection } from "@/features/organization/presentation/LeaveOrganizationSection-client";
 import { getPersonByUserId } from "@/features/people/application/queries";
 import { MyPersonNameForm } from "@/features/people/presentation/MyPersonNameForm-client";
+import { EmptyState } from "@/shared/components/EmptyState";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
+import { Card, CardTitle } from "@/shared/components/ui/card";
 import { es } from "@/shared/i18n/es";
 import { roleLabel } from "@/shared/lib/role-label";
 
@@ -39,11 +41,11 @@ export default async function PerfilPage() {
       {person ? (
         <MyPersonNameForm initialFirstName={person.firstName} initialLastName={person.lastName} />
       ) : (
-        <Card>
-          <CardDescription>
-            {es.usuarioNoVinculado} {es.pideAdminVinculo}
-          </CardDescription>
-        </Card>
+        <EmptyState
+          icon={<FaCircleUser aria-hidden size={22} />}
+          title={es.usuarioNoVinculado}
+          description={es.pideAdminVinculo}
+        />
       )}
 
       {user.role !== "owner" && <LeaveOrganizationSection />}

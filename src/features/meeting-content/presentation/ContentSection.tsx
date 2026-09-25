@@ -27,6 +27,7 @@ import {
   WorkbookImportModal,
   WorkbookSection,
 } from "@/features/meeting-content/presentation/WorkbookSection";
+import { EmptyState } from "@/shared/components/EmptyState";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -400,7 +401,18 @@ function EntryList({ kind, items, canManage }: EntryListProps) {
           </li>
         ))}
         {filtered.length === 0 && (
-          <li className="text-sm text-muted-foreground">{es.ningunRegistro}</li>
+          <li>
+            <EmptyState
+              title={es.ningunRegistro}
+              action={
+                search.trim() !== "" ? (
+                  <Button variant="outline" onClick={() => setSearch("")}>
+                    {es.limpiarBusqueda}
+                  </Button>
+                ) : undefined
+              }
+            />
+          </li>
         )}
       </ul>
       {selected && (

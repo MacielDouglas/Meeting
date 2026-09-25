@@ -389,6 +389,9 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
               </div>
             </Card>
           )}
+          {!programsError && programs.length === 0 && (
+            <p className="text-sm text-muted-foreground">{es.sinEscalas}</p>
+          )}
           {programs.length > 0 && (
             <div className="flex flex-col gap-2">
               <p className="text-sm font-semibold">{es.escalasExistentes}</p>
