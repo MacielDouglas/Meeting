@@ -26,7 +26,7 @@ interface EditPersonPageProps {
 
 export default async function EditPersonPage({ params }: EditPersonPageProps) {
   const user = await getCurrentUser();
-  if (user?.role !== "owner" && user?.role !== "admin") redirect("/personas");
+  if (user?.role !== "owner" && user?.role !== "admin") redirect("/administracion/personas");
 
   const { id } = await params;
   const person = await getPerson(id);
@@ -85,7 +85,7 @@ export default async function EditPersonPage({ params }: EditPersonPageProps) {
         actions={
           <>
             <Link
-              href="/personas"
+              href="/administracion/personas"
               aria-label={es.cancel}
               className="grid h-11 w-11 place-items-center rounded-xl border border-input bg-background text-foreground transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
             >

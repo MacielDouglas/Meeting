@@ -35,10 +35,10 @@ Confirmado no código:
 
 - Agenda semanal: `getWeeklySchedule`, `getMyWeek`, `WeekView`, `MyWeekSection`, impressão em `/reunioes/imprimir`.
 - Programa de reuniões: músicas, esboços, artigos A Sentinela e semanas da apostila por aba (`MeetingProgramSection`, abas Reuniões/Designações/Conteúdo/Oradores).
-- Designações com elegibilidade por sexo, idade (jovem), batismo, privilégios e indisponibilidade; gestão de pessoas e usuários vinculados (`/personas`, `/configuracion?tab=designacoes`).
+- Designações com elegibilidade por sexo, idade (jovem), batismo, privilégios e indisponibilidade; gestão de pessoas e usuários vinculados (`/administracion/personas`, `/administracion/configuracion?tab=designacoes`).
 - Limpeza: setores configuráveis, algoritmo em 8 passadas com fairness de 90 dias (inclui drafts futuros), descanso por sessão e semanal, família atômica, bloqueio de jovem em setor adulto exceto fallback com aviso — ver `docs/cleaning-algorithm.md` e `assign-cleaning.ts`.
 - Conteúdo: importação e consulta de `.jwpub` (`jwpub/*.jwpub`: `mwb_S_202607`, `w_S_202606`, `sjj_S`, `S-34_S`), contagens por idioma.
-- Config: horários, nome da congregação (cabeçalho do programa e do PDF), eventos especiais, exceções, setores de limpeza e regras de designação — restrito a `owner` em `/configuracion`.
+- Config: horários, nome da congregação (cabeçalho do programa e do PDF), eventos especiais, exceções, setores de limpeza e regras de designação — restrito a `owner` em `/administracion/configuracion`; hub em `/administracion` (convites, códigos, rename).
 - Auth: `better-auth` com Google; sessão server-side (`getCurrentUser`); `canManage`/`isOwner`/`currentUserId` no client, nunca objeto `user` completo.
 - Padrão técnico obrigatório (`AGENTS.md`): páginas server async + `Promise.all`, interatividade só em ilhas `"use client"`, `<Suspense>` por aba com skeletons, TanStack Query no client, zero supressão de lint.
 
@@ -56,7 +56,7 @@ Sem direção estética vinculante registrada nesta fase — mundo visual fica p
 
 ## Evidence on Hand
 
-- Código executável: `src/app/page.tsx` (home com semana atual), `src/app/reunioes/page.tsx`, `src/app/personas/`, `src/app/configuracion/page.tsx`, `src/features/{meetings,designations,cleaning,meeting-content,people,weekly-schedule,offline,settings,auth}/`.
+- Código executável: `src/app/page.tsx` (home com semana atual), `src/app/reunioes/page.tsx`, `src/app/administracion/personas/`, `src/app/administracion/configuracion/page.tsx`, `src/features/{meetings,designations,cleaning,meeting-content,people,weekly-schedule,offline,settings,auth,organization}/`.
 - Conteúdo real: `jwpub/mwb_S_202607.jwpub`, `jwpub/w_S_202606.jwpub`, `jwpub/sjj_S.jwpub`, `jwpub/S-34_S.jwpub`, `jwpub/syncfile.json`.
 - Regras: `docs/cleaning-algorithm.md`, testes `assign-cleaning.test.ts`, `build-meeting-program.test.ts`, `capabilities.test.ts`, `schedule.test.ts`, `my-week.test.ts`.
 - Ausências que não devem ser fabricadas: depoimentos, clientes, benchmarks, preços, licenças.

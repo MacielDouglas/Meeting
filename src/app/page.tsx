@@ -1,7 +1,10 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FaBookOpen, FaMeetup, FaUserGroup, FaWifi } from "react-icons/fa6";
+import { FaBookOpen, FaMeetup, FaShieldHalved, FaUserGroup, FaWifi } from "react-icons/fa6";
 import { getCurrentUser } from "@/features/auth/application/session";
 import { ScheduleCacheWriter } from "@/features/offline/ScheduleCacheWriter";
+import { isUserAssociated } from "@/features/organization/application/organization-queries";
 import { getMyWeek } from "@/features/weekly-schedule/application/get-my-week";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import { MyWeekSection } from "@/features/weekly-schedule/presentation/MyWeekSection";
@@ -65,8 +68,11 @@ function PublicLanding() {
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) return <PublicLanding />;
+  // Sem associação à organização: boas-vindas (nunca associa sozinho).
+  if (!(await isUserAssociated(user))) redirect("/bienvenida");
   // Programa só é necessário com sessão: visitante não paga a query.
   const schedule = await getWeeklySchedule();
+  const isOwner = user.role === "owner";
 
   return (
     <main className="page-stack">
@@ -78,6 +84,22 @@ export default async function HomePage() {
           canLinkAccount={user.role === "owner" || user.role === "admin"}
         />
       </Suspense>
+
+      {isOwner && (
+        <Link
+          href="/administracion"
+          aria-label={es.verAdministracion}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-card-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <FaShieldHalved aria-hidden size={20} className="shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-base font-semibold">{es.administracion}</span>
+            <span className="block truncate text-sm text-muted-foreground">
+              {es.administracionDesc}
+            </span>
+          </span>
+        </Link>
+      )}
     </main>
   );
 }

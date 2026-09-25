@@ -113,9 +113,13 @@ describe("updatePersonSchema", () => {
 
 describe("updateUserRoleSchema", () => {
   it("aceita los roles válidos", () => {
-    for (const role of ["owner", "admin", "member"] as const) {
+    for (const role of ["admin", "member"] as const) {
       expect(updateUserRoleSchema.safeParse({ userId: "u2", role }).success).toBe(true);
     }
+  });
+
+  it("rechaza owner por dropdown (titularidade fora deste fluxo)", () => {
+    expect(updateUserRoleSchema.safeParse({ userId: "u2", role: "owner" }).success).toBe(false);
   });
 
   it("rechaza un rol desconocido", () => {

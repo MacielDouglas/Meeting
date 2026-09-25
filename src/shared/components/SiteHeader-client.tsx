@@ -7,12 +7,14 @@ import { FaListOl, FaMeetup } from "react-icons/fa";
 import {
   FaBars,
   FaBookOpen,
+  FaCircleUser,
   FaClipboardList,
   FaGear,
   FaHouse,
   FaMoon,
   FaRightFromBracket,
   FaRightToBracket,
+  FaShieldHalved,
   FaSun,
   FaUserGroup,
   FaUsersGear,
@@ -110,11 +112,21 @@ export function SiteHeader({
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
-  const isPersonas = pathname.startsWith("/personas") && activeTab !== "usuarios";
-  const isUsuarios = pathname.startsWith("/personas") && activeTab === "usuarios";
+  const isPersonas = pathname.startsWith("/administracion/personas") && activeTab !== "usuarios";
+  const isUsuarios = pathname.startsWith("/administracion/personas") && activeTab === "usuarios";
 
   const items = [
     { href: "/", label: es.home, icon: FaHouse, match: (path: string) => path === "/" },
+    ...(isAuthed
+      ? [
+          {
+            href: "/perfil",
+            label: es.perfil,
+            icon: FaCircleUser,
+            match: (path: string) => path === "/perfil",
+          },
+        ]
+      : []),
     {
       href: "/reunioes",
       label: es.tabReuniones,
@@ -128,7 +140,7 @@ export function SiteHeader({
       match: (path: string) => path.startsWith("/designacoes"),
     },
     {
-      href: "/personas",
+      href: "/administracion/personas",
       label: es.people,
       icon: FaUserGroup,
       match: () => isPersonas,
@@ -137,7 +149,7 @@ export function SiteHeader({
     ...(showAdmin
       ? [
           {
-            href: "/personas?tab=usuarios",
+            href: "/administracion/personas?tab=usuarios",
             label: es.usersTab,
             icon: FaUsersGear,
             match: () => isUsuarios,
@@ -157,10 +169,20 @@ export function SiteHeader({
     ...(showSettings
       ? [
           {
-            href: "/configuracion",
+            href: "/administracion",
+            label: es.administracion,
+            icon: FaShieldHalved,
+            match: (path: string) => path === "/administracion",
+          },
+        ]
+      : []),
+    ...(showSettings
+      ? [
+          {
+            href: "/administracion/configuracion",
             label: es.configuracion,
             icon: FaGear,
-            match: (path: string) => path.startsWith("/configuracion"),
+            match: (path: string) => path.startsWith("/administracion/configuracion"),
           },
         ]
       : []),

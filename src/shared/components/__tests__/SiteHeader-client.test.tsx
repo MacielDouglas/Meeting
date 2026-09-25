@@ -66,6 +66,7 @@ describe("SiteHeader", () => {
     expect(screen.queryByRole("link", { name: es.asignar })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: es.configuracion })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: es.people })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: es.perfil })).not.toBeInTheDocument();
   });
 
   it("mostra itens de admin e ajustes conforme as flags", async () => {
@@ -73,21 +74,26 @@ describe("SiteHeader", () => {
     renderHeader({ showAdmin: true, showSettings: true, isAuthed: true });
     await openMenu(user);
     const menu = screen.getByRole("navigation", { name: es.menu });
+    expect(within(menu).getByRole("link", { name: es.perfil })).toHaveAttribute("href", "/perfil");
     expect(within(menu).getByRole("link", { name: es.people })).toHaveAttribute(
       "href",
-      "/personas",
+      "/administracion/personas",
     );
     expect(within(menu).getByRole("link", { name: es.usersTab })).toHaveAttribute(
       "href",
-      "/personas?tab=usuarios",
+      "/administracion/personas?tab=usuarios",
     );
     expect(within(menu).getByRole("link", { name: es.asignar })).toHaveAttribute(
       "href",
       "/asignar",
     );
+    expect(within(menu).getByRole("link", { name: es.administracion })).toHaveAttribute(
+      "href",
+      "/administracion",
+    );
     expect(within(menu).getByRole("link", { name: es.configuracion })).toHaveAttribute(
       "href",
-      "/configuracion",
+      "/administracion/configuracion",
     );
     expect(within(menu).queryByRole("link", { name: es.signInTitle })).not.toBeInTheDocument();
   });

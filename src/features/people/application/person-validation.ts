@@ -54,12 +54,26 @@ export const updatePersonSchema = personFormSchema.extend({ id: personId });
 
 export const updateUserRoleSchema = z.object({
   userId: personId,
-  role: z.enum(["owner", "admin", "member"]),
+  // Owner não se concede por dropdown: só admin/member (transferência de
+  // titularidade fora deste fluxo).
+  role: z.enum(["admin", "member"]),
+});
+
+export const linkUserPersonSchema = z.object({
+  userId: personId,
+  personId,
+});
+
+export const myPersonNameSchema = z.object({
+  firstName: plainText(80),
+  lastName: plainText(80),
 });
 
 export type PersonFormValues = z.infer<typeof personFormSchema>;
 export type UpdatePersonInput = z.infer<typeof updatePersonSchema>;
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
+export type LinkUserPersonInput = z.infer<typeof linkUserPersonSchema>;
+export type MyPersonNameInput = z.infer<typeof myPersonNameSchema>;
 
 export const DEFAULT_PERSON_FORM: PersonFormValues = {
   firstName: "",

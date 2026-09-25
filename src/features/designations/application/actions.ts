@@ -16,7 +16,7 @@ import { plainText } from "@/shared/lib/validation";
 const idSchema = z.string().trim().min(1).max(64);
 
 function revalidate() {
-  revalidatePath("/configuracion");
+  revalidatePath("/administracion/configuracion");
 }
 
 async function nextSectorOrder(): Promise<number> {

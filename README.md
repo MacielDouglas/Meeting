@@ -23,8 +23,11 @@ Antes, isso vivia em planilhas, impressos e mensagens soltas. O Meeting centrali
 | **Reuniões** | `/reunioes` | Programa completo das reuniões entre semana e de fim de semana: partes, discursos, cânticos, rascunho da encenação, salvar/replicar programa. Abas **Contenido** (importar `.jwpub` de publicações e cadernos, outlines, músicas) e **Oradores** (oradores de fora e seus discursos). |
 | **Designações** | `/designacoes` | Visão do membro: próximas reuniões com cargos e limpeza do dia, incluindo "minha semana". |
 | **Asignar** | `/asignar` | Painel admin: sortear/ajustar designações da reunião e o programa de limpeza. |
-| **Pessoas** | `/personas` | Cadastro e busca de membros, papéis e elegibilidade; formulários de criação/edição. |
-| **Configuración** | `/configuracion` | Dono da conta: horários e nome da congregação, exceções de agenda, eventos especiais, regras de limpeza e de designações. |
+| **Pessoas** | `/administracion/personas` | Cadastro e busca de membros, papéis e elegibilidade; formulários de criação/edição. |
+| **Configuración** | `/administracion/configuracion` | Dono da conta: horários e nome da congregação, exceções de agenda, eventos especiais, regras de limpeza e de designações. |
+| **Administración** | `/administracion` | Hub do owner: visão da organização, renomear congregação, convites e códigos de entrada. |
+| **Bienvenida** | `/bienvenida` | Novos usuários sem associação: gerar código de entrada e prévia do app. |
+| **Perfil** | `/perfil` | Meus dados, edição do nome da persona vinculada e saída da organização. |
 | **Impressão e agenda** | `/reunioes/imprimir`, `/api/reunioes/ical` | Versão imprimível do programa e feed iCal das reuniões. |
 
 Recursos transversais:

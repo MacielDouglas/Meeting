@@ -2,10 +2,16 @@ import { mockDb } from "@test/mock-db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { requireOwnerUser, requirePrivilegedUser } from "@/features/auth/application/session";
+import {
+  requireAuthenticatedUser,
+  requireOwnerUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
 import {
   createPerson,
   deletePerson,
+  linkUserToPerson,
+  updateMyPersonName,
   updatePerson,
   updateUserRole,
 } from "@/features/people/application/actions";
@@ -57,14 +63,16 @@ function callsOf(fn: string) {
 
 beforeEach(() => {
   mockDb.reset();
+  vi.mocked(requireAuthenticatedUser).mockReset();
   vi.mocked(requirePrivilegedUser).mockReset();
   vi.mocked(requireOwnerUser).mockReset();
   vi.mocked(revalidatePath).mockReset();
   vi.mocked(redirect).mockReset();
+  vi.mocked(requireAuthenticatedUser).mockResolvedValue(fakeUser);
   vi.mocked(requirePrivilegedUser).mockResolvedValue(fakeUser);
   vi.mocked(requireOwnerUser).mockResolvedValue(fakeUser);
   vi.mocked(redirect).mockImplementation(() => {
-    throw new Error("NEXT_REDIRECT:/personas");
+    throw new Error("NEXT_REDIRECT:/administracion/personas");
   });
 });
 
@@ -121,7 +129,7 @@ describe("createPerson", () => {
 
     await expect(
       createPerson(validForm({ sex: "female", elder: true, familyMemberId: "f1", userId: "u1" })),
-    ).rejects.toThrow("NEXT_REDIRECT:/personas");
+    ).rejects.toThrow("NEXT_REDIRECT:/administracion/personas");
 
     const values = callsOf("values")[0].args[0] as Record<string, unknown>;
     expect(values).toMatchObject({
@@ -133,8 +141,8 @@ describe("createPerson", () => {
       userId: "u1",
     });
     expect(typeof values.id).toBe("string");
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/personas");
-    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/personas");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
+    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/administracion/personas");
   });
 
   it("devuelve error de duplicado cuando la base rechaza el registro", async () => {
@@ -206,14 +214,16 @@ describe("updatePerson", () => {
   it("actualiza la persona sin tocar el id y redirige", async () => {
     mockDb.enqueue([[]]);
 
-    await expect(updatePerson(validForm({ id: "p1" }))).rejects.toThrow("NEXT_REDIRECT:/personas");
+    await expect(updatePerson(validForm({ id: "p1" }))).rejects.toThrow(
+      "NEXT_REDIRECT:/administracion/personas",
+    );
 
     const values = callsOf("set")[0].args[0] as Record<string, unknown>;
     expect(values).toMatchObject({ firstName: "Ana", lastName: "Pérez" });
     expect(values).not.toHaveProperty("id");
     expect(callsOf("where")).toHaveLength(1);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/personas");
-    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/personas");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
+    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/administracion/personas");
   });
 });
 
@@ -230,17 +240,99 @@ describe("deletePerson", () => {
   it("elimina la persona y redirige", async () => {
     mockDb.enqueue([]);
 
-    await expect(deletePerson("p1")).rejects.toThrow("NEXT_REDIRECT:/personas");
+    await expect(deletePerson("p1")).rejects.toThrow("NEXT_REDIRECT:/administracion/personas");
 
     expect(callsOf("delete")).toHaveLength(1);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/personas");
-    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/personas");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
+    expect(vi.mocked(redirect)).toHaveBeenCalledWith("/administracion/personas");
+  });
+});
+
+describe("updateMyPersonName", () => {
+  it("rechaza el nombre inválido sin tocar el banco", async () => {
+    const result = await updateMyPersonName({ firstName: "", lastName: "Paz" });
+    expect(result).toEqual({ ok: false, error: "Revisa el nombre informado." });
+    expect(mockDb.calls).toHaveLength(0);
+  });
+
+  it("exige cuenta vinculada a una persona", async () => {
+    mockDb.enqueue([]);
+    const result = await updateMyPersonName({ firstName: "Ana", lastName: "Paz" });
+    expect(result).toEqual({
+      ok: false,
+      error: "Pide a un administrador que vincule tu cuenta.",
+    });
+  });
+
+  it("actualiza el nombre de la propia persona", async () => {
+    mockDb.enqueueMany([[{ id: "p1" }], []]);
+    const result = await updateMyPersonName({ firstName: "Ana", lastName: "Paz" });
+    expect(result).toEqual({ ok: true });
+    const values = callsOf("set")[0].args[0] as Record<string, unknown>;
+    expect(values).toMatchObject({ firstName: "Ana", lastName: "Paz" });
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/perfil");
+  });
+});
+
+describe("linkUserToPerson", () => {
+  it("rechaza datos inválidos e sem permissão", async () => {
+    expect(await linkUserToPerson({ userId: "", personId: "p1" })).toEqual({
+      ok: false,
+      error: "Datos no válidos para vincular.",
+    });
+    vi.mocked(requireOwnerUser).mockRejectedValueOnce(new Error("FORBIDDEN"));
+    expect(await linkUserToPerson({ userId: "u2", personId: "p1" })).toEqual({
+      ok: false,
+      error: "Solo el owner puede vincular usuarios.",
+    });
+    expect(mockDb.calls).toHaveLength(0);
+  });
+
+  it("exige usuário e pessoa existentes com pessoa livre", async () => {
+    mockDb.enqueue([]);
+    expect(await linkUserToPerson({ userId: "u9", personId: "p1" })).toEqual({
+      ok: false,
+      error: "Usuario no encontrado.",
+    });
+    mockDb.enqueueMany([[{ id: "u2" }], []]);
+    expect(await linkUserToPerson({ userId: "u2", personId: "p9" })).toEqual({
+      ok: false,
+      error: "Persona no encontrada.",
+    });
+    mockDb.enqueueMany([[{ id: "u2" }], [{ id: "p1", userId: "u9" }]]);
+    expect(await linkUserToPerson({ userId: "u2", personId: "p1" })).toEqual({
+      ok: false,
+      error: "Esa persona ya está vinculada a otro usuario.",
+    });
+  });
+
+  it("vincula a pessoa livre ao usuário", async () => {
+    mockDb.enqueueMany([[{ id: "u2" }], [{ id: "p1", userId: null }], []]);
+    const result = await linkUserToPerson({ userId: "u2", personId: "p1" });
+    expect(result).toEqual({ ok: true });
+    const values = callsOf("set")[0].args[0] as Record<string, unknown>;
+    expect(values).toMatchObject({ userId: "u2" });
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
+  });
+
+  it("é idempotente quando já vinculados", async () => {
+    mockDb.enqueueMany([[{ id: "u2" }], [{ id: "p1", userId: "u2" }]]);
+    const result = await linkUserToPerson({ userId: "u2", personId: "p1" });
+    expect(result).toEqual({ ok: true });
+    expect(callsOf("update")).toHaveLength(0);
   });
 });
 
 describe("updateUserRole", () => {
   it("rechaza el rol inválido", async () => {
     const result = await updateUserRole({ userId: "u2", role: "superuser" });
+
+    expect(result).toEqual({ ok: false, error: "Rol no válido." });
+    expect(vi.mocked(requireOwnerUser)).not.toHaveBeenCalled();
+  });
+
+  it("rechaza promover a owner por dropdown", async () => {
+    const result = await updateUserRole({ userId: "u2", role: "owner" });
 
     expect(result).toEqual({ ok: false, error: "Rol no válido." });
     expect(vi.mocked(requireOwnerUser)).not.toHaveBeenCalled();
@@ -263,14 +355,14 @@ describe("updateUserRole", () => {
   });
 
   it("cambia el rol del usuario", async () => {
-    mockDb.enqueue([]);
+    mockDb.enqueueMany([[], [{ id: "org1", name: "Cong" }], [], []]);
 
     const result = await updateUserRole({ userId: "u2", role: "admin" });
 
     expect(result).toEqual({ ok: true });
     const values = callsOf("set")[0].args[0] as Record<string, unknown>;
     expect(values).toMatchObject({ role: "admin" });
-    expect(callsOf("where")).toHaveLength(1);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/personas");
+    expect(callsOf("where")).toHaveLength(3);
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
   });
 });

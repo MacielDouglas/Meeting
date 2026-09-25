@@ -22,11 +22,11 @@ describe("PersonList", () => {
     render(<PersonList persons={persons} canCreate={false} />);
     expect(screen.getByRole("link", { name: /Juan Pérez/ })).toHaveAttribute(
       "href",
-      "/personas/1/editar",
+      "/administracion/personas/1/editar",
     );
     expect(screen.getByRole("link", { name: /María López/ })).toHaveAttribute(
       "href",
-      "/personas/2/editar",
+      "/administracion/personas/2/editar",
     );
   });
 
@@ -65,7 +65,7 @@ describe("PersonList", () => {
     rerender(<PersonList persons={persons} canCreate />);
     expect(screen.getByRole("link", { name: es.newPerson })).toHaveAttribute(
       "href",
-      "/personas/nueva",
+      "/administracion/personas/nueva",
     );
   });
 });

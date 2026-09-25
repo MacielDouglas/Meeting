@@ -180,7 +180,7 @@ describe("MyWeekSection", () => {
 
     expect(screen.getByRole("link", { name: es.vincularEnPersonas })).toHaveAttribute(
       "href",
-      "/personas",
+      "/administracion/personas",
     );
     expect(screen.queryByText(es.pideAdminVinculo)).not.toBeInTheDocument();
   });

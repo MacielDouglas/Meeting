@@ -36,7 +36,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
         </div>
         {canCreate && (
           <Link
-            href="/personas/nueva"
+            href="/administracion/personas/nueva"
             aria-label={es.newPerson}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
           >
@@ -52,7 +52,7 @@ export function PersonList({ persons, canCreate }: PersonListProps) {
           {filtered.map((person) => (
             <li key={person.id} className="border-b border-border last:border-b-0">
               <Link
-                href={`/personas/${person.id}/editar`}
+                href={`/administracion/personas/${person.id}/editar`}
                 className="flex items-center gap-3 py-2.5"
               >
                 <FaCircleUser

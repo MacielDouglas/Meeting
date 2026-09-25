@@ -24,7 +24,7 @@ export interface SettingsActionResult {
 }
 
 function revalidateSettingsPages() {
-  revalidatePath("/configuracion");
+  revalidatePath("/administracion/configuracion");
   revalidatePath("/");
 }
 

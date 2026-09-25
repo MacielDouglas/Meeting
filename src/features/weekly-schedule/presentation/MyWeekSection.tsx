@@ -287,7 +287,7 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
           <p className="text-sm text-muted-foreground">
             {es.usuarioNoVinculado}{" "}
             {canLinkAccount ? (
-              <Link href="/personas" className="font-medium text-accent underline">
+              <Link href="/administracion/personas" className="font-medium text-accent underline">
                 {es.vincularEnPersonas}
               </Link>
             ) : (

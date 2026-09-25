@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaListOl } from "react-icons/fa";
-import { FaBookOpen, FaGear, FaHouse, FaUserGroup } from "react-icons/fa6";
+import { FaBookOpen, FaCircleUser, FaHouse, FaShieldHalved } from "react-icons/fa6";
 import { es } from "@/shared/i18n/es";
 import { cn } from "@/shared/lib/utils";
 
@@ -22,33 +22,23 @@ const ITEMS = [
     match: (path: string) => path.startsWith("/designacoes"),
   },
   {
-    href: "/personas",
-    label: es.people,
-    icon: FaUserGroup,
-    match: (path: string) => path.startsWith("/personas"),
-    privilegedOnly: true,
+    href: "/perfil",
+    label: es.perfil,
+    icon: FaCircleUser,
+    match: (path: string) => path === "/perfil",
   },
   {
-    href: "/configuracion",
-    label: es.configuracion,
-    icon: FaGear,
-    match: (path: string) => path.startsWith("/configuracion"),
+    href: "/administracion",
+    label: es.admin,
+    icon: FaShieldHalved,
+    match: (path: string) => path.startsWith("/administracion"),
     ownerOnly: true,
   },
 ] as const;
 
-export function BottomNav({
-  showSettings,
-  showPeople,
-}: {
-  showSettings: boolean;
-  showPeople: boolean;
-}) {
+export function BottomNav({ showSettings }: { showSettings: boolean }) {
   const pathname = usePathname();
-  const visibleItems = ITEMS.filter(
-    (item) =>
-      (!("ownerOnly" in item) || showSettings) && (!("privilegedOnly" in item) || showPeople),
-  );
+  const visibleItems = ITEMS.filter((item) => !("ownerOnly" in item) || showSettings);
   return (
     <nav
       aria-label="Navegación principal"

@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
-import { listPersons, listUsersWithRoles } from "@/features/people/application/queries";
+import { listActiveJoinTokenCodes } from "@/features/organization/application/organization-queries";
+import {
+  listPersons,
+  listUnlinkedPersonOptions,
+  listUsersWithRoles,
+} from "@/features/people/application/queries";
 import { PersonasTabs } from "@/features/people/presentation/PersonasTabs-client";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { TabNavSkeleton } from "@/shared/components/skeletons";
@@ -23,10 +28,19 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const { tab } = await searchParams;
   const activeTab = tab === "usuarios" ? "usuarios" : "personas";
   const canCreate = user?.role === "owner" || user?.role === "admin";
-  const [persons, users] = await Promise.all([
+  const isOwner = user?.role === "owner";
+  const [persons, users, activeCodes, unlinkedPersons] = await Promise.all([
     activeTab === "personas" ? listPersons() : Promise.resolve([]),
     activeTab === "usuarios" ? listUsersWithRoles() : Promise.resolve([]),
+    // Códigos de entrada: só o owner vê (credencial de uso único).
+    activeTab === "usuarios" && isOwner ? listActiveJoinTokenCodes() : Promise.resolve([]),
+    // Pessoas livres para vincular: só o owner vincula.
+    activeTab === "usuarios" && isOwner ? listUnlinkedPersonOptions() : Promise.resolve([]),
   ]);
+  const joinTokenByUserId: Record<string, { code: string; expiresAt: string }> = {};
+  for (const item of activeCodes) {
+    joinTokenByUserId[item.userId] = { code: item.code, expiresAt: item.expiresAt };
+  }
 
   return (
     <main className="page-stack">
@@ -38,8 +52,12 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
           defaultValue="personas"
           ariaLabel={es.people}
           items={[
-            { value: "personas", label: es.peopleTab, href: "/personas" },
-            { value: "usuarios", label: es.usersTab, href: "/personas?tab=usuarios" },
+            { value: "personas", label: es.peopleTab, href: "/administracion/personas" },
+            {
+              value: "usuarios",
+              label: es.usersTab,
+              href: "/administracion/personas?tab=usuarios",
+            },
           ]}
         />
       </Suspense>
@@ -50,7 +68,9 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
         users={users}
         canCreate={canCreate}
         currentUserId={user?.id ?? ""}
-        isOwner={user?.role === "owner"}
+        isOwner={isOwner}
+        joinTokenByUserId={joinTokenByUserId}
+        unlinkedPersons={unlinkedPersons}
       />
     </main>
   );

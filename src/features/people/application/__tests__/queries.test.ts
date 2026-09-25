@@ -2,6 +2,7 @@ import { mockDb } from "@test/mock-db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   requireAuthenticatedUser,
+  requireOwnerUser,
   requirePrivilegedUser,
 } from "@/features/auth/application/session";
 import {
@@ -9,6 +10,8 @@ import {
   getPersonByUserId,
   listPersonOptions,
   listPersons,
+  listUnlinkedPersonOptions,
+  listUserAccounts,
   listUserOptions,
   listUsersWithRoles,
 } from "@/features/people/application/queries";
@@ -36,8 +39,10 @@ beforeEach(() => {
   mockDb.reset();
   vi.mocked(requirePrivilegedUser).mockReset();
   vi.mocked(requireAuthenticatedUser).mockReset();
+  vi.mocked(requireOwnerUser).mockReset();
   vi.mocked(requirePrivilegedUser).mockResolvedValue(fakeUser);
   vi.mocked(requireAuthenticatedUser).mockResolvedValue(fakeUser);
+  vi.mocked(requireOwnerUser).mockResolvedValue(fakeUser);
 });
 
 describe("getPersonByUserId", () => {
@@ -124,13 +129,14 @@ describe("listPersonOptions", () => {
 });
 
 describe("listUsersWithRoles", () => {
-  it("vincula el nombre de la persona asociada", async () => {
+  it("vincula el nombre de la persona associada", async () => {
     mockDb.enqueueMany([
       [
         { id: "u1", name: "Owner", email: "owner@example.com", role: "owner" },
         { id: "u2", name: "Miembro", email: "member@example.com", role: "member" },
       ],
       [{ userId: "u1", firstName: "Ana", lastName: "Pérez" }],
+      [{ userId: "u2" }],
     ]);
 
     const users = await listUsersWithRoles();
@@ -151,7 +157,7 @@ describe("listUsersWithRoles", () => {
         linkedPersonName: null,
       },
     ]);
-    expect(mockDb.calls.filter((call) => call.fn === "select")).toHaveLength(2);
+    expect(mockDb.calls.filter((call) => call.fn === "select")).toHaveLength(3);
   });
 
   it("ignora las personas sin usuario vinculado", async () => {
@@ -161,19 +167,67 @@ describe("listUsersWithRoles", () => {
         { userId: null, firstName: "Sin", lastName: "Usuario" },
         { userId: "u1", firstName: "Ana", lastName: "Pérez" },
       ],
+      [],
     ]);
 
     const users = await listUsersWithRoles();
 
     expect(users[0].linkedPersonName).toBe("Ana Pérez");
   });
+
+  it("filtra membros sem vínculo (removidos somem da lista)", async () => {
+    mockDb.enqueueMany([
+      [
+        { id: "u1", name: "Owner", email: "owner@example.com", role: "owner" },
+        { id: "u2", name: "Fuera", email: "fuera@example.com", role: "member" },
+      ],
+      [],
+      [],
+    ]);
+
+    const users = await listUsersWithRoles();
+
+    expect(users.map((user) => user.id)).toEqual(["u1"]);
+  });
+});
+
+describe("listUserAccounts", () => {
+  it("lista id e e-mail de todas as contas", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(fakeUser);
+    mockDb.enqueue([
+      { id: "u1", email: "owner@example.com" },
+      { id: "u2", email: "fuera@example.com" },
+    ]);
+
+    const accounts = await listUserAccounts();
+
+    expect(accounts).toEqual([
+      { id: "u1", email: "owner@example.com" },
+      { id: "u2", email: "fuera@example.com" },
+    ]);
+  });
+});
+
+describe("listUnlinkedPersonOptions", () => {
+  it("lista só pessoas sem usuário vinculado", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(fakeUser);
+    mockDb.enqueue([{ id: "p1", firstName: "Ana", lastName: "Pérez" }]);
+
+    const options = await listUnlinkedPersonOptions();
+
+    expect(options).toEqual([{ id: "p1", label: "Ana Pérez" }]);
+    expect(vi.mocked(requireOwnerUser)).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("listUserOptions", () => {
   it("monta etiquetas con nombre y correo", async () => {
-    mockDb.enqueue([
-      { id: "u1", name: "Owner", email: "owner@example.com" },
-      { id: "u2", name: "Miembro", email: "member@example.com" },
+    mockDb.enqueueMany([
+      [
+        { id: "u1", name: "Owner", email: "owner@example.com", role: "owner" },
+        { id: "u2", name: "Miembro", email: "member@example.com", role: "member" },
+      ],
+      [{ userId: "u2" }],
     ]);
 
     const options = await listUserOptions();
@@ -184,8 +238,36 @@ describe("listUserOptions", () => {
     ]);
   });
 
+  it("filtra membros fora da organização", async () => {
+    mockDb.enqueueMany([
+      [
+        { id: "u1", name: "Owner", email: "owner@example.com", role: "owner" },
+        { id: "u2", name: "Fuera", email: "fuera@example.com", role: "member" },
+      ],
+      [],
+    ]);
+
+    const options = await listUserOptions();
+
+    expect(options).toEqual([{ id: "u1", label: "Owner (owner@example.com)" }]);
+  });
+
+  it("mantém o includeUserId mesmo fora da organização", async () => {
+    mockDb.enqueueMany([
+      [{ id: "u2", name: "Nueva", email: "nueva@example.com", role: "member" }],
+      [],
+    ]);
+
+    const options = await listUserOptions(undefined, "u2");
+
+    expect(options).toEqual([{ id: "u2", label: "Nueva (nueva@example.com)" }]);
+  });
+
   it("incluye el usuario de la persona vinculada cuando se informa", async () => {
-    mockDb.enqueue([{ id: "u1", name: "Owner", email: "owner@example.com" }]);
+    mockDb.enqueueMany([
+      [{ id: "u1", name: "Owner", email: "owner@example.com", role: "owner" }],
+      [],
+    ]);
 
     const options = await listUserOptions("p1");
 

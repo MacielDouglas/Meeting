@@ -67,7 +67,7 @@ export default async function ConfiguracionPage({
           items={TABS.map((item) => ({
             value: item.value,
             label: item.label,
-            href: `/configuracion?tab=${item.value}`,
+            href: `/administracion/configuracion?tab=${item.value}`,
           }))}
         />
       </Suspense>

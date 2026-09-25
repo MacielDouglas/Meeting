@@ -6,12 +6,7 @@ import { BottomNav } from "@/shared/components/BottomNav";
 async function BottomNavData() {
   const user = await getCurrentUser();
   if (!user) return null;
-  return (
-    <BottomNav
-      showSettings={user?.role === "owner"}
-      showPeople={user?.role === "owner" || user?.role === "admin"}
-    />
-  );
+  return <BottomNav showSettings={user?.role === "owner"} />;
 }
 
 function BottomNavFallback() {

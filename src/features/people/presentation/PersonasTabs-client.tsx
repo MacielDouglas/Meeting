@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import type { UserWithRole } from "@/features/people/application/queries";
+import type { PersonOption, UserWithRole } from "@/features/people/application/queries";
 import type { PersonSummary } from "@/features/people/domain/person";
 import { TableSkeleton } from "@/shared/components/skeletons";
 
@@ -23,6 +23,8 @@ interface PersonasTabsProps {
   canCreate: boolean;
   currentUserId: string;
   isOwner: boolean;
+  joinTokenByUserId?: Record<string, { code: string; expiresAt: string }>;
+  unlinkedPersons?: PersonOption[];
 }
 
 export function PersonasTabs({
@@ -32,11 +34,19 @@ export function PersonasTabs({
   canCreate,
   currentUserId,
   isOwner,
+  joinTokenByUserId = {},
+  unlinkedPersons = [],
 }: PersonasTabsProps) {
   if (tab === "usuarios") {
     return (
       <Suspense fallback={<TableSkeleton rows={8} />}>
-        <UserList users={users} currentUserId={currentUserId} isOwner={isOwner} />
+        <UserList
+          users={users}
+          currentUserId={currentUserId}
+          isOwner={isOwner}
+          joinTokenByUserId={joinTokenByUserId}
+          unlinkedPersons={unlinkedPersons}
+        />
       </Suspense>
     );
   }

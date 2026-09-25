@@ -20,7 +20,7 @@ const sexSchema = z.enum(["any", "male", "female"]);
 const idSchema = z.string().trim().min(1).max(64);
 
 function revalidate() {
-  revalidatePath("/configuracion");
+  revalidatePath("/administracion/configuracion");
 }
 
 async function ensureTypesSeeded() {

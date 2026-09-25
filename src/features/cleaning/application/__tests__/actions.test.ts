@@ -93,7 +93,7 @@ describe("toggleCleaningType", () => {
       enabled: true,
     });
     expect(tableNameOf(callsOf("insert")[0])).toBe("cleaning_types");
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 
   it("siembra los tipos faltantes antes de guardar", async () => {
@@ -129,7 +129,7 @@ describe("setCleaningAssignmentMode", () => {
       assignmentMode: "group",
     });
     expect(callsOf("onConflictDoUpdate")).toHaveLength(1);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 });
 
@@ -185,7 +185,7 @@ describe("createCleaningSector", () => {
       sortOrder: 3,
     });
     expect(tableNameOf(callsOf("insert")[0])).toBe("cleaning_sectors");
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 });
 
@@ -227,7 +227,7 @@ describe("updateCleaningSector", () => {
     });
     expect(setData.updatedAt).toBeInstanceOf(Date);
     expect(callsOf("where")).toHaveLength(1);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 });
 
@@ -248,7 +248,7 @@ describe("toggleCleaningSector", () => {
     const setData = callsOf("set")[0].args[0] as Record<string, unknown>;
     expect(setData).toMatchObject({ enabled: false });
     expect(setData.updatedAt).toBeInstanceOf(Date);
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 });
 
@@ -269,7 +269,7 @@ describe("deleteCleaningSector", () => {
 
     expect(result).toEqual({ ok: true });
     expect(tableNameOf(callsOf("delete")[0])).toBe("cleaning_sectors");
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 });
 
@@ -299,7 +299,7 @@ describe("restoreDefaultCleaningSectors", () => {
       requiredSex: "male",
       allowYoung: false,
     });
-    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/configuracion");
+    expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/configuracion");
   });
 
   it("solo agrega los sectores que faltan", async () => {

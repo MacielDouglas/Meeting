@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import HomePage from "@/app/page";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { isUserAssociated } from "@/features/organization/application/organization-queries";
 import { getMyWeek } from "@/features/weekly-schedule/application/get-my-week";
 import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-weekly-schedule";
 import type { MyWeek } from "@/features/weekly-schedule/domain/my-week";
@@ -20,6 +21,14 @@ vi.mock("@/features/weekly-schedule/application/get-weekly-schedule", () => ({
 }));
 vi.mock("@/features/weekly-schedule/application/get-my-week", () => ({
   getMyWeek: vi.fn(),
+}));
+vi.mock("@/features/organization/application/organization-queries", () => ({
+  isUserAssociated: vi.fn(),
+}));
+vi.mock("next/navigation", () => ({
+  redirect: (url: string) => {
+    throw new Error(`NEXT_REDIRECT:${url}`);
+  },
 }));
 vi.mock("@/features/offline/ScheduleCacheWriter", () => ({
   ScheduleCacheWriter: cacheWriter,
@@ -94,6 +103,7 @@ const myWeekFixture: MyWeek = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getCurrentUser).mockResolvedValue(null);
+  vi.mocked(isUserAssociated).mockResolvedValue(true);
   vi.mocked(getWeeklySchedule).mockImplementation(() =>
     Promise.reject(new Error("getWeeklySchedule não deveria ser chamado")),
   );
@@ -154,5 +164,58 @@ describe("HomePage — autenticado", () => {
     expect(vi.mocked(getWeeklySchedule)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(getMyWeek)).toHaveBeenCalledWith("user-1");
     expect(cacheWriter).toHaveBeenCalled();
+  });
+
+  it("membro associado vê a semana sem código de entrada nem atalho de admin", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      email: "ana@example.com",
+      name: "Ana",
+      role: "member",
+    });
+    vi.mocked(getWeeklySchedule).mockResolvedValue(scheduleFixture);
+    vi.mocked(getMyWeek).mockResolvedValue(myWeekFixture);
+
+    await act(async () => {
+      render(await HomePage());
+    });
+
+    expect(await screen.findByRole("heading", { level: 1, name: es.miSemana })).toBeInTheDocument();
+    expect(screen.queryByText(es.miCodigoEntrada)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: es.verAdministracion })).not.toBeInTheDocument();
+  });
+
+  it("mostra o atalho de admin ao owner no final da página", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: "owner-1",
+      email: "owner@example.com",
+      name: "Owner",
+      role: "owner",
+    });
+    vi.mocked(getWeeklySchedule).mockResolvedValue(scheduleFixture);
+    vi.mocked(getMyWeek).mockResolvedValue(myWeekFixture);
+
+    await act(async () => {
+      render(await HomePage());
+    });
+
+    expect(await screen.findByRole("link", { name: es.verAdministracion })).toHaveAttribute(
+      "href",
+      "/administracion",
+    );
+    expect(screen.queryByText(es.miCodigoEntrada)).not.toBeInTheDocument();
+  });
+
+  it("redireciona o membro sem associação para as boas-vindas", async () => {
+    vi.mocked(getCurrentUser).mockResolvedValue({
+      id: "user-9",
+      email: "nueva@example.com",
+      name: "Nueva",
+      role: "member",
+    });
+    vi.mocked(isUserAssociated).mockResolvedValue(false);
+
+    await expect(HomePage()).rejects.toThrow("NEXT_REDIRECT:/bienvenida");
+    expect(vi.mocked(getWeeklySchedule)).not.toHaveBeenCalled();
   });
 });

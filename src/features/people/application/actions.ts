@@ -4,9 +4,16 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireOwnerUser, requirePrivilegedUser } from "@/features/auth/application/session";
-import { users } from "@/features/auth/infrastructure/user-schema";
 import {
+  requireAuthenticatedUser,
+  requireOwnerUser,
+  requirePrivilegedUser,
+} from "@/features/auth/application/session";
+import { users } from "@/features/auth/infrastructure/user-schema";
+import { upsertMembership } from "@/features/organization/application/organization-actions";
+import {
+  linkUserPersonSchema,
+  myPersonNameSchema,
   normalizePersonValues,
   personFormSchema,
   updatePersonSchema,
@@ -77,8 +84,8 @@ export async function createPerson(input: unknown): Promise<ActionResult> {
   } catch (error) {
     return { ok: false, error: toErrorMessage(error) };
   }
-  revalidatePath("/personas");
-  redirect("/personas");
+  revalidatePath("/administracion/personas");
+  redirect("/administracion/personas");
 }
 
 export async function updatePerson(input: unknown): Promise<ActionResult> {
@@ -106,8 +113,8 @@ export async function updatePerson(input: unknown): Promise<ActionResult> {
   } catch (error) {
     return { ok: false, error: toErrorMessage(error) };
   }
-  revalidatePath("/personas");
-  redirect("/personas");
+  revalidatePath("/administracion/personas");
+  redirect("/administracion/personas");
 }
 
 export async function deletePerson(id: string): Promise<ActionResult> {
@@ -117,8 +124,8 @@ export async function deletePerson(id: string): Promise<ActionResult> {
     return { ok: false, error: "No tienes permiso para eliminar personas." };
   }
   await getDb().delete(persons).where(eq(persons.id, id));
-  revalidatePath("/personas");
-  redirect("/personas");
+  revalidatePath("/administracion/personas");
+  redirect("/administracion/personas");
 }
 
 export async function updateUserRole(input: unknown): Promise<ActionResult> {
@@ -137,6 +144,66 @@ export async function updateUserRole(input: unknown): Promise<ActionResult> {
     .update(users)
     .set({ role: parsed.data.role })
     .where(eq(users.id, parsed.data.userId));
-  revalidatePath("/personas");
+  // Troca explícita pelo owner também associa o usuário à organização.
+  await upsertMembership(parsed.data.userId, parsed.data.role);
+  revalidatePath("/administracion/personas");
+  return { ok: true };
+}
+
+/** O usuário edita o nome da própria persona vinculada (só nome e sobrenome). */
+export async function updateMyPersonName(input: unknown): Promise<ActionResult> {
+  const parsed = myPersonNameSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Revisa el nombre informado." };
+  let userId: string;
+  try {
+    userId = (await requireAuthenticatedUser()).id;
+  } catch {
+    return { ok: false, error: "Inicia sesión para editar tus datos." };
+  }
+  const rows = await getDb()
+    .select({ id: persons.id })
+    .from(persons)
+    .where(eq(persons.userId, userId))
+    .limit(1);
+  const person = rows[0];
+  if (!person) return { ok: false, error: "Pide a un administrador que vincule tu cuenta." };
+  await getDb()
+    .update(persons)
+    .set({ firstName: parsed.data.firstName, lastName: parsed.data.lastName })
+    .where(eq(persons.id, person.id));
+  revalidatePath("/perfil");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** O owner vincula um usuário a uma pessoa livre (idempotente se já vinculados). */
+export async function linkUserToPerson(input: unknown): Promise<ActionResult> {
+  const parsed = linkUserPersonSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Datos no válidos para vincular." };
+  try {
+    await requireOwnerUser();
+  } catch {
+    return { ok: false, error: "Solo el owner puede vincular usuarios." };
+  }
+  const db = getDb();
+  const userRows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.id, parsed.data.userId))
+    .limit(1);
+  if (!userRows[0]) return { ok: false, error: "Usuario no encontrado." };
+  const personRows = await db
+    .select({ id: persons.id, userId: persons.userId })
+    .from(persons)
+    .where(eq(persons.id, parsed.data.personId))
+    .limit(1);
+  const person = personRows[0];
+  if (!person) return { ok: false, error: "Persona no encontrada." };
+  if (person.userId && person.userId !== parsed.data.userId)
+    return { ok: false, error: "Esa persona ya está vinculada a otro usuario." };
+  if (person.userId !== parsed.data.userId) {
+    await db.update(persons).set({ userId: parsed.data.userId }).where(eq(persons.id, person.id));
+  }
+  revalidatePath("/administracion/personas");
   return { ok: true };
 }
