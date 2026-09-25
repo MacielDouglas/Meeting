@@ -333,14 +333,14 @@ export function MyWeekSection({ myWeek, canLinkAccount }: MyWeekSectionProps) {
       <div className="tight-stack">
         <Link
           href="/reunioes"
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-6 font-display text-base font-semibold text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-accent px-6 font-display text-base font-semibold text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           <FaBookOpen aria-hidden size={18} />
           {es.verProgramaCompleto}
         </Link>
         <Link
           href="/designacoes"
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-secondary px-6 font-display text-sm font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="flex h-11 items-center justify-center gap-2 rounded-2xl bg-secondary px-6 font-display text-sm font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           <FaListOl aria-hidden size={18} />
           {es.verDiseniosLimpieza}

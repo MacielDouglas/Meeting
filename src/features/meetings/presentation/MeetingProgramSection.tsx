@@ -835,7 +835,7 @@ export function MeetingProgramSection({
   };
 
   return (
-    <div className="section-stack">
+    <div className={`section-stack ${canEdit && dirtyCount > 0 ? "pb-60" : ""}`}>
       <fieldset className="flex rounded-xl bg-secondary p-1">
         <legend className="sr-only">{es.tipoReunion}</legend>
         {(

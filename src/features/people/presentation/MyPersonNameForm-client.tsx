@@ -32,6 +32,8 @@ export function MyPersonNameForm({
       } else {
         setError(result.error ?? null);
       }
+    } catch {
+      setError(es.errorGuardar);
     } finally {
       setPending(false);
     }

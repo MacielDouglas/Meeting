@@ -62,7 +62,7 @@ async function AdminOverview() {
         </p>
       </Card>
 
-      <nav aria-label={es.administracion} className="tight-stack">
+      <nav aria-label={es.administracion} className="tight-stack sm:grid sm:grid-cols-3">
         <Link
           href="/administracion/personas?tab=usuarios"
           className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-card-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"

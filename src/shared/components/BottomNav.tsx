@@ -44,7 +44,7 @@ export function BottomNav({ showSettings }: { showSettings: boolean }) {
       aria-label={es.navegacionPrincipal}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background sm:hidden"
     >
-      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
+      <div className="mx-auto flex w-full max-w-md items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
         {visibleItems.map((item) => {
           const active = item.match(pathname);
           const Icon = item.icon;

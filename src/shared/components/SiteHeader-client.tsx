@@ -201,7 +201,7 @@ export function SiteHeader({
   const visibleItems = items.filter((item) => !("privileged" in item) || showAdmin);
 
   return (
-    <header className="relative flex items-center gap-3">
+    <header className="sticky top-0 z-40 flex items-center gap-3 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
       <Link
         href="/"
         aria-label="Meeting"
@@ -283,7 +283,7 @@ export function SiteHeader({
       {menuOpen && (
         <nav
           aria-label={es.menu}
-          className="absolute top-[calc(100%+8px)] right-0 z-50 w-60 rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-lg"
+          className="absolute top-[calc(100%+8px)] right-0 z-50 max-h-[70dvh] w-60 overflow-y-auto rounded-2xl border border-border bg-card p-2 text-card-foreground shadow-lg"
         >
           <ul className="flex flex-col">
             {visibleItems.map((item) => {

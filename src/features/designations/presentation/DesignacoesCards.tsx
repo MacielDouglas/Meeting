@@ -77,7 +77,7 @@ function CleaningRows({
                       <span key={name}>
                         {index > 0 ? " · " : null}
                         {isHighlight(name, highlightName) ? (
-                          <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-accent-ink">
+                          <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold text-accent-ink">
                             {name}
                           </span>
                         ) : (
@@ -129,7 +129,7 @@ function DutyRows({
               className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
             >
               {isHighlight(item.personName, highlightName) ? (
-                <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-accent-ink">
+                <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold text-accent-ink">
                   {item.personName}
                 </span>
               ) : (
@@ -156,7 +156,7 @@ function DesignacoesCard({
 }) {
   const empty = day.cleaning.length === 0 && day.duties.length === 0;
   return (
-    <Card className={cn("p-4 sm:p-5", lead && "ring-2 ring-accent")}>
+    <Card className={cn("p-4", lead && "ring-2 ring-accent")}>
       <div
         className={cn(
           "flex flex-col gap-1 rounded-xl px-3 py-3",
@@ -182,7 +182,7 @@ function DesignacoesCard({
           {canManage ? (
             <Link
               href="/asignar"
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.asignar}
             </Link>
@@ -221,7 +221,7 @@ export function DesignacoesCards({
   canManage?: boolean;
 }) {
   return (
-    <div className="section-stack">
+    <div className="section-stack sm:grid sm:grid-cols-2 sm:[&>*:first-child]:col-span-2">
       {days.map((day, index) => (
         <DesignacoesCard
           key={`${day.date}-${day.kind}`}

@@ -326,7 +326,7 @@ export function CleaningDesignationSection({
     selectedType === "per_meeting" ? rangeMeetingDays.length : selectedDates.size;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="section-stack">
       {enabledTypes.length > 0 && (
         <div className="flex rounded-xl bg-secondary p-1">
           {enabledTypes.map((type) => (
