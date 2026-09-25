@@ -11,6 +11,7 @@ import {
   listOutsideSpeakers,
   type OutsideSpeakerItem,
 } from "@/features/meetings/application/outside-speaker-queries";
+import { useReunioesEditMode } from "@/features/meetings/presentation/ReunioesEditMode-client";
 import {
   newTalkDraft,
   SpeakerTalkFields,
@@ -45,6 +46,9 @@ export function OutsideSpeakersClient({
   systemCongregation,
   canManage,
 }: OutsideSpeakersClientProps) {
+  // Mesmo modo edição da aba Reuniões: sem ele, só leitura das designações.
+  const editMode = useReunioesEditMode();
+  const canEdit = canManage && editMode;
   const queryClient = useQueryClient();
 
   const speakersQuery = useQuery({
@@ -183,7 +187,9 @@ export function OutsideSpeakersClient({
         </p>
       )}
 
-      {canManage && (
+      {canManage && !editMode && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
+
+      {canEdit && (
         <Card className="flex flex-col gap-2 p-3">
           {editingSpeaker ? (
             <div className="flex flex-col gap-1 rounded-lg bg-secondary px-3 py-2">
@@ -279,7 +285,7 @@ export function OutsideSpeakersClient({
                           </span>
                         ) : null}
                       </span>
-                      {canManage && (
+                      {canEdit && (
                         <span className="flex shrink-0 gap-2">
                           <button
                             type="button"
@@ -308,7 +314,7 @@ export function OutsideSpeakersClient({
           {speakers.length === 0 && (
             <div className="flex flex-col gap-1">
               <p className="text-sm font-medium">{es.ningunOrador}</p>
-              {canManage && <p className="text-sm text-muted-foreground">{es.anadePrimerOrador}</p>}
+              {canEdit && <p className="text-sm text-muted-foreground">{es.anadePrimerOrador}</p>}
             </div>
           )}
         </div>

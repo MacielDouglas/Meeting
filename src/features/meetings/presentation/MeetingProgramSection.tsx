@@ -49,6 +49,7 @@ import {
   blocksMeeting,
   resolveWeekOverrides,
 } from "@/features/meetings/domain/special-event-weeks";
+import { useReunioesEditMode } from "@/features/meetings/presentation/ReunioesEditMode-client";
 import { SpecialEventBanner } from "@/features/meetings/presentation/SpecialEventBanner";
 import type { SpecialEventItem } from "@/features/settings/application/queries";
 import { CardSkeleton } from "@/shared/components/skeletons";
@@ -246,6 +247,10 @@ export function MeetingProgramSection({
   congregationName,
   events,
 }: MeetingProgramSectionProps) {
+  // Modo edição (switch no topo para owner/admin): sem ele, mesmo quem pode
+  // gerenciar vê só as designações, sem opção de editar.
+  const editMode = useReunioesEditMode();
+  const canEdit = canManage && editMode;
   const [kind, setKind] = useState<"midweek" | "weekend">(initialKind);
   const [weekOffset, setWeekOffset] = useState(0);
   const weekStart = useMemo(
@@ -428,7 +433,7 @@ export function MeetingProgramSection({
 
   /** Cria o programa da semana a partir do modelo (upsert não-destrutivo). */
   async function handleCreateProgram() {
-    if (!canManage || blocked || template.length === 0 || saving) return;
+    if (!canEdit || blocked || template.length === 0 || saving) return;
     setSaving(true);
     setError(null);
     setJustSaved(false);
@@ -472,7 +477,7 @@ export function MeetingProgramSection({
     [saved],
   );
   const modelSyncAvailable =
-    canManage &&
+    canEdit &&
     programId !== null &&
     template.length > 0 &&
     saved !== null &&
@@ -480,7 +485,7 @@ export function MeetingProgramSection({
 
   /** Sincroniza o programa com o modelo atual, sem perder designações. */
   async function handleSyncModel() {
-    if (!canManage || blocked || !programId || template.length === 0 || saving) return;
+    if (!canEdit || blocked || !programId || template.length === 0 || saving) return;
     setSaving(true);
     setError(null);
     const payload = buildTemplatePayload();
@@ -789,7 +794,7 @@ export function MeetingProgramSection({
       const prayerSong = part.key === "closing-song";
       const songPart = part.key.includes("song") || part.songNumber != null;
       const countable =
-        canManage &&
+        canEdit &&
         programId !== null &&
         !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
         (!songPart || prayerSong);
@@ -812,7 +817,7 @@ export function MeetingProgramSection({
       if (current !== null && rowVisible[index]) headerVisible.set(current, true);
     });
     return { assigned, total, rowVisible, headerVisible };
-  }, [displayPartsWithSections, partDisplay, canManage, programId, vacantOnly]);
+  }, [displayPartsWithSections, partDisplay, canEdit, programId, vacantOnly]);
   const assignmentProgress = {
     assigned: assignmentStats.assigned,
     total: assignmentStats.total,
@@ -916,7 +921,7 @@ export function MeetingProgramSection({
       {saving && !programId && (
         <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
       )}
-      {!canManage && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
+      {!canEdit && <p className="text-xs text-muted-foreground">{es.soloLectura}</p>}
 
       {override.kind !== "none" && !blocked && !loading && !loadError && (
         <SpecialEventBanner
@@ -927,7 +932,7 @@ export function MeetingProgramSection({
         />
       )}
 
-      {canManage && !blocked && programId !== null && !loading && assignmentStats.total > 0 && (
+      {canEdit && !blocked && programId !== null && !loading && assignmentStats.total > 0 && (
         <fieldset className="flex rounded-xl bg-secondary p-1">
           <legend className="sr-only">{es.filtrarPartes}</legend>
           {(
@@ -984,7 +989,7 @@ export function MeetingProgramSection({
         <Card className="flex flex-col overflow-hidden border-0 bg-session p-0 text-session-fg shadow-none">
           <div className="flex flex-col gap-2 px-0 py-4">
             <p className="text-sm font-medium text-session-fg">{es.programaNoEncontrado}</p>
-            {canManage && template.length > 0 && (
+            {canEdit && template.length > 0 && (
               <div>
                 <Button disabled={saving} onClick={() => void handleCreateProgram()}>
                   {saving ? es.guardandoPrograma : es.crearProgramaSemana}
@@ -994,7 +999,7 @@ export function MeetingProgramSection({
             {template.length === 0 && (
               <>
                 <p className="text-sm text-session-mute">{es.importarGuiaHint}</p>
-                {canManage && <JwpubImportButton />}
+                {canEdit && <JwpubImportButton />}
               </>
             )}
           </div>
@@ -1019,7 +1024,7 @@ export function MeetingProgramSection({
               const isSongPart = part.key.includes("song") || part.songNumber != null;
               // Botão sempre renderizado (foco preservado); salvando só desabilita.
               const interactive =
-                canManage &&
+                canEdit &&
                 programId !== null &&
                 !ALWAYS_DISPLAY_ONLY_KEYS.has(part.key) &&
                 !(kind === "midweek" && part.key === "opening-song");
@@ -1150,7 +1155,7 @@ export function MeetingProgramSection({
           </Card>
         )}
 
-      {canManage && dirtyCount > 0 && (
+      {canEdit && dirtyCount > 0 && (
         <div className="fixed inset-x-0 bottom-[84px] z-30 mx-auto w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
           <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
             <p className="text-sm">
@@ -1188,7 +1193,7 @@ export function MeetingProgramSection({
         </p>
       )}
 
-      {programId && canManage && (
+      {programId && canEdit && (
         <details className="group rounded-2xl border border-input bg-background">
           <summary className="flex cursor-pointer list-none items-center justify-between p-3 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden">
             <span className="font-display text-sm font-medium text-muted-foreground">

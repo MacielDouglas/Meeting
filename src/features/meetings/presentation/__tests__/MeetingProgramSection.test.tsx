@@ -66,6 +66,7 @@ function renderSection(overrides: Partial<ComponentProps<typeof MeetingProgramSe
 
 beforeEach(() => {
   vi.clearAllMocks();
+  window.localStorage.setItem("reunioes-edit-mode", "1");
   vi.mocked(getMeetingProgram).mockResolvedValue(programFixture);
 });
 
@@ -116,5 +117,15 @@ describe("MeetingProgramSection", () => {
     expect(screen.getByText(es.assemblyCta)).toBeInTheDocument();
     expect(screen.getByText(es.eventReplacesMeeting)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
+  });
+
+  it("sin modo edición no ofrece crear el programa (solo lectura)", async () => {
+    window.localStorage.setItem("reunioes-edit-mode", "0");
+    vi.mocked(getMeetingProgram).mockResolvedValue(null);
+    renderSection();
+
+    expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
+    expect(screen.getByText(es.soloLectura)).toBeInTheDocument();
   });
 });

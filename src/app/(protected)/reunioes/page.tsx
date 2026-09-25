@@ -11,6 +11,7 @@ import { listWatchtowerIssues } from "@/features/meeting-content/application/wat
 import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
+import { ReunioesEditModeToggle } from "@/features/meetings/presentation/ReunioesEditMode-client";
 import { ReunioesSecondaryTabs } from "@/features/meetings/presentation/ReunioesSecondaryTabs-client";
 import {
   getMeetingSchedule,
@@ -155,6 +156,8 @@ export default async function ReunioesPage({
   return (
     <main className="page-stack">
       <PageHeader title={es.tabReuniones} />
+
+      {canManage && <ReunioesEditModeToggle />}
 
       {canManage && (
         <TabNav

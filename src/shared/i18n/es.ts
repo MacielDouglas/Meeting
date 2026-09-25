@@ -361,6 +361,8 @@ export const es = {
   congregacionLabel: "Congregación",
   telefonoLabel: "Teléfono",
   editarLabel: "Editar",
+  modoEdicion: "Modo edición",
+  modoEdicionHint: "Activa para asignar partes y editar oradores",
 } as const;
 
 export type SpanishDictionary = typeof es;
