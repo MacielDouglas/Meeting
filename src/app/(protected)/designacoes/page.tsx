@@ -16,6 +16,8 @@ import {
   listUpcomingDutyDates,
 } from "@/features/meeting-duties/application/duty-queries";
 import { mondayOfISO, noticeForDate } from "@/features/meetings/domain/special-event-weeks";
+import { getPersonByUserId } from "@/features/people/application/queries";
+import { getFullName } from "@/features/people/domain/person";
 import {
   getMeetingSchedule,
   listPublicSpecialEvents,
@@ -105,14 +107,20 @@ export default async function DesignacoesPage({
       />
 
       <Suspense fallback={<WeekCardsSkeleton />}>
-        <DesignacoesCardsSection canManage={canManage} />
+        <DesignacoesCardsSection canManage={canManage} userId={user.id} />
       </Suspense>
     </main>
   );
 }
 
 /** Busca blocante isolada: o shell (header) nunca espera os dados. */
-async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
+async function DesignacoesCardsSection({
+  canManage,
+  userId,
+}: {
+  canManage: boolean;
+  userId: string;
+}) {
   const meetingSchedule = await getMeetingSchedule();
   const today = todayLocalISO();
   const scheduled = nextMeetingDates(
@@ -126,10 +134,11 @@ async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
 
   // Une as datas da agenda com as datas que têm designação salva (limpeza
   // semanal/geral e escalas podem cair fora dos dias de reunião).
-  const [cleaningDates, dutyDates, weekEvents] = await Promise.all([
+  const [cleaningDates, dutyDates, weekEvents, linkedPerson] = await Promise.all([
     listUpcomingCleaningDates(today),
     listUpcomingDutyDates(today),
     listPublicSpecialEvents().catch(() => []),
+    getPersonByUserId(userId).catch(() => null),
   ]);
   const byDate = new Map<string, UpcomingMeeting>();
   for (const meeting of scheduled) byDate.set(meeting.date, meeting);
@@ -200,9 +209,12 @@ async function DesignacoesCardsSection({ canManage }: { canManage: boolean }) {
     };
   });
 
+  // Nome próprio em destaque nas fileiras: só a pessoa vinculada ao usuário.
+  const highlightName = linkedPerson ? getFullName(linkedPerson) : null;
+
   return (
     <>
-      <DesignacoesCards days={days} />
+      <DesignacoesCards days={days} highlightName={highlightName} />
       {days.length === 0 ? (
         <Card className="flex flex-col gap-3 p-4">
           <p className="text-sm text-muted-foreground">{es.sinDesignacionesProxima}</p>

@@ -35,7 +35,19 @@ export interface DesignacoesCardDay {
   duties: DesignacoesCardDuty[];
 }
 
-function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
+/** Nome próprio em destaque: a pessoa vinculada ao usuário vê suas fileiras. */
+function isHighlight(name: string, highlightName: string | null): boolean {
+  if (!highlightName || highlightName.trim() === "") return false;
+  return name.trim().toLowerCase() === highlightName.trim().toLowerCase();
+}
+
+function CleaningRows({
+  items,
+  highlightName,
+}: {
+  items: DesignacoesCardCleaning[];
+  highlightName: string | null;
+}) {
   if (items.length === 0) return null;
   return (
     <section aria-label={es.cleaning}>
@@ -56,8 +68,25 @@ function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
                 title={`${item.personNames.join(" · ")}${item.isFamily ? ` · ${es.familiaMinuscula}` : ""}`}
                 className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
               >
-                {item.personNames.join(" · ") || es.sinAsignar}
-                {item.isFamily ? ` · ${es.familiaMinuscula}` : ""}
+                {item.personNames.length === 0 ? (
+                  es.sinAsignar
+                ) : (
+                  <>
+                    {item.personNames.map((name, index) => (
+                      <span key={name}>
+                        {index > 0 ? " · " : null}
+                        {isHighlight(name, highlightName) ? (
+                          <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-accent-ink">
+                            {name}
+                          </span>
+                        ) : (
+                          name
+                        )}
+                      </span>
+                    ))}
+                    {item.isFamily ? ` · ${es.familiaMinuscula}` : ""}
+                  </>
+                )}
               </span>
             </li>
           );
@@ -67,7 +96,13 @@ function CleaningRows({ items }: { items: DesignacoesCardCleaning[] }) {
   );
 }
 
-function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
+function DutyRows({
+  items,
+  highlightName,
+}: {
+  items: DesignacoesCardDuty[];
+  highlightName: string | null;
+}) {
   if (items.length === 0) return null;
   return (
     <section aria-label={es.asignaciones}>
@@ -92,7 +127,13 @@ function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
               title={item.personName || es.sinAsignar}
               className="max-w-[55%] shrink-0 break-words text-right leading-snug text-muted-foreground line-clamp-2"
             >
-              {item.personName || es.sinAsignar}
+              {isHighlight(item.personName, highlightName) ? (
+                <span className="rounded-md bg-accent px-1.5 py-0.5 text-xs font-semibold whitespace-nowrap text-accent-ink">
+                  {item.personName}
+                </span>
+              ) : (
+                item.personName || es.sinAsignar
+              )}
             </span>
           </li>
         ))}
@@ -101,7 +142,15 @@ function DutyRows({ items }: { items: DesignacoesCardDuty[] }) {
   );
 }
 
-function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean }) {
+function DesignacoesCard({
+  day,
+  lead,
+  highlightName,
+}: {
+  day: DesignacoesCardDay;
+  lead: boolean;
+  highlightName: string | null;
+}) {
   const empty = day.cleaning.length === 0 && day.duties.length === 0;
   return (
     <Card className={cn("p-4 sm:p-5", lead && "ring-2 ring-accent")}>
@@ -136,8 +185,8 @@ function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean
               compact
             />
           ) : null}
-          <DutyRows items={day.duties} />
-          <CleaningRows items={day.cleaning} />
+          <DutyRows items={day.duties} highlightName={highlightName} />
+          <CleaningRows items={day.cleaning} highlightName={highlightName} />
         </div>
       )}
     </Card>
@@ -149,11 +198,22 @@ function DesignacoesCard({ day, lead }: { day: DesignacoesCardDay; lead: boolean
  * destaque com ring e cabeçalho em acento; os seguintes recuam só no
  * cabeçalho (papel suave), sem opacidade — legível sob sol. Só leitura.
  */
-export function DesignacoesCards({ days }: { days: DesignacoesCardDay[] }) {
+export function DesignacoesCards({
+  days,
+  highlightName = null,
+}: {
+  days: DesignacoesCardDay[];
+  highlightName?: string | null;
+}) {
   return (
     <div className="section-stack">
       {days.map((day, index) => (
-        <DesignacoesCard key={`${day.date}-${day.kind}`} day={day} lead={index === 0} />
+        <DesignacoesCard
+          key={`${day.date}-${day.kind}`}
+          day={day}
+          lead={index === 0}
+          highlightName={highlightName}
+        />
       ))}
     </div>
   );
