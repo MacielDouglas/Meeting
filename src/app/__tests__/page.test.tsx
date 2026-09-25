@@ -113,14 +113,13 @@ beforeEach(() => {
 });
 
 describe("HomePage — landing pública", () => {
-  it("renderiza marca, tagline, destaques e login sem buscar dados de sessão", async () => {
+  it("renderiza marca, tagline, prévia de exemplo e login sem buscar dados de sessão", async () => {
     const html = renderToStaticMarkup(await HomePage());
 
     expect(html).toContain("Meeting");
     expect(html).toContain(es.homeTagline);
-    expect(html).toContain(es.homeFeatPrograma);
-    expect(html).toContain(es.homeFeatDesignaciones);
-    expect(html).toContain(es.homeFeatOffline);
+    expect(html).toContain(es.ejemplo);
+    expect(html).toContain("Hno. Ejemplo");
     expect(html).toContain(es.signInWithGoogle);
 
     expect(vi.mocked(getWeeklySchedule)).not.toHaveBeenCalled();
@@ -128,12 +127,15 @@ describe("HomePage — landing pública", () => {
     expect(cacheWriter).not.toHaveBeenCalled();
   });
 
-  it("expõe o botão de Google e exatamente três destaques", async () => {
+  it("expõe o botão de Google e a prévia de status de exemplo", async () => {
     render(await HomePage());
 
     expect(screen.getByRole("heading", { level: 1, name: "Meeting" })).toBeInTheDocument();
     expect(screen.getByText(es.homeTagline)).toBeInTheDocument();
-    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(
+      screen.getByRole("region", { name: `${es.vistaPrevia} (${es.ejemplo})` }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Hna. Ejemplo")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: es.signInWithGoogle })).toBeInTheDocument();
     expect(screen.queryByText(es.miSemana)).not.toBeInTheDocument();
   });
