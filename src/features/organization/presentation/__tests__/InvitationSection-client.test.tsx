@@ -23,6 +23,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 const persons = [{ id: "p1", label: "Juan Pérez" }];
+const futureExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
 beforeEach(() => {
   createInvitationMock.mockReset();
@@ -50,7 +51,7 @@ describe("InvitationSection", () => {
             email: "ana@example.com",
             role: "member",
             status: "pending",
-            expiresAt: "2026-10-02T00:00:00.000Z",
+            expiresAt: futureExpiry,
             createdAt: "2026-09-25T00:00:00.000Z",
             hasAccount: true,
           },
@@ -59,7 +60,7 @@ describe("InvitationSection", () => {
             email: "nueva@example.com",
             role: "admin",
             status: "pending",
-            expiresAt: "2026-10-02T00:00:00.000Z",
+            expiresAt: futureExpiry,
             createdAt: "2026-09-25T00:00:00.000Z",
             hasAccount: false,
           },
@@ -99,7 +100,7 @@ describe("InvitationSection", () => {
             email: "ana@example.com",
             role: "member",
             status: "pending",
-            expiresAt: "2026-10-02T00:00:00.000Z",
+            expiresAt: futureExpiry,
             createdAt: "2026-09-25T00:00:00.000Z",
             hasAccount: true,
           },
@@ -133,7 +134,7 @@ describe("InvitationSection", () => {
             email: "bob@example.com",
             role: "admin",
             status: "pending",
-            expiresAt: "2026-10-02T00:00:00.000Z",
+            expiresAt: futureExpiry,
             createdAt: "2026-09-25T00:00:00.000Z",
             hasAccount: true,
           },
@@ -167,7 +168,7 @@ describe("InvitationSection", () => {
             email: "ana@example.com",
             role: "member",
             status: "pending",
-            expiresAt: "2026-10-02T00:00:00.000Z",
+            expiresAt: futureExpiry,
             createdAt: "2026-09-25T00:00:00.000Z",
             hasAccount: true,
           },

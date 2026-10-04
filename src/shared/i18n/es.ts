@@ -525,6 +525,22 @@ export const es = {
   activando: "Activando…",
   errorCrear: "No se pudo crear. Verifica los datos e inténtalo de nuevo.",
   designacionesTodasReuniones: "Designaciones — todas las reuniones",
+  enlacePublico: "Enlace público",
+  enlacePublicoDesc:
+    "Programa de la semana en JSON cifrado (AES-256-GCM con el token como clave). Sin caducidad: vale hasta que lo revoques.",
+  generarEnlace: "Generar enlace",
+  rotarEnlace: "Generar uno nuevo",
+  revocarEnlace: "Revocar enlace",
+  enlaceActivoDesde: "Enlace activo desde",
+  enlaceInactivo: "Sin enlace activo.",
+  enlaceAvisoUnico:
+    "Copia el token ahora: solo se muestra una vez. Quien tenga el enlace y el token puede descifrar la semana.",
+  copiarEnlace: "Copiar enlace",
+  copiarToken: "Copiar token",
+  copiado: "Copiado.",
+  confirmarRotarEnlace: "¿Generar un enlace nuevo? El anterior dejará de funcionar.",
+  confirmarRevocarEnlace: "¿Revocar el enlace? Dejará de funcionar de inmediato.",
+  comoDescifrar: "Cómo descifrar (Node.js)",
 } as const;
 
 export type SpanishDictionary = typeof es;

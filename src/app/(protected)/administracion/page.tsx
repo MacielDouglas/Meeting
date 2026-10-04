@@ -19,6 +19,8 @@ import {
   listUsersWithRoles,
 } from "@/features/people/application/queries";
 import { getMeetingSchedule } from "@/features/settings/application/queries";
+import { getPublicShareStatus } from "@/features/sharing/application/share-queries";
+import { PublicShareSection } from "@/features/sharing/presentation/PublicShareSection-client";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { CardSkeleton } from "@/shared/components/skeletons";
 import { Card, CardDescription, CardTitle } from "@/shared/components/ui/card";
@@ -141,6 +143,11 @@ async function JoinTokensLoader() {
   return <JoinTokenSection initial={tokens} persons={persons} />;
 }
 
+async function PublicShareLoader() {
+  const status = await getPublicShareStatus();
+  return <PublicShareSection initial={status} />;
+}
+
 export default async function AdministracionPage() {
   const user = await getCurrentUser();
   if (user?.role !== "owner") redirect("/");
@@ -159,6 +166,9 @@ export default async function AdministracionPage() {
       </Suspense>
       <Suspense fallback={<CardSkeleton />}>
         <JoinTokensLoader />
+      </Suspense>
+      <Suspense fallback={<CardSkeleton />}>
+        <PublicShareLoader />
       </Suspense>
     </main>
   );

@@ -1,0 +1,3 @@
+CREATE TABLE "public_share" ("id" text PRIMARY KEY NOT NULL,"organization_id" text NOT NULL,"token_hash" text NOT NULL,"created_by" text,"created_at" timestamp DEFAULT now() NOT NULL,CONSTRAINT "public_share_organization_id_unique" UNIQUE("organization_id"),CONSTRAINT "public_share_token_hash_unique" UNIQUE("token_hash"));--> statement-breakpoint
+ALTER TABLE "public_share" ADD CONSTRAINT "public_share_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "public_share" ADD CONSTRAINT "public_share_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
