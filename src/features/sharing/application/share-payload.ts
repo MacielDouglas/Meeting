@@ -3,6 +3,7 @@ import {
   cleaningAssignments,
   cleaningPrograms,
 } from "@/features/cleaning/infrastructure/cleaning-program-schema";
+import { cleaningSectors } from "@/features/cleaning/infrastructure/cleaning-schema";
 import { dutyAssignments } from "@/features/meeting-duties/infrastructure/duty-schema";
 import {
   meetingAssignments,
@@ -43,6 +44,7 @@ export interface PublicShareDuty {
 export interface PublicShareCleaning {
   date: string;
   sectorName: string;
+  task: string;
   personName: string;
 }
 
@@ -151,16 +153,25 @@ export async function buildPublicWeekPayload(
   }
 
   // Limpeza: só programas confirmados (nunca rascunhos), na semana.
+  // A tarefa vem do setor (mesmo tipo do programa); setor ausente vira "".
   let cleaning: PublicShareCleaning[] = [];
   try {
     const rows = await db
       .select({
         date: cleaningAssignments.assignmentDate,
         sectorName: cleaningAssignments.sectorName,
+        task: cleaningSectors.task,
         personName: cleaningAssignments.personName,
       })
       .from(cleaningAssignments)
       .innerJoin(cleaningPrograms, eq(cleaningPrograms.id, cleaningAssignments.programId))
+      .leftJoin(
+        cleaningSectors,
+        and(
+          eq(cleaningSectors.key, cleaningAssignments.sectorKey),
+          eq(cleaningSectors.cleaningTypeKey, cleaningPrograms.typeKey),
+        ),
+      )
       .where(
         and(
           eq(cleaningPrograms.status, "confirmed"),
@@ -169,7 +180,7 @@ export async function buildPublicWeekPayload(
         ),
       )
       .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
-    cleaning = rows;
+    cleaning = rows.map((row) => ({ ...row, task: row.task ?? "" }));
   } catch {
     cleaning = [];
   }
