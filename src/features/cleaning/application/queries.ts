@@ -15,6 +15,8 @@ export interface CleaningSectorItem {
   key: string | null;
   name: string;
   task: string;
+  nameEs: string | null;
+  taskEs: string | null;
   enabled: boolean;
   peopleCount: number | null;
   requiredSex: RequiredSex;
@@ -60,6 +62,8 @@ export async function listCleaningConfig(): Promise<CleaningTypeItem[]> {
             key: sector.key,
             name: sector.name,
             task: sector.task,
+            nameEs: sector.nameEs,
+            taskEs: sector.taskEs,
             enabled: sector.enabled,
             peopleCount: sector.peopleCount,
             requiredSex: sector.requiredSex as RequiredSex,
@@ -88,6 +92,8 @@ function buildDefaultCleaningConfig(): CleaningTypeItem[] {
         key: sector.key,
         name: sector.name,
         task: sector.task,
+        nameEs: null,
+        taskEs: null,
         enabled: true,
         peopleCount: null,
         requiredSex: "any" as RequiredSex,

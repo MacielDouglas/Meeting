@@ -22,20 +22,38 @@ describe("buildPublicWeekPayload (limpeza)", () => {
       {
         date: "2026-09-30",
         sectorName: "Grupo 1",
+        sectorNameEs: "Grupo 1 ES",
         task: "Barrer y trapear",
+        taskEs: "Barrer y trapear ES",
         personName: "Luis Gómez",
       },
-      { date: "2026-10-04", sectorName: "Grupo 2", task: null, personName: "Ana Torres" },
+      {
+        date: "2026-10-04",
+        sectorName: "Grupo 2",
+        sectorNameEs: null,
+        task: null,
+        taskEs: null,
+        personName: "Ana Torres",
+      },
     ]);
     const payload = await buildPublicWeekPayload(new Date("2026-09-30T12:00:00Z"));
     expect(payload.cleaning).toEqual([
       {
         date: "2026-09-30",
         sectorName: "Grupo 1",
+        sectorNameEs: "Grupo 1 ES",
         task: "Barrer y trapear",
+        taskEs: "Barrer y trapear ES",
         personName: "Luis Gómez",
       },
-      { date: "2026-10-04", sectorName: "Grupo 2", task: "", personName: "Ana Torres" },
+      {
+        date: "2026-10-04",
+        sectorName: "Grupo 2",
+        sectorNameEs: "",
+        task: "",
+        taskEs: "",
+        personName: "Ana Torres",
+      },
     ]);
     expect(payload.duties).toEqual([]);
   });

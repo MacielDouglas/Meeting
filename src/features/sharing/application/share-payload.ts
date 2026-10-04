@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, lte, or } from "drizzle-orm";
 import {
   cleaningAssignments,
   cleaningPrograms,
@@ -44,7 +44,9 @@ export interface PublicShareDuty {
 export interface PublicShareCleaning {
   date: string;
   sectorName: string;
+  sectorNameEs: string;
   task: string;
+  taskEs: string;
   personName: string;
 }
 
@@ -153,14 +155,18 @@ export async function buildPublicWeekPayload(
   }
 
   // Limpeza: só programas confirmados (nunca rascunhos), na semana.
-  // A tarefa vem do setor (mesmo tipo do programa); setor ausente vira "".
+  // A tarefa vem do setor (mesmo tipo do programa). Setor padrão casa por
+  // `key`, setor customizado (key nula) casa por `id` — igual à troca manual.
+  // Setor ausente vira "".
   let cleaning: PublicShareCleaning[] = [];
   try {
     const rows = await db
       .select({
         date: cleaningAssignments.assignmentDate,
         sectorName: cleaningAssignments.sectorName,
+        sectorNameEs: cleaningSectors.nameEs,
         task: cleaningSectors.task,
+        taskEs: cleaningSectors.taskEs,
         personName: cleaningAssignments.personName,
       })
       .from(cleaningAssignments)
@@ -168,8 +174,11 @@ export async function buildPublicWeekPayload(
       .leftJoin(
         cleaningSectors,
         and(
-          eq(cleaningSectors.key, cleaningAssignments.sectorKey),
           eq(cleaningSectors.cleaningTypeKey, cleaningPrograms.typeKey),
+          or(
+            eq(cleaningSectors.key, cleaningAssignments.sectorKey),
+            eq(cleaningSectors.id, cleaningAssignments.sectorKey),
+          ),
         ),
       )
       .where(
@@ -180,7 +189,12 @@ export async function buildPublicWeekPayload(
         ),
       )
       .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
-    cleaning = rows.map((row) => ({ ...row, task: row.task ?? "" }));
+    cleaning = rows.map((row) => ({
+      ...row,
+      sectorNameEs: row.sectorNameEs ?? "",
+      task: row.task ?? "",
+      taskEs: row.taskEs ?? "",
+    }));
   } catch {
     cleaning = [];
   }

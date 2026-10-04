@@ -28,6 +28,9 @@ export const cleaningSectors = pgTable("cleaning_sectors", {
   key: text("key"),
   name: text("name").notNull(),
   task: text("task").notNull().default(""),
+  // Versão em espanhol (nome/tarefa base ficam no idioma cadastrado).
+  nameEs: text("name_es"),
+  taskEs: text("task_es"),
   enabled: boolean("enabled").notNull().default(true),
   peopleCount: integer("people_count"),
   requiredSex: requiredSexEnum("required_sex").notNull().default("any"),

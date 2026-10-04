@@ -60,6 +60,8 @@ function SectorForm({
     id: string;
     name: string;
     task: string;
+    nameEs: string | null;
+    taskEs: string | null;
     peopleCount: number | null;
     requiredSex: RequiredSex;
     allowYoung: boolean;
@@ -68,6 +70,8 @@ function SectorForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [task, setTask] = useState(initial?.task ?? "");
+  const [nameEs, setNameEs] = useState(initial?.nameEs ?? "");
+  const [taskEs, setTaskEs] = useState(initial?.taskEs ?? "");
   const [peopleCount, setPeopleCount] = useState(
     initial?.peopleCount != null ? String(initial.peopleCount) : "",
   );
@@ -85,6 +89,8 @@ function SectorForm({
         typeKey,
         name: name.trim(),
         task: task.trim(),
+        nameEs: nameEs.trim(),
+        taskEs: taskEs.trim(),
         peopleCount: peopleCount === "" ? null : Number(peopleCount),
         requiredSex,
         allowYoung,
@@ -130,6 +136,25 @@ function SectorForm({
         <textarea
           value={task}
           onChange={(e) => setTask(e.target.value)}
+          rows={3}
+          maxLength={2000}
+          className="rounded-lg bg-background px-3 py-2 text-base outline-none focus:border focus:border-ring"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">Nombre en español (opcional)</span>
+        <input
+          value={nameEs}
+          onChange={(e) => setNameEs(e.target.value)}
+          maxLength={80}
+          className="h-10 rounded-lg bg-background px-3 text-sm outline-none focus:border focus:border-ring"
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">Tarea en español (opcional)</span>
+        <textarea
+          value={taskEs}
+          onChange={(e) => setTaskEs(e.target.value)}
           rows={3}
           maxLength={2000}
           className="rounded-lg bg-background px-3 py-2 text-base outline-none focus:border focus:border-ring"
@@ -293,6 +318,8 @@ function SectorModal({
               id: sector.id,
               name: sector.name,
               task: sector.task,
+              nameEs: sector.nameEs,
+              taskEs: sector.taskEs,
               peopleCount: sector.peopleCount,
               requiredSex: sector.requiredSex,
               allowYoung: sector.allowYoung,
