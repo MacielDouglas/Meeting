@@ -67,6 +67,30 @@ describe("share-actions (owner)", () => {
     const result = await revokePublicShareToken();
     expect(result).toEqual({ ok: true });
   });
+
+  it("orienta a migrar quando a tabela public_share não existe (criar)", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueueRejection(new Error('relation "public_share" does not exist'));
+    const result = await createPublicShareToken();
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.",
+    });
+  });
+
+  it("orienta a migrar quando a tabela public_share não existe (revogar)", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueueRejection(new Error('relation "public_share" does not exist'));
+    const result = await revokePublicShareToken();
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.",
+    });
+  });
 });
 
 describe("getPublicShareStatus", () => {

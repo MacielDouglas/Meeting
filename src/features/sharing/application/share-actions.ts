@@ -20,6 +20,14 @@ export interface ShareActionResult {
 
 const CONGREGATION_ORG_SLUG = "congregation";
 
+const SHARE_TABLES_MISSING_ERROR =
+  "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
+
+function isMissingTableError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("public_share") || message.includes("does not exist");
+}
+
 function publicShareUrl(token: string): string {
   const base = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   return `${base}/api/public/programa/${token}`;
@@ -78,6 +86,7 @@ export async function createPublicShareToken(): Promise<ShareActionResult> {
       revalidatePath("/administracion");
       return { ok: true, token, url: publicShareUrl(token) };
     } catch (error) {
+      if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes("unique")) throw error;
     }
@@ -96,7 +105,8 @@ export async function revokePublicShareToken(): Promise<ShareActionResult> {
   try {
     const organizationId = await ensureShareOrganization();
     await db.delete(publicShares).where(eq(publicShares.organizationId, organizationId));
-  } catch {
+  } catch (error) {
+    if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
     return { ok: false, error: "No se pudo revocar el enlace." };
   }
   revalidatePath("/administracion");
