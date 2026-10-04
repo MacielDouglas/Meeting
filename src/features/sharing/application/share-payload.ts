@@ -1,4 +1,8 @@
 import { and, asc, eq, gte, lte } from "drizzle-orm";
+import {
+  cleaningAssignments,
+  cleaningPrograms,
+} from "@/features/cleaning/infrastructure/cleaning-program-schema";
 import { dutyAssignments } from "@/features/meeting-duties/infrastructure/duty-schema";
 import {
   meetingAssignments,
@@ -36,6 +40,12 @@ export interface PublicShareDuty {
   personName: string;
 }
 
+export interface PublicShareCleaning {
+  date: string;
+  sectorName: string;
+  personName: string;
+}
+
 export interface PublicWeekPayload {
   weekStart: string;
   weekEnd: string;
@@ -44,6 +54,7 @@ export interface PublicWeekPayload {
   midweek: PublicShareMeeting | null;
   weekend: PublicShareMeeting | null;
   duties: PublicShareDuty[];
+  cleaning: PublicShareCleaning[];
 }
 
 async function loadMeeting(
@@ -139,6 +150,30 @@ export async function buildPublicWeekPayload(
     duties = [];
   }
 
+  // Limpeza: só programas confirmados (nunca rascunhos), na semana.
+  let cleaning: PublicShareCleaning[] = [];
+  try {
+    const rows = await db
+      .select({
+        date: cleaningAssignments.assignmentDate,
+        sectorName: cleaningAssignments.sectorName,
+        personName: cleaningAssignments.personName,
+      })
+      .from(cleaningAssignments)
+      .innerJoin(cleaningPrograms, eq(cleaningPrograms.id, cleaningAssignments.programId))
+      .where(
+        and(
+          eq(cleaningPrograms.status, "confirmed"),
+          gte(cleaningAssignments.assignmentDate, weekStart),
+          lte(cleaningAssignments.assignmentDate, weekEnd),
+        ),
+      )
+      .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
+    cleaning = rows;
+  } catch {
+    cleaning = [];
+  }
+
   return {
     weekStart,
     weekEnd,
@@ -147,5 +182,6 @@ export async function buildPublicWeekPayload(
     midweek,
     weekend,
     duties,
+    cleaning,
   };
 }
