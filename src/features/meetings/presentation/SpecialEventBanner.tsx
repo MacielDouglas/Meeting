@@ -49,8 +49,8 @@ export function SpecialEventBanner({
       <div className={cn("relative flex flex-col gap-2", compact ? "p-4" : "p-5 sm:p-6")}>
         <p
           className={cn(
-            "inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 font-display font-semibold tracking-wide",
-            compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
+            "inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 font-display text-xs font-semibold tracking-tight",
+            compact ? "px-2 py-0.5" : "px-2.5 py-1",
           )}
         >
           <Icon aria-hidden size={compact ? 12 : 14} className="text-accent" />

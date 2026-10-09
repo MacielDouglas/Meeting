@@ -372,6 +372,9 @@ export function MeetingProgramSection({
   // O rascunho de sessionStorage viaja junto para restaurar na primeira carga.
   const programQuery = useQuery({
     queryKey: ["meeting-program", kind, weekStart, loadToken],
+    // Programa muda só por ação explícita (refresh invalida): 1h sem refetch
+    // ao remontar/navegar poupa rede em conexão lenta.
+    staleTime: 60 * 60 * 1000,
     queryFn: async () => {
       const [result, draft] = await Promise.all([
         getMeetingProgram(kind, weekStart),
@@ -903,7 +906,7 @@ export function MeetingProgramSection({
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
         {(
           [
             { value: "midweek", title: "Reunión de entre semana", line: midweekLine },
@@ -927,7 +930,7 @@ export function MeetingProgramSection({
                 {option.title}
               </span>
               <span
-                className={`block truncate text-sm ${
+                className={`block truncate text-xs ${
                   active ? "font-medium text-foreground" : "text-muted-foreground"
                 }`}
               >
@@ -1037,7 +1040,9 @@ export function MeetingProgramSection({
           </div>
         </Card>
       ) : (
-        <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
+        // Pausa generosa antes da lista (24px com o gap do ritmo): a lista é o
+        // conteúdo primário e merece separação dos controles acima.
+        <Card className="mt-2 flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
           <div aria-busy={saving} className="flex flex-col divide-y divide-session-line">
             {displayPartsWithSections.map((part, index) => {
               const meta = sectionMetaOf(part.section);
@@ -1066,11 +1071,12 @@ export function MeetingProgramSection({
               // Em edição os nomes gritam em acento (como nas imagens); em
               // leitura ficam neutros.
               const nameTone = interactive ? "text-accent" : "text-session-fg";
-              // Títulos longos (discurso de Tesouros, tema da Atalaya) quebram
-              // em várias linhas em vez de truncar com reticências.
-              const wrapsTitle = part.key === "treasures-talk" || part.key === "watchtower-study";
-              const titleTone = part.key === "public-talk" ? "text-base" : "text-sm";
-              const titleClamp = wrapsTitle ? "whitespace-normal break-words" : "truncate";
+              // Títulos quebram em até 2 linhas (nunca truncate seco): nomes
+              // longos em espanhol e telas de 360px não perdem o sentido.
+              // O discurso público diferencia por peso, não por tamanho.
+              const titleTone =
+                part.key === "public-talk" ? "text-sm font-bold" : "text-sm font-medium";
+              const titleClamp = "line-clamp-2 break-words whitespace-normal";
               const rowContent = (
                 <>
                   <span className="flex w-11 shrink-0 flex-col items-start gap-0.5 pt-0.5">
@@ -1085,7 +1091,7 @@ export function MeetingProgramSection({
                   <span className="min-w-0 flex-1">
                     <span
                       title={display.title}
-                      className={`block ${titleClamp} ${titleTone} font-semibold text-session-fg`}
+                      className={`block ${titleClamp} ${titleTone} text-session-fg`}
                     >
                       {display.title}
                     </span>
@@ -1128,7 +1134,7 @@ export function MeetingProgramSection({
               return (
                 <div key={part.id}>
                   {part.showSection && assignmentStats.headerVisible.get(index) !== false && (
-                    <h3 className="sticky top-0 z-10 flex items-center gap-2 border-b border-session-line bg-session/95 py-2 backdrop-blur">
+                    <h3 className="sticky top-[calc(2.75rem+env(safe-area-inset-top,0px))] z-10 flex items-center gap-2 border-b border-session-line bg-session/95 py-2 backdrop-blur">
                       <span
                         className="section-emblem grid h-6 w-6 shrink-0 place-items-center rounded-lg text-white"
                         style={{ backgroundColor: meta.color }}
@@ -1136,7 +1142,7 @@ export function MeetingProgramSection({
                         <SectionIcon aria-hidden size={14} />
                       </span>
                       <span
-                        className="section-label font-display text-sm font-semibold tracking-tight"
+                        className="section-label font-display text-xs font-semibold tracking-tight"
                         style={{ "--section-color": meta.color } as CSSProperties}
                       >
                         {meta.label}
@@ -1190,7 +1196,7 @@ export function MeetingProgramSection({
         )}
 
       {canEdit && dirtyCount > 0 && (
-        <div className="fixed inset-x-0 bottom-[84px] z-30 mx-auto w-full max-w-md px-4 pb-[env(safe-area-inset-bottom)] sm:max-w-[42rem] lg:max-w-[56rem]">
+        <div className="fixed inset-x-0 bottom-[calc(var(--bottom-nav-h,64px)+12px+env(safe-area-inset-bottom,0px))] z-30 mx-auto w-full max-w-md px-4 sm:max-w-[42rem] lg:max-w-[56rem]">
           <div className="rounded-2xl border border-border bg-card p-3 text-card-foreground shadow-lg">
             <p className="text-sm">
               <span className="font-semibold">

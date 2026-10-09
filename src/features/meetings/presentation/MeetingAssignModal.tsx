@@ -104,7 +104,15 @@ function formatLastAssignment(iso: string | null): string {
   if (!iso) return es.sinHistorial;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return es.sinHistorial;
-  return `última: ${formatDateBR(iso.slice(0, 10))}`;
+  return `${es.ultimaAsignacion}: ${formatDateBR(iso.slice(0, 10))}`;
+}
+
+/** Preenche modelo traducible ("Buscar {rol}…") sem concatenar fragmentos. */
+function fillTemplate(template: string, values: Record<string, string>): string {
+  return Object.entries(values).reduce(
+    (text, [key, value]) => text.replace(`{${key}}`, value),
+    template,
+  );
 }
 
 /** Caixa de nome temporário no fim da lista (fora da organização, só na parte). */
@@ -132,7 +140,7 @@ function TempNameBox({
           aria-label={es.nombreTemporal}
           maxLength={160}
           autoComplete="off"
-          className="h-12 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+          className="h-12 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-base outline-none focus:border focus:border-ring"
         />
         <button
           type="button"
@@ -390,14 +398,14 @@ export function MeetingAssignModal({
                 placeholder={es.numCancion}
                 aria-label={es.numCancion}
                 maxLength={4}
-                className="h-11 w-32 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+                className="h-11 w-32 rounded-lg bg-secondary px-3 text-base outline-none focus:border focus:border-ring"
               />
               <button
                 type="button"
                 onClick={handleSongStage}
                 className="h-11 rounded-xl bg-secondary px-5 font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                {es.definir}
+                {es.definirCancion}
               </button>
             </div>
             {staged?.songNumber ? (
@@ -472,24 +480,28 @@ export function MeetingAssignModal({
 
         {allowPerson && step === "titular" && !isPublicTalk && (
           <div className="flex flex-col gap-2">
-            <input
-              value={titularSearchInput}
-              onChange={(e) => setTitularSearchInput(e.target.value)}
-              placeholder={`Buscar ${labels.main.toLowerCase()}…`}
-              aria-label={`Buscar ${labels.main.toLowerCase()}`}
-              maxLength={60}
-              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
-            />
-            <SegmentedControl
-              small
-              options={[
-                { value: "name", label: es.ordenAlfabetico },
-                { value: "rotation", label: es.rotacion },
-              ]}
-              value={orderBy}
-              onChange={(value) => setOrderBy(value as "name" | "rotation")}
-              ariaLabel={es.ordenarPor}
-            />
+            <div className="sticky -top-6 z-10 -mx-6 bg-background px-6 pt-6 pb-2">
+              <div className="flex flex-col gap-2">
+                <input
+                  value={titularSearchInput}
+                  onChange={(e) => setTitularSearchInput(e.target.value)}
+                  placeholder={fillTemplate(es.buscarPersona, { rol: labels.main.toLowerCase() })}
+                  aria-label={fillTemplate(es.buscarPersona, { rol: labels.main.toLowerCase() })}
+                  maxLength={60}
+                  className="h-11 rounded-lg bg-secondary px-3 text-base outline-none focus:border focus:border-ring"
+                />
+                <SegmentedControl
+                  small
+                  options={[
+                    { value: "name", label: es.ordenAlfabetico },
+                    { value: "rotation", label: es.rotacion },
+                  ]}
+                  value={orderBy}
+                  onChange={(value) => setOrderBy(value as "name" | "rotation")}
+                  ariaLabel={es.ordenarPor}
+                />
+              </div>
+            </div>
             {titularQuery.isPending ? (
               <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
             ) : titularQuery.isError ? (
@@ -568,19 +580,25 @@ export function MeetingAssignModal({
             </div>
             {helperRule && (
               <p className="text-xs text-muted-foreground">
-                {helperRule === "sameSex"
-                  ? `${labels.helper}: alguien del mismo sexo que ${selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.`
-                  : `${labels.helper}: alguien del mismo sexo o de la misma familia que ${selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.`}
+                {fillTemplate(
+                  helperRule === "sameSex" ? es.ayudanteMismoSexo : es.ayudanteMismoSexoFamilia,
+                  {
+                    ayudante: labels.helper,
+                    nombre: selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? "",
+                  },
+                )}
               </p>
             )}
-            <input
-              value={helperSearchInput}
-              onChange={(e) => setHelperSearchInput(e.target.value)}
-              placeholder={`Buscar ${labels.helper.toLowerCase()}…`}
-              aria-label={`Buscar ${labels.helper.toLowerCase()}`}
-              maxLength={60}
-              className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
-            />
+            <div className="sticky -top-6 z-10 -mx-6 bg-background px-6 pt-6 pb-2">
+              <input
+                value={helperSearchInput}
+                onChange={(e) => setHelperSearchInput(e.target.value)}
+                placeholder={fillTemplate(es.buscarPersona, { rol: labels.helper.toLowerCase() })}
+                aria-label={fillTemplate(es.buscarPersona, { rol: labels.helper.toLowerCase() })}
+                maxLength={60}
+                className="h-11 rounded-lg bg-secondary px-3 text-base outline-none focus:border focus:border-ring"
+              />
+            </div>
             {helperQuery.isPending ? (
               <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
             ) : helperQuery.isError ? (
@@ -626,8 +644,10 @@ export function MeetingAssignModal({
                   ))}
                   {eligibleHelpers.length === 0 && (
                     <li className="text-sm text-muted-foreground">
-                      Ningún {labels.helper.toLowerCase()} elegible para{" "}
-                      {selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.
+                      {fillTemplate(es.sinAyudanteElegible, {
+                        ayudante: labels.helper.toLowerCase(),
+                        nombre: selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? "",
+                      })}
                     </li>
                   )}
                 </ul>

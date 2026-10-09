@@ -272,7 +272,6 @@ export const es = {
   ordenAlfabetico: "Orden alfabético",
   rotacion: "Rotación (menos recientes)",
   definirCancion: "Definir canción",
-  definir: "Definir",
   numCancion: "N.º de canción",
   congregacionOrador: "Congregación del orador",
   estaParteSinAsignacion: "Esta parte no tiene designación.",
@@ -415,12 +414,17 @@ export const es = {
   verTodas: "Ver todas las partes",
   reintentar: "Reintentar",
   falloEn: "Falló en",
-  sincronizar: "Sincronizar programa",
+  sincronizar: "Actualizar programa",
   buscarEsbozo: "Buscar bosquejo (n.º o tema)",
+  buscarPersona: "Buscar {rol}…",
+  ultimaAsignacion: "última",
+  sinAyudanteElegible: "Ningún {ayudante} elegible para {nombre}.",
+  ayudanteMismoSexo: "{ayudante}: alguien del mismo sexo que {nombre}.",
+  ayudanteMismoSexoFamilia:
+    "{ayudante}: alguien del mismo sexo o de la misma familia que {nombre}.",
   descartarTitulo: "¿Descartar los cambios?",
   seguirEditando: "Seguir editando",
-  modeloCambiado:
-    "El modelo trajo partes nuevas. Sincronizar para añadirlas sin perder las designaciones.",
+  modeloCambiado: "Hay partes nuevas en la guía. Añádelas sin perder las designaciones.",
   ningunTipoLimpieza: "Ningún tipo de limpieza activado. Activarlo en Configuración › Limpieza.",
   avisosSorteo: "Avisos del sorteo (revisar antes de confirmar)",
   // Conteúdo
@@ -471,7 +475,7 @@ export const es = {
   modoEdicion: "Modo edición",
   modoEdicionHint: "Activa para asignar partes y editar oradores",
   editarReunion: "Editar la reunión",
-  activaAsignarPartes: "Activa asignar partes",
+  activaAsignarPartes: "Muestra las opciones para asignar",
   activaModoEdicion: "Activa el modo edición para hacer cambios.",
   // Limpeza / calendário
   mesAnterior: "Mes anterior",
