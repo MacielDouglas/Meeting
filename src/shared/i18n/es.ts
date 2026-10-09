@@ -234,6 +234,12 @@ export const es = {
   impresionTitle: "Impresión del programa",
   sinGuardar: "Sin guardar",
   sinAsignar: "Sin asignar",
+  nombreTemporal: "Nombre temporal",
+  nombreTemporalHint:
+    "Si no está en la lista ni en la organización, escribe el nombre aquí. Queda guardado solo en esta parte.",
+  usarNombre: "Usar nombre",
+  elegido: "Elegido",
+  temporal: "Temporal",
   sala: "Sala",
   asignar: "Asignar",
   asignaciones: "Asignaciones",
@@ -461,6 +467,9 @@ export const es = {
   editarLabel: "Editar",
   modoEdicion: "Modo edición",
   modoEdicionHint: "Activa para asignar partes y editar oradores",
+  editarReunion: "Editar la reunión",
+  activaAsignarPartes: "Activa asignar partes",
+  verReunion: "Ver reunión",
   activaModoEdicion: "Activa el modo edición para hacer cambios.",
   // Limpeza / calendário
   mesAnterior: "Mes anterior",

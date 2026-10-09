@@ -27,6 +27,8 @@ interface OutsideSpeakersClientProps {
   initialOutlines: { number: number; theme: string }[];
   systemCongregation: string;
   canManage: boolean;
+  /** Na aba Reuniões a edição exige o toggle; em Personas o canManage basta. */
+  requireEditMode?: boolean;
 }
 
 const EMPTY_FORM = { name: "", congregation: "", phone: "" };
@@ -45,10 +47,11 @@ export function OutsideSpeakersClient({
   initialOutlines,
   systemCongregation,
   canManage,
+  requireEditMode = true,
 }: OutsideSpeakersClientProps) {
-  // Mesmo modo edição da aba Reuniões: sem ele, só leitura das designações.
+  // Na aba Reuniões a edição exige o toggle; em Personas o canManage basta.
   const editMode = useReunioesEditMode();
-  const canEdit = canManage && editMode;
+  const canEdit = canManage && (!requireEditMode || editMode);
   const queryClient = useQueryClient();
 
   const speakersQuery = useQuery({

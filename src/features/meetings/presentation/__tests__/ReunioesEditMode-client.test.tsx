@@ -19,7 +19,7 @@ describe("ReunioesEditModeToggle", () => {
     const user = userEvent.setup();
     render(<ReunioesEditModeToggle />);
 
-    const toggle = screen.getByRole("switch", { name: es.modoEdicion });
+    const toggle = screen.getByRole("switch", { name: es.editarReunion });
     expect(toggle).toHaveAttribute("aria-checked", "false");
 
     await user.click(toggle);
@@ -31,7 +31,7 @@ describe("ReunioesEditModeToggle", () => {
     window.localStorage.setItem(STORAGE_KEY, "1");
     render(<ReunioesEditModeToggle />);
 
-    expect(screen.getByRole("switch", { name: es.modoEdicion })).toHaveAttribute(
+    expect(screen.getByRole("switch", { name: es.editarReunion })).toHaveAttribute(
       "aria-checked",
       "true",
     );
@@ -63,7 +63,7 @@ describe("ReunioesEditModeToggle", () => {
     );
 
     expect(screen.getByText("lectura")).toBeInTheDocument();
-    await user.click(screen.getByRole("switch", { name: es.modoEdicion }));
+    await user.click(screen.getByRole("switch", { name: es.editarReunion }));
     expect(screen.getByText("edicion")).toBeInTheDocument();
   });
 });

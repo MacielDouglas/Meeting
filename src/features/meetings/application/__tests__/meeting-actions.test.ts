@@ -657,6 +657,57 @@ describe("saveStagedChanges", () => {
     expect(mockDb.pending).toBe(0);
   });
 
+  it("nome temporário com ajudante da organização", async () => {
+    mockDb.enqueueMany([
+      [{ id: "p5", firstName: "María", lastName: "López" }],
+      [assignmentRow({ id: "asg-1" })],
+      [],
+    ]);
+    const result = await saveStagedChanges([
+      {
+        assignmentId: "asg-1",
+        label: "Lectura",
+        speakerName: "Visitante Temporal",
+        helperPersonId: "p5",
+      },
+    ]);
+    expect(result).toEqual({ ok: true });
+    const patches = mockDb.calls.filter((call) => call.fn === "set").map((call) => call.args[0]);
+    expect(patches[0]).toMatchObject({
+      personId: null,
+      personName: "Visitante Temporal",
+      helperPersonId: "p5",
+      helperPersonName: "María López",
+    });
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("ajudante temporário com titular da organização", async () => {
+    mockDb.enqueueMany([
+      [{ id: "p1", firstName: "Juan", lastName: "Pérez" }],
+      [assignmentRow({ id: "asg-1" })],
+      [],
+    ]);
+    const result = await saveStagedChanges([
+      {
+        assignmentId: "asg-1",
+        label: "Lectura",
+        personId: "p1",
+        helperPersonId: null,
+        helperName: "Ayudante Temporal",
+      },
+    ]);
+    expect(result).toEqual({ ok: true });
+    const patches = mockDb.calls.filter((call) => call.fn === "set").map((call) => call.args[0]);
+    expect(patches[0]).toMatchObject({
+      personId: "p1",
+      personName: "Juan Pérez",
+      helperPersonId: null,
+      helperPersonName: "Ayudante Temporal",
+    });
+    expect(mockDb.pending).toBe(0);
+  });
+
   it("falha com rótulo quando a parte não existe", async () => {
     mockDb.enqueue([]);
     const result = await saveStagedChanges([{ assignmentId: "asg-9", label: "Perdida" }]);

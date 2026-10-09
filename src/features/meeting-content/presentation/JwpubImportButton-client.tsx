@@ -87,7 +87,7 @@ export function JwpubImportButton({ label = es.importarJwpub }: { label?: string
       {inspected && (inspected.kind === "songs" || inspected.kind === "outlines") && (
         <p className="text-sm text-muted-foreground">
           Este archivo es de {inspected.kind === "songs" ? "cánticos" : "esbozos"}. Importa en la{" "}
-          <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
+          <Link href="/administracion/contenido" className="font-medium text-accent underline">
             pestaña Contenido
           </Link>
           .

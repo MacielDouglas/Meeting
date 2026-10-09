@@ -34,6 +34,9 @@ export interface ProgramPartInput {
   songTheme?: string | null;
   needsHelper?: boolean;
   capability?: string;
+  /** Número da parte na apostila (1-9 no meio de semana).
+      Só leitura em tela/impressão: presidente, cânticos e comentários não têm. */
+  partNumber?: number | null;
 }
 
 export interface BuiltPart extends ProgramPartInput {
@@ -174,14 +177,25 @@ export interface WorkbookWeekLike {
     openingComments?: string;
     concludingComments?: string;
     BibleReading?: string;
-    "TREASURES FROM GODS WORD"?: { title: string; duration?: string; assignment?: string }[];
+    "TREASURES FROM GODS WORD"?: {
+      title: string;
+      number?: number;
+      duration?: string;
+      assignment?: string;
+    }[];
     "APPLY YOURSELF TO THE FIELD MINISTRY"?: {
       title: string;
+      number?: number;
       duration?: string;
       assignment?: string;
       territory?: string;
     }[];
-    "LIVING AS CHRISTIANS"?: { title: string; duration?: string; assignment?: string }[];
+    "LIVING AS CHRISTIANS"?: {
+      title: string;
+      number?: number;
+      duration?: string;
+      assignment?: string;
+    }[];
   };
 }
 
@@ -240,6 +254,7 @@ export function buildMidweekParts(
       subtitle: week.meeting.BibleReading ?? "",
       durationMinutes: parseDurationMinutes(talk.duration, 10),
       capability: "treasuresTalk",
+      partNumber: talk.number ?? null,
     });
   }
   if (gems) {
@@ -249,6 +264,7 @@ export function buildMidweekParts(
       title: gems.title || "Busquemos perlas escondidas",
       durationMinutes: parseDurationMinutes(gems.duration, 10),
       capability: "pearlsQuest",
+      partNumber: gems.number ?? null,
     });
   }
   if (reading) {
@@ -259,6 +275,7 @@ export function buildMidweekParts(
       subtitle: reading.assignment ?? week.meeting.BibleReading ?? "",
       durationMinutes: parseDurationMinutes(reading.duration, 4),
       capability: "bibleReading",
+      partNumber: reading.number ?? null,
     });
   }
   // +1 do presidente após a leitura (somado ao relógio, sem linha própria).
@@ -280,6 +297,7 @@ export function buildMidweekParts(
       durationMinutes: duration,
       needsHelper: classified.needsHelper,
       capability: classified.capability,
+      partNumber: part.number ?? null,
     });
   });
   const PRESIDENT_EXTRA_PER_MINISTRY_PART = 1;
@@ -309,6 +327,7 @@ export function buildMidweekParts(
       subtitle: part.assignment ?? "",
       durationMinutes: parseDurationMinutes(part.duration, 10),
       capability: "living",
+      partNumber: part.number ?? null,
     });
   });
 
@@ -331,6 +350,7 @@ export function buildMidweekParts(
       durationMinutes: parseDurationMinutes(cbs.duration, 30),
       needsHelper: true,
       capability: "congregationStudy",
+      partNumber: cbs.number ?? null,
     });
   }
   livingAfterCbs.forEach((part, index) => {
@@ -341,6 +361,7 @@ export function buildMidweekParts(
       subtitle: part.assignment ?? "",
       durationMinutes: parseDurationMinutes(part.duration, 10),
       capability: "living",
+      partNumber: part.number ?? null,
     });
   });
 

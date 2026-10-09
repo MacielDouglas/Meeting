@@ -36,19 +36,19 @@ describe("build-meeting-program", () => {
           ],
           BibleReading: "JEREMÍAS 29,30",
           "TREASURES FROM GODS WORD": [
-            { title: "Jehová disciplina", duration: "(10 mins.)" },
-            { title: "Busquemos perlas escondidas", duration: "(10 mins.)" },
-            { title: "Lectura de la Biblia", duration: "(4 mins.)" },
+            { title: "Jehová disciplina", number: 1, duration: "(10 mins.)" },
+            { title: "Busquemos perlas escondidas", number: 2, duration: "(10 mins.)" },
+            { title: "Lectura de la Biblia", number: 3, duration: "(4 mins.)" },
           ],
           "APPLY YOURSELF TO THE FIELD MINISTRY": [
-            { title: "Empiece conversaciones", duration: "(5 mins.)" },
-            { title: "Empiece conversaciones", duration: "(5 mins.)" },
-            { title: "Discurso", duration: "(4 mins.)" },
+            { title: "Empiece conversaciones", number: 4, duration: "(5 mins.)" },
+            { title: "Empiece conversaciones", number: 5, duration: "(5 mins.)" },
+            { title: "Discurso", number: 6, duration: "(4 mins.)" },
           ],
           "LIVING AS CHRISTIANS": [
-            { title: "Jehová llena de esperanza", duration: "(10 mins.)" },
-            { title: "Campaña especial", duration: "(5 mins.)" },
-            { title: "Estudio bíblico de la congregación", duration: "(30 mins.)" },
+            { title: "Jehová llena de esperanza", number: 7, duration: "(10 mins.)" },
+            { title: "Campaña especial", number: 8, duration: "(5 mins.)" },
+            { title: "Estudio bíblico de la congregación", number: 9, duration: "(30 mins.)" },
           ],
         },
       },
@@ -84,6 +84,21 @@ describe("build-meeting-program", () => {
     expect(ministry[0].needsHelper).toBe(true);
     expect(ministry[2].capability).toBe("ministrySpeech");
     expect(ministry[2].needsHelper).toBeFalsy();
+    // Número da apostila: tesouros 1-3, ministério 4-6, vida 7-9.
+    expect(parts.find((p) => p.key === "treasures-talk")?.partNumber).toBe(1);
+    expect(parts.find((p) => p.key === "treasures-gems")?.partNumber).toBe(2);
+    expect(parts.find((p) => p.key === "treasures-reading")?.partNumber).toBe(3);
+    expect(ministry.map((p) => p.partNumber)).toEqual([4, 5, 6]);
+    expect(parts.find((p) => p.key === "living-0")?.partNumber).toBe(7);
+    expect(parts.find((p) => p.key === "living-1")?.partNumber).toBe(8);
+    expect(parts.find((p) => p.key === "congregation-study")?.partNumber).toBe(9);
+    // Presidente, cânticos e comentários não têm número.
+    expect(parts.find((p) => p.key === "president")?.partNumber).toBeUndefined();
+    expect(parts.find((p) => p.key === "opening-song")?.partNumber).toBeUndefined();
+    expect(parts.find((p) => p.key === "middle-song")?.partNumber).toBeUndefined();
+    expect(parts.find((p) => p.key === "closing-song")?.partNumber).toBeUndefined();
+    expect(parts.find((p) => p.key === "opening-comments")?.partNumber).toBeUndefined();
+    expect(parts.find((p) => p.key === "concluding-comments")?.partNumber).toBeUndefined();
     // Palavras de conclusão sem designação.
     expect(parts.find((p) => p.key === "concluding-comments")?.capability).toBeUndefined();
     const last = parts[parts.length - 1];

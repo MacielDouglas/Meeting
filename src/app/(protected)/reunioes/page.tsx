@@ -2,17 +2,11 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
-import {
-  getContentCounts,
-  listOutlines,
-  listSongs,
-} from "@/features/meeting-content/application/queries";
+import { listOutlines, listSongs } from "@/features/meeting-content/application/queries";
 import { listWatchtowerIssues } from "@/features/meeting-content/application/watchtower-queries";
 import { listWorkbookIssues } from "@/features/meeting-content/application/workbook-queries";
-import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import { MeetingProgramSection } from "@/features/meetings/presentation/MeetingProgramSection";
 import { ReunioesEditModeToggle } from "@/features/meetings/presentation/ReunioesEditMode-client";
-import { ReunioesSecondaryTabs } from "@/features/meetings/presentation/ReunioesSecondaryTabs-client";
 import {
   getMeetingSchedule,
   listPublicSpecialEvents,
@@ -21,28 +15,10 @@ import { getWeeklySchedule } from "@/features/weekly-schedule/application/get-we
 import { selectInitialKind } from "@/features/weekly-schedule/domain/schedule";
 import { PageHeader } from "@/shared/components/PageHeader";
 import { CardSkeleton } from "@/shared/components/skeletons";
-import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 import { todayLocalISO } from "@/shared/lib/format-date";
 
-type ReunioesTab = "reunioes" | "conteudo" | "oradores";
-
 export const metadata: Metadata = { title: es.tabReuniones };
-
-const TABS: { value: ReunioesTab; label: string }[] = [
-  { value: "reunioes", label: es.tabReuniones },
-  { value: "conteudo", label: es.tabContenido },
-  { value: "oradores", label: es.tabOradores },
-];
-
-const ZERO_COUNTS = {
-  songsEs: 0,
-  songsPt: 0,
-  songsEn: 0,
-  outlinesEs: 0,
-  outlinesPt: 0,
-  outlinesEn: 0,
-};
 
 /** Aba Reuniões: dados próprios sob Suspense — o shell nunca espera. */
 async function MeetingsTab({ canManage }: { canManage: boolean }) {
@@ -97,41 +73,6 @@ async function MeetingsTab({ canManage }: { canManage: boolean }) {
   );
 }
 
-/** Abas Conteúdo/Oradores: fetch condicional ao tab, sob Suspense. */
-async function SecondaryTab({
-  tab,
-  canManage,
-}: {
-  tab: "conteudo" | "oradores";
-  canManage: boolean;
-}) {
-  const isContent = tab === "conteudo";
-  const [songs, outlines, counts, issues, workbooks, meetingScheduleData, speakers] =
-    await Promise.all([
-      isContent ? listSongs() : Promise.resolve([]),
-      listOutlines(),
-      isContent ? getContentCounts() : Promise.resolve(ZERO_COUNTS),
-      isContent ? listWatchtowerIssues() : Promise.resolve([]),
-      isContent ? listWorkbookIssues() : Promise.resolve([]),
-      getMeetingSchedule(),
-      tab === "oradores" ? listOutsideSpeakers() : Promise.resolve([]),
-    ]);
-
-  return (
-    <ReunioesSecondaryTabs
-      tab={tab}
-      songs={songs}
-      outlines={outlines}
-      issues={issues}
-      workbooks={workbooks}
-      counts={counts}
-      speakers={speakers}
-      systemCongregation={meetingScheduleData.congregationName}
-      canManage={canManage}
-    />
-  );
-}
-
 export default async function ReunioesPage({
   searchParams,
 }: {
@@ -142,47 +83,21 @@ export default async function ReunioesPage({
 
   const params = (await searchParams) ?? {};
   if (params.tab === "designacoes") redirect("/designacoes");
-  if (
-    (params.tab === "conteudo" || params.tab === "oradores") &&
-    user.role !== "owner" &&
-    user.role !== "admin"
-  ) {
-    redirect("/reunioes");
-  }
-  const tab: ReunioesTab =
-    params.tab === "conteudo" || params.tab === "oradores" ? params.tab : "reunioes";
+  // Rotas antigas: conteúdo foi para a administração; oradores para a aba em personas.
+  if (params.tab === "conteudo") redirect("/administracion/contenido");
+  if (params.tab === "oradores") redirect("/administracion/personas?tab=oradores");
   const canManage = user.role === "owner" || user.role === "admin";
 
   return (
     <main className="page-stack">
-      <PageHeader title={es.tabReuniones} />
+      <PageHeader
+        title={es.tabReuniones}
+        actions={canManage ? <ReunioesEditModeToggle /> : undefined}
+      />
 
-      {canManage && <ReunioesEditModeToggle />}
-
-      {canManage && (
-        <TabNav
-          param="tab"
-          defaultValue="reunioes"
-          ariaLabel={es.seccionesReuniones}
-          items={TABS.map((item) => ({
-            value: item.value,
-            label: item.label,
-            href: `/reunioes?tab=${item.value}`,
-          }))}
-        />
-      )}
-
-      {tab === "reunioes" && (
-        <Suspense fallback={<CardSkeleton />}>
-          <MeetingsTab canManage={canManage} />
-        </Suspense>
-      )}
-
-      {tab !== "reunioes" && (
-        <Suspense fallback={<CardSkeleton />}>
-          <SecondaryTab tab={tab} canManage={canManage} />
-        </Suspense>
-      )}
+      <Suspense fallback={<CardSkeleton />}>
+        <MeetingsTab canManage={canManage} />
+      </Suspense>
     </main>
   );
 }

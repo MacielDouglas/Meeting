@@ -10,7 +10,6 @@ import {
   FaChevronDown,
   FaChevronLeft,
   FaChevronRight,
-  FaClock,
   FaMicrophone,
 } from "react-icons/fa";
 import { GiSheep } from "react-icons/gi";
@@ -65,7 +64,7 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
-import { MONTH_SHORT_ES, WEEKDAY_FULL_ES, WEEKDAY_SHORT_ES } from "@/shared/lib/format-date";
+import { MONTH_FULL_ES, WEEKDAY_FULL_ES } from "@/shared/lib/format-date";
 import { isNextRedirectError } from "@/shared/lib/redirect-error";
 import { MeetingAssignModal, type StagedChange } from "./MeetingAssignModal";
 import { PdfExportModal } from "./PdfExportModal-client";
@@ -123,15 +122,26 @@ function mondayOf(offsetWeeks: number): string {
   return `${monday.getFullYear()}-${pad(monday.getMonth() + 1)}-${pad(monday.getDate())}`;
 }
 
-/** Intervalo da semana: "12 – 18 ene" ou "28 ene – 3 feb". */
+/** Intervalo da semana: "05 - 11 octubre" ou "28 enero - 03 febrero". */
 function formatWeekRange(weekStart: string): string {
   const end = addDays(weekStart, 6);
   const [, sm, sd] = weekStart.split("-").map(Number);
   const [, em, ed] = end.split("-").map(Number);
   const startDay = String(sd).padStart(2, "0");
   const endDay = String(ed).padStart(2, "0");
-  if (sm === em) return `${startDay} – ${endDay} ${MONTH_SHORT_ES[sm - 1]}`;
-  return `${startDay} ${MONTH_SHORT_ES[sm - 1]} – ${endDay} ${MONTH_SHORT_ES[em - 1]}`;
+  if (sm === em) return `${startDay} - ${endDay} ${MONTH_FULL_ES[sm - 1]}`;
+  return `${startDay} ${MONTH_FULL_ES[sm - 1]} - ${endDay} ${MONTH_FULL_ES[em - 1]}`;
+}
+
+/** "Jueves · 08/10 · 19:00": dia por extenso + DD/MM + hora, como nas imagens. */
+function formatMeetingLine(dateISO: string, time: string): string {
+  const [y, m, d] = dateISO.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const weekday = WEEKDAY_FULL_ES[dt.getUTCDay()] ?? "";
+  const capitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+  const day = String(d).padStart(2, "0");
+  const month = String(m).padStart(2, "0");
+  return `${capitalized} · ${day}/${month} · ${time}`;
 }
 
 function addDays(iso: string, days: number): string {
@@ -196,8 +206,11 @@ function describePart(part: DisplayPart): PartDisplay {
   // O último cântico carrega "y oración" no título do modelo
   // ("Canción 129 y oración"); preserva o sufixo ao exibir o número.
   const prayerSuffix = /oraci[óo]n/i.test(part.title) ? " y oración" : "";
-  const title = `${part.songNumber ? `Canción ${part.songNumber}${prayerSuffix}` : part.title}${
-    part.durationMinutes ? ` (${part.durationMinutes} min)` : ""
+  // Número da apostila no meio de semana ("1. Tengamos…"); presidente,
+  // cânticos e comentários não têm número e seguem sem prefixo.
+  const numberedTitle = part.partNumber != null ? `${part.partNumber}. ${part.title}` : part.title;
+  const title = `${part.songNumber ? `Canción ${part.songNumber}${prayerSuffix}` : numberedTitle}${
+    part.durationMinutes ? ` · ${part.durationMinutes} min` : ""
   }${part.classroom && part.classroom !== "A" ? ` · Sala ${part.classroom}` : ""}`;
   const subtitle = part.subtitle || part.songTheme || "";
   const person = part.personName || "";
@@ -330,7 +343,12 @@ export function MeetingProgramSection({
   // Na visita, o meio de semana vai para terça.
   const meetingDay = kind === "midweek" ? (visit ? 2 : midweekDay) : weekendDay;
   const meetingDayName = WEEKDAY_FULL_ES[meetingDay] ?? "";
-  const meetingTitle = kind === "midweek" ? "Reunión de entre semana" : "Reunión del fin de semana";
+
+  // Datas das duas reuniões da semana (para o seletor duplo das imagens).
+  const midweekDateISO = addDays(weekStart, ((visit ? 2 : midweekDay) - 1 + 7) % 7);
+  const weekendDateISO = addDays(weekStart, (weekendDay - 1 + 7) % 7);
+  const midweekLine = formatMeetingLine(midweekDateISO, midweekTime);
+  const weekendLine = formatMeetingLine(weekendDateISO, weekendTime);
 
   const template: BuiltPart[] = useMemo(() => {
     if (kind === "midweek") {
@@ -610,6 +628,8 @@ export function MeetingProgramSection({
           helperPersonName: s.helperPersonName ?? "",
           classroom: s.classroom ?? "A",
           speakerCongregation: s.speakerCongregation ?? "",
+          // Sem modelo da apostila não há número confiável: omite o prefixo.
+          partNumber: null,
           ...classifySavedPart(s.partKey, s.title, s.subtitle, kind),
         }),
       );
@@ -707,6 +727,7 @@ export function MeetingProgramSection({
           ? { speakerCongregation: change.speakerCongregation }
           : {}),
         ...(change.speakerName !== undefined ? { speakerName: change.speakerName } : {}),
+        ...(change.helperName !== undefined ? { helperName: change.helperName } : {}),
       });
     }
     if (items.length === 0) return;
@@ -834,70 +855,96 @@ export function MeetingProgramSection({
     total: assignmentStats.total,
   };
 
+  // Presidente sai da lista e vira a linha "Presidente · Nome" do cabeçalho,
+  // como nas imagens (clicável em modo edição, só leitura nos demais).
+  const presidentPart = displayPartsWithSections.find((part) => part.key === "president") ?? null;
+  const presidentDisplay = presidentPart ? partDisplay.get(presidentPart.id) : undefined;
+  const presidentName =
+    presidentDisplay && presidentDisplay.line1 !== "—" ? presidentDisplay.line1 : "";
+  const presidentInteractive =
+    canEdit && programId !== null && presidentPart !== null && !presidentPart.id.startsWith("tpl-");
+
+  // Contador "X/Y asignadas" sob o toggle do topo (só com edição ligada).
+  useEffect(() => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("reunioes-progress", {
+          detail: { assigned: assignmentProgress.assigned, total: assignmentProgress.total },
+        }),
+      );
+    } catch {
+      /* evento indisponível: o toggle segue sem o contador */
+    }
+  }, [assignmentProgress.assigned, assignmentProgress.total]);
+
   return (
     <div className={`section-stack ${canEdit && dirtyCount > 0 ? "pb-60" : ""}`}>
-      <fieldset className="flex rounded-xl bg-secondary p-1">
-        <legend className="sr-only">{es.tipoReunion}</legend>
-        {(
-          [
-            { value: "midweek", label: es.entreSemana },
-            { value: "weekend", label: es.finSemana },
-          ] as const
-        ).map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={kind === option.value}
-            onClick={() => handleKindChange(option.value)}
-            className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${
-              kind === option.value
-                ? "bg-background font-semibold text-foreground shadow-sm"
-                : "font-medium text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </fieldset>
-
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={() => handleWeekStep(-1)}
-          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaAnterior}
         >
-          <FaChevronLeft size={16} />
+          <FaChevronLeft size={20} />
         </button>
         <div className="flex min-w-0 flex-1 flex-col items-center gap-1 py-1 text-center">
-          <p className="truncate font-display text-2xl font-semibold leading-none tracking-tight">
+          <p className="truncate font-display text-xl font-semibold leading-none tracking-tight">
             {formatWeekRange(weekStart)}
           </p>
-          <p className="truncate text-sm font-medium text-muted-foreground">
-            {kind === "midweek" ? es.entreSemana : es.finSemana} ·{" "}
-            {WEEKDAY_SHORT_ES[kind === "midweek" ? midweekDay : weekendDay]}{" "}
-            {kind === "midweek" ? midweekTime : weekendTime}
-          </p>
-          {weekOffset !== 0 ? (
+          {weekOffset !== 0 && (
             <button
               type="button"
               onClick={handleGoToday}
-              className="mt-1 inline-flex h-9 min-w-12 items-center justify-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="mt-1 inline-flex h-8 min-w-12 items-center justify-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.hoy}
             </button>
-          ) : (
-            <span aria-hidden className="mt-1 h-9" />
           )}
         </div>
         <button
           type="button"
           onClick={() => handleWeekStep(1)}
-          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl border border-input bg-background transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="grid h-11 w-11 shrink-0 place-items-center self-center rounded-xl transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
           aria-label={es.semanaSiguiente}
         >
-          <FaChevronRight size={16} />
+          <FaChevronRight size={20} />
         </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            { value: "midweek", title: "Reunión de entre semana", line: midweekLine },
+            { value: "weekend", title: "Reunión de fin de semana", line: weekendLine },
+          ] as const
+        ).map((option) => {
+          const active = kind === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => handleKindChange(option.value)}
+              className="min-w-0 rounded-xl px-1 py-1 text-left transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              <span
+                className={`block truncate text-sm font-bold ${
+                  active ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {option.title}
+              </span>
+              <span
+                className={`block truncate text-sm ${
+                  active ? "font-medium text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {active ? option.line : es.verReunion}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {error && (
@@ -931,11 +978,6 @@ export function MeetingProgramSection({
       )}
       {saving && !programId && (
         <p className="text-xs text-muted-foreground">{es.guardandoPrograma}</p>
-      )}
-      {!canEdit && (
-        <p className="text-xs text-muted-foreground">
-          {canManage ? es.activaModoEdicion : es.soloLectura}
-        </p>
       )}
 
       {override.kind !== "none" && !blocked && !loading && !loadError && (
@@ -1021,16 +1063,32 @@ export function MeetingProgramSection({
         </Card>
       ) : (
         <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
-          <div className="sticky top-0 z-10 flex items-baseline justify-between gap-3 border-b border-session-line bg-session/95 px-0 py-3 backdrop-blur">
-            <p className="text-sm font-medium text-session-mute">
-              {meetingDayName} · {meetingTitle}
-            </p>
-            <p className="shrink-0 text-sm font-medium tabular-nums text-session-mute">
-              {assignmentProgress.assigned}/{assignmentProgress.total} {es.asignadas}
-            </p>
+          <div className="flex justify-end">
+            {presidentInteractive && presidentPart ? (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => setEditing(presidentPart)}
+                className="rounded-lg text-right text-sm transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-70"
+                aria-label={`${es.asignar} Presidente`}
+              >
+                <span className="font-bold text-session-fg">Presidente · </span>
+                <span className={`font-bold ${presidentName ? "text-accent" : "text-danger"}`}>
+                  {presidentName || es.sinAsignar.toUpperCase()}
+                </span>
+              </button>
+            ) : (
+              <p className="text-right text-sm">
+                <span className="font-bold text-session-fg">Presidente · </span>
+                {presidentName && (
+                  <span className="font-bold text-session-fg">{presidentName}</span>
+                )}
+              </p>
+            )}
           </div>
           <div aria-busy={saving} className="flex flex-col divide-y divide-session-line">
             {displayPartsWithSections.map((part, index) => {
+              if (part.key === "president") return null;
               const meta = sectionMetaOf(part.section);
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
               const display = partDisplay.get(part.id);
@@ -1048,32 +1106,36 @@ export function MeetingProgramSection({
               const hasAssignee = display.line1 !== "—" || display.line2 !== "";
               // Nomes só aparecem com designado; cânticos nunca mostram "Sin asignar",
               // exceto o final, que designa a oração e grita a vaga como as demais.
+              // Em leitura a vaga some (decisão): mantém título/hora, oculta nomes.
               const showNames =
                 hasAssignee || ((!isSongPart || part.key === "closing-song") && interactive);
               const names = hasAssignee
                 ? `${display.line1}${display.line2 ? ` · ${display.line2}` : ""}`
                 : es.sinAsignar;
+              // Em edição os nomes gritam em acento (como nas imagens); em
+              // leitura ficam neutros.
+              const nameTone = interactive ? "text-accent" : "text-session-fg";
+              // Títulos longos (discurso de Tesouros, tema da Atalaya) quebram
+              // em várias linhas em vez de truncar com reticências.
+              const wrapsTitle = part.key === "treasures-talk" || part.key === "watchtower-study";
+              const titleTone = part.key === "public-talk" ? "text-base" : "text-sm";
+              const titleClamp = wrapsTitle ? "whitespace-normal break-words" : "truncate";
               const rowContent = (
                 <>
-                  <span className="flex w-11 shrink-0 flex-col items-center gap-0.5 pt-0.5">
+                  <span className="flex w-11 shrink-0 flex-col items-start gap-0.5 pt-0.5">
                     {isDirty && (
                       <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning">
                         <span className="sr-only">{es.sinGuardar}</span>
                       </span>
                     )}
-                    <FaClock aria-hidden size={16} className="shrink-0 text-session-faint" />
-                    <span className="text-xs font-semibold tabular-nums text-session-mute">
+                    <span className="text-xs font-medium tabular-nums text-muted-foreground">
                       {part.startTime}
                     </span>
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
                       title={display.title}
-                      className={
-                        part.key === "public-talk"
-                          ? "block truncate text-base font-semibold text-session-fg"
-                          : "block truncate text-sm font-semibold text-session-fg"
-                      }
+                      className={`block ${titleClamp} ${titleTone} font-semibold text-session-fg`}
                     >
                       {display.title}
                     </span>
@@ -1084,16 +1146,13 @@ export function MeetingProgramSection({
                     )}
                     {showNames && (
                       <span className="mt-0.5 block text-right">
-                        {/* Só a falta grita: vaga acionável em acento, designada em voz neutra. */}
                         <span
-                          className={`block truncate text-sm font-semibold ${
-                            hasAssignee || !interactive ? "text-session-fg" : "text-accent"
-                          }`}
+                          className={`block truncate text-sm font-bold ${hasAssignee ? nameTone : "text-danger"}`}
                         >
-                          {hasAssignee ? display.line1 : es.sinAsignar}
+                          {hasAssignee ? display.line1 : es.sinAsignar.toUpperCase()}
                         </span>
                         {display.line2 && (
-                          <span className="block truncate text-xs text-session-fg opacity-90">
+                          <span className={`block truncate text-xs ${nameTone} opacity-90`}>
                             {display.line2}
                           </span>
                         )}

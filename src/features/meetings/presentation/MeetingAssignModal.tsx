@@ -46,6 +46,8 @@ export interface StagedChange {
   speakerCongregation?: string;
   /** Orador (ficha salva): nome livre de vínculo de pessoa, congregação travada na ficha. */
   speakerName?: string;
+  /** Nome temporário do ajudante (fora da organização): só fica na parte. */
+  helperName?: string;
 }
 
 interface OutlineOption {
@@ -99,6 +101,46 @@ function formatLastAssignment(iso: string | null): string {
   return `última: ${formatDateBR(iso.slice(0, 10))}`;
 }
 
+/** Caixa de nome temporário no fim da lista (fora da organização, só na parte). */
+function TempNameBox({
+  input,
+  onInput,
+  onUse,
+  inputLabel,
+}: {
+  input: string;
+  onInput: (value: string) => void;
+  onUse: () => void;
+  inputLabel: string;
+}) {
+  const valid = input.trim().length >= 2;
+  return (
+    <div className="rounded-xl border border-dashed border-input p-3">
+      <p className="text-sm font-semibold">{es.nombreTemporal}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{es.nombreTemporalHint}</p>
+      <div className="mt-2 flex gap-2">
+        <input
+          value={input}
+          onChange={(event) => onInput(event.target.value)}
+          placeholder={inputLabel}
+          aria-label={es.nombreTemporal}
+          maxLength={160}
+          autoComplete="off"
+          className="h-12 min-w-0 flex-1 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
+        />
+        <button
+          type="button"
+          disabled={!valid}
+          onClick={onUse}
+          className="h-12 shrink-0 rounded-xl bg-secondary px-4 font-display text-sm font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50"
+        >
+          {es.usarNombre}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function MeetingAssignModal({
   title,
   subtitle,
@@ -126,6 +168,10 @@ export function MeetingAssignModal({
   const [orderBy, setOrderBy] = useState<"name" | "rotation">("name");
   const [songNumber, setSongNumber] = useState("");
   const [songError, setSongError] = useState<string | null>(null);
+  // Nome temporário (fora da lista e da organização): só fica na parte.
+  const [titularTempInput, setTitularTempInput] = useState("");
+  const [helperTempInput, setHelperTempInput] = useState("");
+  const [tempTitularName, setTempTitularName] = useState<string | null>(null);
   // Alteração local do modal: nada fecha nem salva sozinho — o rodapé
   // "Asignar" confirma tudo de uma vez (pessoa + cântico + sala + congregação).
   const [staged, setStaged] = useState<StagedChange | null>(null);
@@ -197,12 +243,16 @@ export function MeetingAssignModal({
   });
 
   // Ajudantes elegíveis para o titular (mesmo sexo e/ou família), sem o titular.
+  // Com titular temporário não há sexo/família para filtrar: lista todos.
   const eligibleHelpers = useMemo(() => {
-    if (!selectedTitular || step !== "helper") return [];
+    if (step !== "helper") return [];
+    if (!selectedTitular) return helperQuery.data ?? [];
     return (helperQuery.data ?? []).filter((h) => isEligibleHelper(selectedTitular, h, helperRule));
   }, [helperQuery.data, selectedTitular, step, helperRule]);
 
   function handlePickTitular(person: MeetingPerson) {
+    // Escolha da lista sempre sobrescreve eventual nome temporário.
+    setTempTitularName(null);
     if (withHelperFlow) {
       setSelectedTitular(person);
       setStep("helper");
@@ -212,21 +262,71 @@ export function MeetingAssignModal({
       ...previous,
       personId: person.id,
       personName: fullName(person),
+      speakerName: undefined,
+      helperName: undefined,
+    }));
+  }
+
+  /** Nome temporário como titular: avança ao ajudante ou encena direto. */
+  function handleUseTempTitular() {
+    const name = titularTempInput.trim().slice(0, 160);
+    if (name.length < 2) return;
+    if (withHelperFlow) {
+      setSelectedTitular(null);
+      setTempTitularName(name);
+      setStep("helper");
+      return;
+    }
+    setStaged((previous) => ({
+      ...previous,
+      personId: null,
+      personName: name,
+      speakerName: name,
+      helperPersonId: null,
+      helperPersonName: "",
+      helperName: undefined,
     }));
   }
 
   function handlePickHelper(helper: MeetingPerson | null) {
-    if (!selectedTitular) return;
+    const base =
+      selectedTitular != null
+        ? { personId: selectedTitular.id, personName: fullName(selectedTitular) }
+        : tempTitularName != null
+          ? { personId: null, personName: tempTitularName, speakerName: tempTitularName }
+          : null;
+    if (!base) return;
     setStaged((previous) => ({
       ...previous,
-      personId: selectedTitular.id,
-      personName: fullName(selectedTitular),
+      ...base,
       helperPersonId: helper ? helper.id : null,
       helperPersonName: helper ? fullName(helper) : "",
+      helperName: undefined,
+    }));
+  }
+
+  /** Nome temporário como ajudante: mantém o titular já escolhido. */
+  function handleUseTempHelper() {
+    const name = helperTempInput.trim().slice(0, 160);
+    if (name.length < 2) return;
+    const base =
+      selectedTitular != null
+        ? { personId: selectedTitular.id, personName: fullName(selectedTitular) }
+        : tempTitularName != null
+          ? { personId: null, personName: tempTitularName, speakerName: tempTitularName }
+          : null;
+    if (!base) return;
+    setStaged((previous) => ({
+      ...previous,
+      ...base,
+      helperPersonId: null,
+      helperPersonName: name,
+      helperName: name,
     }));
   }
 
   function handleBackToTitular() {
+    setTempTitularName(null);
     setStep("titular");
   }
 
@@ -429,17 +529,30 @@ export function MeetingAssignModal({
                     <li className="text-sm text-muted-foreground">{es.ningunaPersona}</li>
                   )}
                 </ul>
+                {!isPublicTalk && (
+                  <TempNameBox
+                    input={titularTempInput}
+                    onInput={setTitularTempInput}
+                    onUse={handleUseTempTitular}
+                    inputLabel={`Escribe el ${labels.main.toLowerCase()}…`}
+                  />
+                )}
               </>
             )}
           </div>
         )}
 
-        {withHelperFlow && step === "helper" && selectedTitular && (
+        {withHelperFlow && step === "helper" && (selectedTitular || tempTitularName) && (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2 rounded-xl bg-secondary px-3 py-2.5">
               <span className="min-w-0 flex-1 text-sm">
                 <span className="block text-xs text-muted-foreground">{labels.main}</span>
-                <span className="block truncate font-medium">{fullName(selectedTitular)}</span>
+                <span className="block truncate font-medium">
+                  {selectedTitular ? fullName(selectedTitular) : tempTitularName}
+                  {tempTitularName && (
+                    <span className="text-muted-foreground"> · {es.temporal}</span>
+                  )}
+                </span>
               </span>
               <button
                 type="button"
@@ -452,8 +565,8 @@ export function MeetingAssignModal({
             {helperRule && (
               <p className="text-xs text-muted-foreground">
                 {helperRule === "sameSex"
-                  ? `${labels.helper}: alguien del mismo sexo que ${selectedTitular.firstName}.`
-                  : `${labels.helper}: alguien del mismo sexo o de la misma familia que ${selectedTitular.firstName}.`}
+                  ? `${labels.helper}: alguien del mismo sexo que ${selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.`
+                  : `${labels.helper}: alguien del mismo sexo o de la misma familia que ${selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.`}
               </p>
             )}
             <input
@@ -509,34 +622,56 @@ export function MeetingAssignModal({
                   ))}
                   {eligibleHelpers.length === 0 && (
                     <li className="text-sm text-muted-foreground">
-                      Ningún {labels.helper.toLowerCase()} elegible para {selectedTitular.firstName}
-                      .
+                      Ningún {labels.helper.toLowerCase()} elegible para{" "}
+                      {selectedTitular?.firstName ?? tempTitularName?.split(" ")[0] ?? ""}.
                     </li>
                   )}
                 </ul>
+                <TempNameBox
+                  input={helperTempInput}
+                  onInput={setHelperTempInput}
+                  onUse={handleUseTempHelper}
+                  inputLabel={`Escribe el ${labels.helper.toLowerCase()}…`}
+                />
               </>
             )}
           </div>
         )}
+
+        {staged?.personName ? (
+          <p className="rounded-xl bg-secondary px-3 py-2.5 text-sm">
+            {es.elegido}: <span className="font-semibold">{staged.personName}</span>
+            {staged.speakerName ? <span> · {es.temporal}</span> : null}
+            {staged.helperPersonName ? (
+              <span>
+                {" "}
+                · {staged.helperPersonName}
+                {staged.helperName ? <span> ({es.temporal})</span> : null}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
 
         <DialogFooter>
           {withHelperFlow && step === "helper" && (
             <button
               type="button"
               onClick={handleBackToTitular}
-              className="flex h-11 flex-1 items-center justify-center gap-1 rounded-xl bg-secondary px-3 font-display text-sm font-medium text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="flex min-h-[52px] flex-1 items-center justify-center gap-1 rounded-xl bg-secondary px-3 font-display text-base font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               <FaChevronLeft aria-hidden size={12} />
               {es.volver}
             </button>
           )}
-          <DialogClose className="mt-0 flex-1">{es.cancel}</DialogClose>
+          <DialogClose className="mt-0 min-h-[52px] flex-1 text-base font-semibold">
+            {es.cancel}
+          </DialogClose>
           {!isPublicTalk && (
             <button
               type="button"
               disabled={!staged}
               onClick={handleAsignar}
-              className="h-11 flex-1 rounded-xl bg-accent px-4 font-display text-sm font-medium text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
+              className="min-h-[52px] flex-1 rounded-xl bg-accent px-4 font-display text-base font-semibold text-accent-ink transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-50"
             >
               {es.asignar}
             </button>

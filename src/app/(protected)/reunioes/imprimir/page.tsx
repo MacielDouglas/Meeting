@@ -89,7 +89,7 @@ export default async function ImprimirPage({ searchParams }: ImprimirPageProps) 
           {speakers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {es.ningunOrador}{" "}
-              <Link href="/reunioes?tab=oradores" className="text-accent underline">
+              <Link href="/administracion/personas?tab=oradores" className="text-accent underline">
                 {es.registrarOradores}
               </Link>
             </p>

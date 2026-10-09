@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { listOutlines } from "@/features/meeting-content/application/queries";
+import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
+import { OutsideSpeakersClient } from "@/features/meetings/presentation/OutsideSpeakers-client";
 import { listActiveJoinTokenCodes } from "@/features/organization/application/organization-queries";
 import {
   listPersons,
@@ -9,8 +12,9 @@ import {
   listUsersWithRoles,
 } from "@/features/people/application/queries";
 import { PersonasTabs } from "@/features/people/presentation/PersonasTabs-client";
+import { getMeetingSchedule } from "@/features/settings/application/queries";
 import { PageHeader } from "@/shared/components/PageHeader";
-import { TabNavSkeleton } from "@/shared/components/skeletons";
+import { CardSkeleton, TabNavSkeleton } from "@/shared/components/skeletons";
 import { TabNav } from "@/shared/components/TabNav-client";
 import { es } from "@/shared/i18n/es";
 
@@ -20,13 +24,34 @@ interface PeoplePageProps {
   searchParams: Promise<{ tab?: string }>;
 }
 
+type PersonasTab = "personas" | "usuarios" | "oradores";
+
+async function OradoresTab() {
+  const [speakers, outlines, meetingScheduleData] = await Promise.all([
+    listOutsideSpeakers(),
+    listOutlines(),
+    getMeetingSchedule(),
+  ]);
+
+  return (
+    <OutsideSpeakersClient
+      initialSpeakers={speakers}
+      initialOutlines={outlines.map((o) => ({ number: o.number, theme: o.theme }))}
+      systemCongregation={meetingScheduleData.congregationName}
+      canManage
+      requireEditMode={false}
+    />
+  );
+}
+
 export default async function PeoplePage({ searchParams }: PeoplePageProps) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
   if (user.role !== "owner" && user.role !== "admin") redirect("/");
 
   const { tab } = await searchParams;
-  const activeTab = tab === "usuarios" ? "usuarios" : "personas";
+  const activeTab: PersonasTab =
+    tab === "usuarios" ? "usuarios" : tab === "oradores" ? "oradores" : "personas";
   const canCreate = user?.role === "owner" || user?.role === "admin";
   const isOwner = user?.role === "owner";
   const [persons, users, activeCodes, unlinkedPersons] = await Promise.all([
@@ -46,7 +71,7 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
     <main className="page-stack">
       <PageHeader title={es.people} />
 
-      <Suspense fallback={<TabNavSkeleton tabs={2} />}>
+      <Suspense fallback={<TabNavSkeleton tabs={3} />}>
         <TabNav
           param="tab"
           defaultValue="personas"
@@ -58,20 +83,31 @@ export default async function PeoplePage({ searchParams }: PeoplePageProps) {
               label: es.usersTab,
               href: "/administracion/personas?tab=usuarios",
             },
+            {
+              value: "oradores",
+              label: es.tabOradores,
+              href: "/administracion/personas?tab=oradores",
+            },
           ]}
         />
       </Suspense>
 
-      <PersonasTabs
-        tab={activeTab}
-        persons={persons}
-        users={users}
-        canCreate={canCreate}
-        currentUserId={user?.id ?? ""}
-        isOwner={isOwner}
-        joinTokenByUserId={joinTokenByUserId}
-        unlinkedPersons={unlinkedPersons}
-      />
+      {activeTab === "oradores" ? (
+        <Suspense fallback={<CardSkeleton />}>
+          <OradoresTab />
+        </Suspense>
+      ) : (
+        <PersonasTabs
+          tab={activeTab}
+          persons={persons}
+          users={users}
+          canCreate={canCreate}
+          currentUserId={user?.id ?? ""}
+          isOwner={isOwner}
+          joinTokenByUserId={joinTokenByUserId}
+          unlinkedPersons={unlinkedPersons}
+        />
+      )}
     </main>
   );
 }

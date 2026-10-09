@@ -45,3 +45,18 @@ export const MONTH_SHORT_ES = [
   "nov",
   "dic",
 ] as const;
+
+export const MONTH_FULL_ES = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+] as const;

@@ -159,6 +159,16 @@ export function SiteHeader({
     ...(showAdmin
       ? [
           {
+            href: "/administracion/contenido",
+            label: es.tabContenido,
+            icon: FaBookOpen,
+            match: (path: string) => path.startsWith("/administracion/contenido"),
+          },
+        ]
+      : []),
+    ...(showAdmin
+      ? [
+          {
             href: "/asignar",
             label: es.asignar,
             icon: FaClipboardList,

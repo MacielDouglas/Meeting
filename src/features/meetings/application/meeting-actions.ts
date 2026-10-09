@@ -381,6 +381,8 @@ const stagedItemSchema = z.object({
   classroom: z.enum(["A", "B", "C"]).optional(),
   speakerCongregation: z.string().max(160).optional(),
   speakerName: z.string().min(1).max(160).optional(),
+  /** Nome temporário do ajudante (fora da organização): só fica na parte. */
+  helperName: z.string().max(160).optional(),
 });
 
 export type StagedChangeInput = z.infer<typeof stagedItemSchema>;
@@ -462,14 +464,24 @@ export async function saveStagedChanges(
         if (!names.has(item.helperPersonId)) return fail(item.label, "Ayudante no encontrado.");
       }
       const patch: AssignmentPatch = {};
+      // Nome temporário aparado; vazio equivale a ausente.
+      const freeHelperName = (item.helperName ?? "").trim().slice(0, 160);
       if (item.speakerName !== undefined) {
-        // Orador de fora: nome livre no lugar do vínculo de pessoa.
+        // Nome temporário/livre no lugar do vínculo de pessoa.
         Object.assign(patch, {
           personId: null,
           personName: item.speakerName,
-          helperPersonId: null,
-          helperPersonName: "",
         });
+        if (item.helperPersonId) {
+          Object.assign(patch, {
+            helperPersonId: item.helperPersonId,
+            helperPersonName: (names.get(item.helperPersonId) ?? "").trim(),
+          });
+        } else if (freeHelperName !== "") {
+          Object.assign(patch, { helperPersonId: null, helperPersonName: freeHelperName });
+        } else {
+          Object.assign(patch, { helperPersonId: null, helperPersonName: "" });
+        }
         if (item.classroom !== undefined) patch.classroom = item.classroom;
         if (item.speakerCongregation !== undefined)
           patch.speakerCongregation = item.speakerCongregation;
@@ -482,7 +494,9 @@ export async function saveStagedChanges(
             item.helperPersonId !== undefined
               ? item.helperPersonId
                 ? (names.get(item.helperPersonId) ?? "").trim()
-                : ""
+                : freeHelperName !== ""
+                  ? freeHelperName
+                  : ""
               : existing.helperPersonName;
         }
         if (item.songNumber !== undefined && item.songNumber !== null) {

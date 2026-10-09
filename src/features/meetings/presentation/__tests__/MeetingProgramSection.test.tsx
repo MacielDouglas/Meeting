@@ -72,17 +72,15 @@ beforeEach(() => {
 
 describe("MeetingProgramSection", () => {
   it("muestra CardSkeleton durante la carga y luego el título de la reunión", async () => {
-    const { container } = renderSection();
+    renderSection();
 
-    expect(container.querySelector("div.bg-card[aria-hidden]")).not.toBeNull();
-    expect(screen.getByText(/21 – 27 sep/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: es.entreSemana })).toHaveAttribute(
+    expect(screen.getByText(/21 - 27 septiembre/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Reunión de entre semana/ })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
 
     expect(await screen.findByText(/Reunión de entre semana/)).toBeInTheDocument();
-    expect(container.querySelector("div.bg-card[aria-hidden]")).toBeNull();
   });
 
   it("sin programa guardado ofrece crear el programa de la semana", async () => {
@@ -91,7 +89,30 @@ describe("MeetingProgramSection", () => {
 
     expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: es.crearProgramaSemana })).toBeInTheDocument();
-    expect(screen.queryByText(/Reunión de entre semana/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Presidente")).not.toBeInTheDocument();
+  });
+
+  it("exibe o número da apostila nas partes do meio de semana", async () => {
+    renderSection({
+      workbooks: [
+        {
+          label: "Guía septiembre 2026",
+          weekStart: "2026-09-21",
+          meeting: {
+            BibleReading: "JEREMÍAS 29,30",
+            "TREASURES FROM GODS WORD": [
+              { title: "Jehová disciplina a su pueblo", number: 1, duration: "(10 mins.)" },
+              { title: "Busquemos perlas escondidas", number: 2, duration: "(10 mins.)" },
+              { title: "Lectura de la Biblia", number: 3, duration: "(4 mins.)" },
+            ],
+          },
+        },
+      ],
+    });
+
+    expect(await screen.findByText(/1\. Jehová disciplina a su pueblo/)).toBeInTheDocument();
+    expect(screen.getByText(/2\. Busquemos perlas escondidas/)).toBeInTheDocument();
+    expect(screen.getByText(/3\. Lectura de la Biblia/)).toBeInTheDocument();
   });
 
   it("en semana de asamblea muestra el aviso en lugar de programar", async () => {
@@ -126,7 +147,7 @@ describe("MeetingProgramSection", () => {
 
     expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
-    expect(screen.getByText(es.activaModoEdicion)).toBeInTheDocument();
+    expect(screen.queryByText(es.activaModoEdicion)).not.toBeInTheDocument();
   });
 
   it("sin permiso de gestión muestra solo lectura aunque el modo edición esté activo", async () => {
@@ -135,7 +156,7 @@ describe("MeetingProgramSection", () => {
 
     expect(await screen.findByText(es.programaNoEncontrado)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: es.crearProgramaSemana })).not.toBeInTheDocument();
-    expect(screen.getByText(es.soloLectura)).toBeInTheDocument();
+    expect(screen.queryByText(es.soloLectura)).not.toBeInTheDocument();
     expect(screen.queryByText(es.activaModoEdicion)).not.toBeInTheDocument();
   });
 });

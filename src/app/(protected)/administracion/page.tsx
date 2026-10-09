@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FaGear, FaUserGroup, FaUsersGear } from "react-icons/fa6";
+import { FaBookOpen, FaGear, FaUserGroup, FaUsersGear } from "react-icons/fa6";
 import { getActiveOrganization } from "@/features/auth/application/organization";
 import { getCurrentUser } from "@/features/auth/application/session";
 import {
@@ -64,7 +64,7 @@ async function AdminOverview() {
         </p>
       </Card>
 
-      <nav aria-label={es.administracion} className="tight-stack sm:grid sm:grid-cols-3">
+      <nav aria-label={es.administracion} className="tight-stack sm:grid sm:grid-cols-2">
         <Link
           href="/administracion/personas?tab=usuarios"
           className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-card-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -87,6 +87,18 @@ async function AdminOverview() {
               {es.administracionPersonas}
             </span>
             <span className="block truncate text-sm text-muted-foreground">{es.peopleTab}</span>
+          </span>
+        </Link>
+        <Link
+          href="/administracion/contenido"
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-card-foreground shadow-sm transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          <FaBookOpen aria-hidden size={20} className="shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-base font-semibold">{es.tabContenido}</span>
+            <span className="block truncate text-sm text-muted-foreground">
+              {es.contenidoReuniones}
+            </span>
           </span>
         </Link>
         <Link

@@ -1,11 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Switch } from "@/shared/components/ui/switch";
 import { es } from "@/shared/i18n/es";
 
 const STORAGE_KEY = "reunioes-edit-mode";
 const EVENT_NAME = "reunioes-edit-mode-change";
+const PROGRESS_EVENT = "reunioes-progress";
 
 function readEditMode(): boolean {
   if (typeof window === "undefined") return false;
@@ -44,19 +45,39 @@ export function setReunioesEditMode(checked: boolean): void {
 }
 
 /**
- * Ilha client mínima: switch no início da página para owner/admin.
+ * Ilha client mínima: switch no topo da página para owner/admin, no layout
+ * das imagens (título + switch à direita, subtítulo e contador abaixo).
  * O server decide quem vê (canManage); o estado vive no client.
+ * O contador "X/Y asignadas" chega via evento `reunioes-progress` emitido
+ * pela seção do programa; só aparece com a edição ligada.
  */
 export function ReunioesEditModeToggle() {
   const editMode = useReunioesEditMode();
+  const [progress, setProgress] = useState<{ assigned: number; total: number } | null>(null);
+
+  useEffect(() => {
+    const onProgress = (event: Event) => {
+      const detail = (event as CustomEvent<{ assigned: number; total: number }>).detail;
+      if (detail && typeof detail.assigned === "number" && typeof detail.total === "number") {
+        setProgress({ assigned: detail.assigned, total: detail.total });
+      }
+    };
+    window.addEventListener(PROGRESS_EVENT, onProgress);
+    return () => window.removeEventListener(PROGRESS_EVENT, onProgress);
+  }, []);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{es.modoEdicion}</p>
-        <p className="text-xs text-muted-foreground">{es.modoEdicionHint}</p>
+    <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-muted-foreground">{es.editarReunion}</span>
+        <Switch label={es.editarReunion} checked={editMode} onCheckedChange={setReunioesEditMode} />
       </div>
-      <Switch label={es.modoEdicion} checked={editMode} onCheckedChange={setReunioesEditMode} />
+      <p className="text-xs text-muted-foreground">{es.activaAsignarPartes}</p>
+      {editMode && progress && progress.total > 0 && (
+        <p className="text-xs font-semibold tabular-nums text-accent">
+          {progress.assigned}/{progress.total} {es.asignadas}
+        </p>
+      )}
     </div>
   );
 }

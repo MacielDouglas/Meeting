@@ -215,7 +215,7 @@ export function PublicTalkPicker({
       {outlines.length === 0 && (
         <p className="px-1 text-xs text-muted-foreground">
           {es.importarBosquejosHint}{" "}
-          <Link href="/reunioes?tab=conteudo" className="font-medium text-accent underline">
+          <Link href="/administracion/contenido" className="font-medium text-accent underline">
             {es.verContenido}
           </Link>
         </p>
@@ -223,7 +223,10 @@ export function PublicTalkPicker({
       {speakers.length === 0 && (
         <p className="px-1 text-sm text-muted-foreground">
           {es.registrarOradoresHint}{" "}
-          <Link href="/reunioes?tab=oradores" className="font-medium text-accent underline">
+          <Link
+            href="/administracion/personas?tab=oradores"
+            className="font-medium text-accent underline"
+          >
             {es.anadirOrador}
           </Link>
         </p>
