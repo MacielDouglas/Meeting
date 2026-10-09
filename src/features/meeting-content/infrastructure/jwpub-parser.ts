@@ -108,6 +108,7 @@ function parseSongs(db: Database): ParsedItem[] {
   );
   const numericItems: { title: string; docId: number }[] = [];
   while (stmt.step()) {
+    if (numericItems.length >= MAX_PARSED_ROWS) break;
     const row = stmt.getAsObject() as unknown as { title: string; docId: number };
     if (typeof row.title === "string" && /^\d+$/.test(row.title.trim())) {
       numericItems.push({ title: row.title.trim(), docId: Number(row.docId) });
@@ -116,6 +117,7 @@ function parseSongs(db: Database): ParsedItem[] {
   stmt.free();
   const items: ParsedItem[] = [];
   for (const item of numericItems) {
+    if (items.length >= MAX_PARSED_ROWS) break;
     const docStmt = db.prepare("SELECT Title AS title FROM Document WHERE DocumentId = ?");
     docStmt.bind([item.docId]);
     if (docStmt.step()) {
@@ -132,6 +134,7 @@ function parseOutlines(db: Database): ParsedItem[] {
   const stmt = db.prepare("SELECT Title AS title FROM Document");
   const items: ParsedItem[] = [];
   while (stmt.step()) {
+    if (items.length >= MAX_PARSED_ROWS) break;
     const row = stmt.getAsObject() as unknown as { title: string };
     const title = String(row.title ?? "").trim();
     const match = title.match(/^(\d+)\.\s+(.+)$/);
@@ -263,6 +266,26 @@ interface OpenedPublication {
   symbol: string;
 }
 
+/** Tetos anti zip-bomb: entradas, bytes descomprimidos e linhas lidas. */
+export const MAX_ZIP_ENTRIES = 5000;
+export const MAX_UNCOMPRESSED_BYTES = 300 * 1024 * 1024;
+export const MAX_DB_BYTES = 200 * 1024 * 1024;
+export const MAX_PARSED_ROWS = 5000;
+
+function assertZipBounds(zip: AdmZip, label: string): void {
+  const entries = zip.getEntries();
+  if (entries.length > MAX_ZIP_ENTRIES) {
+    throw new Error(`Archivo demasiado grande (${label}: entradas).`);
+  }
+  let total = 0;
+  for (const entry of entries) {
+    total += entry.header.size;
+    if (total > MAX_UNCOMPRESSED_BYTES) {
+      throw new Error(`Archivo demasiado grande (${label}: descomprimido).`);
+    }
+  }
+}
+
 export async function openPublicationDb(
   buffer: Buffer,
   filename: string,
@@ -279,6 +302,7 @@ export async function openPublicationDb(
   } catch {
     throw new Error("Archivo no válido: no se pudo abrir el .jwpub.");
   }
+  assertZipBounds(outer, "jwpub");
   const manifestEntry = outer.getEntry("manifest.json");
   const contentsEntry = outer.getEntry("contents");
   if (!manifestEntry || !contentsEntry) {
@@ -292,12 +316,16 @@ export async function openPublicationDb(
   }
   const symbol = manifest.publication?.uniqueSymbol ?? manifest.publication?.symbol ?? "";
   const inner = new AdmZip(contentsEntry.getData());
+  assertZipBounds(inner, "contents");
   const dbName = manifest.publication?.fileName ?? "";
   const dbEntry =
     (dbName ? inner.getEntry(dbName) : null) ??
     inner.getEntries().find((entry) => entry.entryName.endsWith(".db"));
   if (!dbEntry) {
     throw new Error("Base de datos no encontrada dentro del .jwpub.");
+  }
+  if (dbEntry.header.size > MAX_DB_BYTES) {
+    throw new Error("Base de datos demasiado grande dentro del .jwpub.");
   }
   const SQL = await getSqlJs();
   const db = new SQL.Database(new Uint8Array(dbEntry.getData()));
@@ -333,6 +361,7 @@ function parseWatchtowerArticles(db: Database, language: JwpubLanguage): ParsedW
     "SELECT DocumentId AS documentId, Title AS title FROM Document WHERE Class = '40' ORDER BY DocumentId",
   );
   while (articleStmt.step()) {
+    if (articles.length >= MAX_PARSED_ROWS) break;
     const row = articleStmt.getAsObject() as unknown as { documentId: number; title: string };
     const title = String(row.title ?? "").trim();
     if (title) articles.push({ documentId: Number(row.documentId), title });
@@ -344,6 +373,7 @@ function parseWatchtowerArticles(db: Database, language: JwpubLanguage): ParsedW
     "SELECT FirstDateOffset AS start, LastDateOffset AS end FROM DatedText ORDER BY FirstDateOffset",
   );
   while (weekStmt.step()) {
+    if (weeks.length >= MAX_PARSED_ROWS) break;
     const row = weekStmt.getAsObject() as unknown as { start: number; end: number };
     if (row.start && row.end) weeks.push({ start: Number(row.start), end: Number(row.end) });
   }
@@ -358,6 +388,7 @@ function parseWatchtowerArticles(db: Database, language: JwpubLanguage): ParsedW
     );
     extractStmt.bind([article.documentId]);
     while (extractStmt.step()) {
+      if (songNumbers.length >= 100) break;
       const row = extractStmt.getAsObject() as unknown as { caption: string };
       const caption = String(row.caption ?? "");
       const match = caption.match(/sjj\s+(?:canci[óo]n|c[âa]ntico|song)\s+(\d+)/i);

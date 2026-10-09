@@ -94,6 +94,11 @@ export function SiteHeader({
     if (signingOut) return;
     setSigningOut(true);
     setMenuOpen(false);
+    // Apaga o offline do aparelho em paralelo (privacidade compartilhada).
+    // Fire-and-forget: nunca atrasa nem bloqueia o logout.
+    void import("@/features/offline/schedule-cache")
+      .then((mod) => mod.clearAllOfflineData())
+      .catch(() => undefined);
     try {
       await authClient.signOut();
     } finally {

@@ -71,7 +71,9 @@ export function DutySection({ congregationName = "" }: { congregationName?: stri
   } = useQuery({
     queryKey: ["duty-programs"],
     queryFn: () => listDutyPrograms(),
-    staleTime: 0,
+    // 5 min de cache (mutações dão refetch explícito); evita refetch a cada
+    // montagem em conexão lenta.
+    staleTime: 5 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   });
 

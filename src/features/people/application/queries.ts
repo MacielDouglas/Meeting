@@ -19,7 +19,9 @@ export interface LinkedPerson {
 
 /** Pessoa vinculada ao usuário (para "minha semana" na página inicial). */
 export async function getPersonByUserId(userId: string): Promise<LinkedPerson | null> {
-  await requireAuthenticatedUser();
+  const me = await requireAuthenticatedUser();
+  // Só os próprios dados; terceiros exigem owner/admin.
+  if (userId !== me.id) await requirePrivilegedUser();
   const rows = await getDb()
     .select({
       id: persons.id,
@@ -41,6 +43,16 @@ export interface UserWithRole {
   email: string;
   role: "owner" | "admin" | "member";
   linkedPersonName: string | null;
+}
+
+/** userId vinculado à pessoa (para checar "são meus dados" antes de expor). */
+export async function getPersonUserId(personId: string): Promise<string | null> {
+  const rows = await getDb()
+    .select({ userId: persons.userId })
+    .from(persons)
+    .where(eq(persons.id, personId))
+    .limit(1);
+  return rows[0]?.userId ?? null;
 }
 
 export async function listPersons(): Promise<PersonSummary[]> {

@@ -3,7 +3,7 @@
 // - .jwpub: via pacote meeting-schedules-parser (MIT), que descriptografa
 //   o Content (campos ricos como content/questions podem vir vazios);
 // - .json: conteúdo completo no formato { name, weeks: [...] }.
-import { writeFile } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadPub } from "meeting-schedules-parser/dist/node/index.js";
@@ -67,6 +67,9 @@ export interface ParsedWorkbook {
   name: string;
   content: WorkbookContent;
 }
+
+/** Teto de semanas por edição (apostila real tem ~8; 200 já é abuso). */
+export const MAX_WORKBOOK_WEEKS = 200;
 
 type LibWeek = Record<string, string | number | undefined>;
 
@@ -351,15 +354,17 @@ export async function parseWorkbookJwpub(
 
   // A lib valida o nome exato do arquivo: o temp precisa manter o nome normalizado.
   // tmpdir() do SO (em serverless Linux não existe D:\ nem C:\).
+  // Diretório próprio por importação (sem colisão entre owners concorrentes).
   const safeName = normalizedFilename.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const tempPath = join(tmpdir(), safeName);
+  const tempDir = await mkdtemp(join(tmpdir(), "mwb-"));
+  const tempPath = join(tempDir, safeName);
   await writeFile(tempPath, buffer);
   let rawWeeks: LibWeek[];
   try {
-    rawWeeks = (await loadPub(tempPath)) as unknown as LibWeek[];
+    const loaded = (await loadPub(tempPath)) as unknown as LibWeek[];
+    rawWeeks = Array.isArray(loaded) ? loaded.slice(0, MAX_WORKBOOK_WEEKS) : [];
   } finally {
-    const { unlink } = await import("node:fs/promises");
-    await unlink(tempPath).catch(() => undefined);
+    await rm(tempDir, { recursive: true, force: true });
   }
   if (!Array.isArray(rawWeeks) || rawWeeks.length === 0) {
     throw new Error("Ninguna semana encontrada en el archivo.");
@@ -398,6 +403,9 @@ export function parseWorkbookJson(text: string, filename: string): ParsedWorkboo
   }
   if (!isRecord(data) || !Array.isArray(data.weeks) || data.weeks.length === 0) {
     throw new Error("El .json necesita { name, weeks: [...] } con al menos una semana.");
+  }
+  if (data.weeks.length > MAX_WORKBOOK_WEEKS) {
+    throw new Error(`El .json tiene demasiadas semanas (máximo ${MAX_WORKBOOK_WEEKS}).`);
   }
   for (const week of data.weeks) {
     if (!isRecord(week) || typeof week.week !== "string" || !isRecord(week.meeting)) {

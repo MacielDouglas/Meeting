@@ -158,9 +158,12 @@ export async function saveMeetingProgram(
     const currentByKey = new Map(current.map((row) => [row.partKey, row]));
     const incomingKeys = new Set(parsedParts.data.map((p) => p.partKey));
 
+    // Lote único (1 round de escrita): deleções, updates e inserts disparam
+    // em paralelo em vez de N awaits sequenciais por parte.
+    const statements = [];
     for (const stale of current) {
       if (!incomingKeys.has(stale.partKey)) {
-        await db.delete(meetingAssignments).where(eq(meetingAssignments.id, stale.id));
+        statements.push(db.delete(meetingAssignments).where(eq(meetingAssignments.id, stale.id)));
       }
     }
     let sortOrder = 0;
@@ -181,26 +184,31 @@ export async function saveMeetingProgram(
       };
       sortOrder += 1;
       if (kept) {
-        await db
-          .update(meetingAssignments)
-          .set({
-            ...values,
-            // Preserva cântico salvo se a reimportação vier sem número.
-            songNumber: p.songNumber ?? kept.songNumber,
-            songTheme: p.songTheme || kept.songTheme,
-          })
-          .where(eq(meetingAssignments.id, kept.id));
+        statements.push(
+          db
+            .update(meetingAssignments)
+            .set({
+              ...values,
+              // Preserva cântico salvo se a reimportação vier sem número.
+              songNumber: p.songNumber ?? kept.songNumber,
+              songTheme: p.songTheme || kept.songTheme,
+            })
+            .where(eq(meetingAssignments.id, kept.id)),
+        );
       } else {
-        await db.insert(meetingAssignments).values({
-          id: randomUUID(),
-          programId,
-          partKey: p.partKey,
-          ...values,
-          songNumber: p.songNumber ?? null,
-          songTheme: p.songTheme,
-        });
+        statements.push(
+          db.insert(meetingAssignments).values({
+            id: randomUUID(),
+            programId,
+            partKey: p.partKey,
+            ...values,
+            songNumber: p.songNumber ?? null,
+            songTheme: p.songTheme,
+          }),
+        );
       }
     }
+    if (statements.length > 0) await Promise.all(statements);
   } catch (error) {
     console.error("[meetings] falha ao salvar programa", { programId, error });
     if (isMissingTableError(error)) return { ok: false, error: MEETING_TABLES_MISSING_ERROR };

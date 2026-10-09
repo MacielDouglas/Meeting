@@ -2,6 +2,7 @@ import { mockDb } from "@test/mock-db";
 import { revalidatePath } from "next/cache";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { requireAuthenticatedUser, requireOwnerUser } from "@/features/auth/application/session";
+import { resetJoinRedeemAttempts } from "@/features/organization/application/join-attempt-limit";
 import {
   cancelInvitation,
   createInvitation,
@@ -12,6 +13,7 @@ import {
   removeUserFromOrganization,
   renameOrganization,
   resendInvitation,
+  upsertMembership,
 } from "@/features/organization/application/organization-actions";
 import { JOIN_TOKEN_CODE_PATTERN } from "@/features/organization/domain/join-token";
 
@@ -56,6 +58,7 @@ function pendingInvite(overrides = {}) {
 
 beforeEach(() => {
   mockDb.reset();
+  resetJoinRedeemAttempts();
   vi.mocked(requireOwnerUser).mockReset();
   vi.mocked(requireAuthenticatedUser).mockReset();
   vi.mocked(revalidatePath).mockReset();
@@ -305,17 +308,28 @@ describe("redeemJoinToken", () => {
     mockDb.enqueue([]);
     expect(await redeemJoinToken({ code: "ABC-DEF-GHJ", role: "member", personId: "p1" })).toEqual({
       ok: false,
-      error: "Código no encontrado.",
+      error: "Código inválido, usado o vencido.",
     });
     mockDb.enqueue([{ id: "t1", userId: "u2", usedAt: new Date(), expiresAt: future }]);
     expect(await redeemJoinToken({ code: "ABC-DEF-GHJ", role: "member", personId: "p1" })).toEqual({
       ok: false,
-      error: "Este código ya fue usado.",
+      error: "Código inválido, usado o vencido.",
     });
     mockDb.enqueue([{ id: "t1", userId: "u2", usedAt: null, expiresAt: past }]);
     expect(await redeemJoinToken({ code: "ABC-DEF-GHJ", role: "member", personId: "p1" })).toEqual({
       ok: false,
-      error: "Este código venció. Pide uno nuevo.",
+      error: "Código inválido, usado o vencido.",
+    });
+  });
+
+  it("bloqueia após 10 falhas em 10 minutos", async () => {
+    for (let i = 0; i < 10; i++) {
+      mockDb.enqueue([]);
+      await redeemJoinToken({ code: "XYZ-XYZ-XYZ", role: "member", personId: "p1" });
+    }
+    expect(await redeemJoinToken({ code: "XYZ-XYZ-XYZ", role: "member", personId: "p1" })).toEqual({
+      ok: false,
+      error: "Demasiados intentos. Espera unos minutos.",
     });
   });
 
@@ -399,5 +413,22 @@ describe("removeUserFromOrganization", () => {
     const result = await removeUserFromOrganization({ id: "u2" });
     expect(result).toEqual({ ok: true, userName: "Ana" });
     expect(vi.mocked(revalidatePath)).toHaveBeenCalledWith("/administracion/personas");
+  });
+});
+
+describe("upsertMembership", () => {
+  it("exige owner e papel válido", async () => {
+    vi.mocked(requireOwnerUser).mockRejectedValueOnce(new Error("FORBIDDEN"));
+    await expect(upsertMembership("u2", "member")).rejects.toThrow("FORBIDDEN");
+    await expect(upsertMembership("u2", "superadmin")).rejects.toThrow("FORBIDDEN");
+    await expect(upsertMembership("", "member")).rejects.toThrow("FORBIDDEN");
+    expect(mockDb.calls).toHaveLength(0);
+  });
+
+  it("cria o vínculo quando não existe", async () => {
+    mockDb.enqueueMany([[{ id: "org-1" }], [], []]);
+    await upsertMembership("u2", "member");
+    const inserts = mockDb.calls.filter((call) => call.fn === "values");
+    expect(inserts.length).toBeGreaterThan(0);
   });
 });

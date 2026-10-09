@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/features/auth/application/session";
+import { OfflineSync } from "@/features/offline/OfflineSync-client";
 import { isUserAssociated } from "@/features/organization/application/organization-queries";
 
 /** Rotas privadas nunca pré-renderizam: sessão só existe em request real. */
@@ -16,5 +17,10 @@ export default async function ProtectedLayout({ children }: { children: ReactNod
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
   if (!(await isUserAssociated(user))) redirect("/bienvenida");
-  return <>{children}</>;
+  return (
+    <>
+      <OfflineSync />
+      {children}
+    </>
+  );
 }

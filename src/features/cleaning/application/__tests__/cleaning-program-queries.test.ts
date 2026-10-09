@@ -222,6 +222,7 @@ describe("getManyPersonCleaningHistories / getPersonCleaningHistory", () => {
 
 describe("listPersonCleaningInRange", () => {
   it("retorna la limpieza del intervalo con isFamily false por defecto", async () => {
+    mockDb.enqueue([{ userId: "u1" }]);
     mockDb.enqueue([
       {
         assignmentDate: "2026-09-01",

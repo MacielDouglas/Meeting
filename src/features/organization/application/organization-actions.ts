@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { and, eq, ilike, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { requireAuthenticatedUser, requireOwnerUser } from "@/features/auth/application/session";
 import {
   invitations,
@@ -12,6 +13,10 @@ import {
   organizations,
 } from "@/features/auth/infrastructure/organization-schema";
 import { users } from "@/features/auth/infrastructure/user-schema";
+import {
+  isJoinRedeemBlocked,
+  registerJoinRedeemFailure,
+} from "@/features/organization/application/join-attempt-limit";
 import {
   type BasicPersonInput,
   createInvitationSchema,
@@ -41,6 +46,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const INVITATION_TTL_MS = 7 * DAY_MS;
 const JOIN_TOKEN_TTL_MS = 7 * DAY_MS;
 const CONGREGATION_ORG_SLUG = "congregation";
+
+/** Papéis válidos de vínculo (o privilégio quem garante é o requireOwnerUser). */
+const membershipRoleSchema = z.enum(["owner", "admin", "member"]);
 
 function revalidateAdminPages() {
   revalidatePath("/administracion");
@@ -126,9 +134,15 @@ async function resolveAdmitPerson(
 /**
  * Registra o vínculo do usuário à organização (a associação). Chamado só nos
  * fluxos explícitos de admissão (convite, código, troca de papel pelo owner):
- * nunca automaticamente no login.
+ * nunca automaticamente no login. Exige owner porque o arquivo é "use server"
+ * e todo export vira action invocável remotamente.
  */
 export async function upsertMembership(userId: string, role: string): Promise<void> {
+  await requireOwnerUser();
+  const parsed = membershipRoleSchema.safeParse(role);
+  if (!parsed.success) throw new Error("FORBIDDEN");
+  if (!userId || userId.length > 64) throw new Error("FORBIDDEN");
+  const safeRole = parsed.data;
   const organizationId = await ensureCongregationOrganization();
   const db = getDb();
   const existing = await db
@@ -137,9 +151,9 @@ export async function upsertMembership(userId: string, role: string): Promise<vo
     .where(and(eq(members.organizationId, organizationId), eq(members.userId, userId)))
     .limit(1);
   if (existing[0]) {
-    await db.update(members).set({ role }).where(eq(members.id, existing[0].id));
+    await db.update(members).set({ role: safeRole }).where(eq(members.id, existing[0].id));
   } else {
-    await db.insert(members).values({ id: randomUUID(), organizationId, userId, role });
+    await db.insert(members).values({ id: randomUUID(), organizationId, userId, role: safeRole });
   }
 }
 
@@ -369,6 +383,15 @@ export async function redeemJoinToken(input: unknown): Promise<OrganizationActio
     return { ok: false, error: "Solo el owner puede admitir." };
   }
   const code = normalizeJoinTokenCode(parsed.data.code);
+  // Mensagem única para não-existe/usado/vencido (sem oráculo de enumeração)
+  // + trava após 10 falhas em 10 minutos por conta+código.
+  const invalidCode = (): OrganizationActionResult => {
+    registerJoinRedeemFailure(ownerId, code);
+    return { ok: false, error: "Código inválido, usado o vencido." };
+  };
+  if (isJoinRedeemBlocked(ownerId, code)) {
+    return { ok: false, error: "Demasiados intentos. Espera unos minutos." };
+  }
   const db = getDb();
   const tokenRows = await db
     .select({
@@ -383,10 +406,9 @@ export async function redeemJoinToken(input: unknown): Promise<OrganizationActio
     .where(eq(joinTokens.code, code))
     .limit(1);
   const token = tokenRows[0];
-  if (!token) return { ok: false, error: "Código no encontrado." };
-  if (token.usedAt !== null) return { ok: false, error: "Este código ya fue usado." };
-  if (new Date(token.expiresAt) <= new Date())
-    return { ok: false, error: "Este código venció. Pide uno nuevo." };
+  if (!token) return invalidCode();
+  if (token.usedAt !== null) return invalidCode();
+  if (new Date(token.expiresAt) <= new Date()) return invalidCode();
   if (token.userId === ownerId) return { ok: false, error: "No puedes cambiar tu propio rol." };
   const person = await resolveAdmitPerson(token.userId, {
     personId: parsed.data.personId,

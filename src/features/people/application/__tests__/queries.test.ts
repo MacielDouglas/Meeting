@@ -63,6 +63,19 @@ describe("getPersonByUserId", () => {
 
     await expect(getPersonByUserId("u9")).resolves.toBeNull();
   });
+
+  it("não exige privileged para os próprios dados", async () => {
+    mockDb.enqueue([{ id: "p1", firstName: "Ana", lastName: "Pérez", sex: "female" }]);
+
+    await expect(getPersonByUserId("u1")).resolves.not.toBeNull();
+    expect(vi.mocked(requirePrivilegedUser)).not.toHaveBeenCalled();
+  });
+
+  it("exige privileged para dados de terceiros", async () => {
+    vi.mocked(requirePrivilegedUser).mockRejectedValueOnce(new Error("FORBIDDEN"));
+
+    await expect(getPersonByUserId("u9")).rejects.toThrow("FORBIDDEN");
+  });
 });
 
 describe("listPersons", () => {

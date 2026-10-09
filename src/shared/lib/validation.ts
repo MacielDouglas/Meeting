@@ -19,3 +19,17 @@ export function optionalPlainText(max: number) {
     .optional()
     .nullable();
 }
+
+/**
+ * Escapa curingas de LIKE (`%`, `_`, `\`) com a barra invertida (escape padrão
+ * do Postgres em padrões LIKE). Evita que a digitação vire curinga; o Drizzle
+ * continua ligando o valor como parâmetro (sem SQLi).
+ */
+export function escapeLikeWildcards(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
+/** Monta `%termo%` já com curingas escapados para `ilike`. */
+export function likeContains(search: string): string {
+  return `%${escapeLikeWildcards(search)}%`;
+}

@@ -58,6 +58,11 @@ describe("share-actions (owner)", () => {
     expect(result.ok).toBe(true);
     expect(result.token).toMatch(/^[A-Za-z0-9]{32}$/);
     expect(result.url).toContain(`/api/public/programa/${result.token}`);
+    // Validade de 90 dias retornada na criação.
+    expect(result.expiresAt).toBeDefined();
+    const ttl = new Date(result.expiresAt ?? 0).getTime() - Date.now();
+    expect(ttl).toBeGreaterThan(89 * 24 * 60 * 60 * 1000);
+    expect(ttl).toBeLessThanOrEqual(90 * 24 * 60 * 60 * 1000);
   });
 
   it("revoga o enlace do owner", async () => {
@@ -94,21 +99,35 @@ describe("share-actions (owner)", () => {
 });
 
 describe("getPublicShareStatus", () => {
-  it("informa enlace ativo com a data de criação", async () => {
+  it("informa enlace ativo com criação e expiração", async () => {
     vi.mocked(requireOwnerUser).mockResolvedValue(owner);
-    mockDb.enqueue([{ createdAt: new Date("2026-09-01T10:00:00.000Z") }]);
+    mockDb.enqueue([
+      {
+        createdAt: new Date("2026-09-01T10:00:00.000Z"),
+        expiresAt: new Date("2026-11-30T10:00:00.000Z"),
+      },
+    ]);
     await expect(getPublicShareStatus()).resolves.toEqual({
       active: true,
       createdAt: "2026-09-01T10:00:00.000Z",
+      expiresAt: "2026-11-30T10:00:00.000Z",
     });
   });
 
   it("informa inativo sem linha e sem tabela migrada", async () => {
     vi.mocked(requireOwnerUser).mockResolvedValue(owner);
     mockDb.enqueue([]);
-    await expect(getPublicShareStatus()).resolves.toEqual({ active: false, createdAt: null });
+    await expect(getPublicShareStatus()).resolves.toEqual({
+      active: false,
+      createdAt: null,
+      expiresAt: null,
+    });
 
     mockDb.enqueueRejection(new Error('relation "public_share" does not exist'));
-    await expect(getPublicShareStatus()).resolves.toEqual({ active: false, createdAt: null });
+    await expect(getPublicShareStatus()).resolves.toEqual({
+      active: false,
+      createdAt: null,
+      expiresAt: null,
+    });
   });
 });

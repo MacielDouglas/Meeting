@@ -123,8 +123,8 @@ export function CleaningDesignationSection({
     );
   }
 
-  // Programas via TanStack Query (sem fetch em useEffect): busca fresca a cada
-  // montagem/troca de tipo (`staleTime: 0`) e mantém a lista anterior durante
+  // Programas via TanStack Query (sem fetch em useEffect): 5 min de cache
+  // (mutações dão refetch explícito) e mantém a lista anterior durante
   // refetch, como antes.
   const {
     data: programs = [],
@@ -133,7 +133,7 @@ export function CleaningDesignationSection({
   } = useQuery({
     queryKey: ["cleaning-programs", selectedType],
     queryFn: () => listCleaningPrograms(selectedType),
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     placeholderData: (previousData) => previousData,
   });
 

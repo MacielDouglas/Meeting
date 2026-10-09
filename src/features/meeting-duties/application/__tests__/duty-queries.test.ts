@@ -229,6 +229,7 @@ describe("listPersonDutiesInRange", () => {
         sortOrder: 0,
       },
     ];
+    mockDb.enqueue([{ userId: "user-1" }]);
     mockDb.enqueue(rows);
     await expect(listPersonDutiesInRange("p1", "2026-09-21", "2026-09-27")).resolves.toEqual(rows);
     expect(requireAuthenticatedUser).toHaveBeenCalledTimes(1);
@@ -237,13 +238,23 @@ describe("listPersonDutiesInRange", () => {
   });
 
   it("devuelve lista vacía si falla la consulta", async () => {
+    mockDb.enqueue([{ userId: "user-1" }]);
     mockDb.enqueue(rejection("fallo transitorio"));
     await expect(listPersonDutiesInRange("p1", "2026-09-21", "2026-09-27")).resolves.toEqual([]);
+  });
+
+  it("exige privileged para dados de terceiros", async () => {
+    mockDb.enqueue([{ userId: "other-user" }]);
+    vi.mocked(requirePrivilegedUser).mockRejectedValueOnce(new Error("FORBIDDEN"));
+    await expect(listPersonDutiesInRange("p1", "2026-09-21", "2026-09-27")).rejects.toThrow(
+      "FORBIDDEN",
+    );
   });
 });
 
 describe("listUpcomingPersonDuties", () => {
   it("limita a 6 por defecto", async () => {
+    mockDb.enqueue([{ userId: "user-1" }]);
     mockDb.enqueue([]);
     await expect(listUpcomingPersonDuties("p1", "2026-09-21")).resolves.toEqual([]);
     expect(mockDb.calls).toContainEqual({ fn: "limit", args: [6] });
@@ -251,12 +262,14 @@ describe("listUpcomingPersonDuties", () => {
   });
 
   it("respeta el límite personalizado", async () => {
+    mockDb.enqueue([{ userId: "user-1" }]);
     mockDb.enqueue([]);
     await listUpcomingPersonDuties("p1", "2026-09-21", 2);
     expect(mockDb.calls).toContainEqual({ fn: "limit", args: [2] });
   });
 
   it("devuelve lista vacía si falla la consulta", async () => {
+    mockDb.enqueue([{ userId: "user-1" }]);
     mockDb.enqueue(rejection("fallo transitorio"));
     await expect(listUpcomingPersonDuties("p1", "2026-09-21")).resolves.toEqual([]);
   });

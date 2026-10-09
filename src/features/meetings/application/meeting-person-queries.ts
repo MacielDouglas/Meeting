@@ -5,6 +5,7 @@ import { requireAuthenticatedUser } from "@/features/auth/application/session";
 import { FEMALE_RESTRICTED_KEYS } from "@/features/people/domain/person";
 import { persons } from "@/features/people/infrastructure/person-schema";
 import { getDb } from "@/shared/lib/db";
+import { likeContains } from "@/shared/lib/validation";
 
 export interface MeetingPerson {
   id: string;
@@ -74,7 +75,7 @@ export async function listMeetingPersons(
   if (options?.helperOnly) conditions.push(eq(persons.helper, true));
   const search = options?.search?.trim();
   if (search) {
-    const pattern = `%${search.replace(/[%_//]/g, "")}%`;
+    const pattern = likeContains(search);
     const searchCondition = or(ilike(persons.firstName, pattern), ilike(persons.lastName, pattern));
     if (searchCondition) conditions.push(searchCondition);
   }

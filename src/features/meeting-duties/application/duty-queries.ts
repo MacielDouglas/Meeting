@@ -10,6 +10,7 @@ import {
   dutyAssignments,
   dutyPrograms,
 } from "@/features/meeting-duties/infrastructure/duty-schema";
+import { getPersonUserId } from "@/features/people/application/queries";
 import { persons } from "@/features/people/infrastructure/person-schema";
 import { getDb } from "@/shared/lib/db";
 
@@ -226,7 +227,9 @@ export async function listPersonDutiesInRange(
   startDate: string,
   endDate: string,
 ): Promise<PersonDutyItem[]> {
-  await requireAuthenticatedUser();
+  const me = await requireAuthenticatedUser();
+  // Só os próprios dados; terceiros exigem owner/admin.
+  if ((await getPersonUserId(personId)) !== me.id) await requirePrivilegedUser();
   try {
     const db = getDb();
     const rows = await db
@@ -261,7 +264,9 @@ export async function listUpcomingPersonDuties(
   fromDate: string,
   limit = 6,
 ): Promise<PersonDutyItem[]> {
-  await requireAuthenticatedUser();
+  const me = await requireAuthenticatedUser();
+  // Só os próprios dados; terceiros exigem owner/admin.
+  if ((await getPersonUserId(personId)) !== me.id) await requirePrivilegedUser();
   try {
     const db = getDb();
     const rows = await db
@@ -288,6 +293,7 @@ export async function listUpcomingPersonDuties(
 export async function listDutyCandidates(
   dutyKey: "usher" | "sound" | "video" | "microphone" | "platform",
 ): Promise<{ id: string; name: string }[]> {
+  await requirePrivilegedUser();
   const people = await listDutyEligiblePersons();
   return people
     .filter((p) => p.sex === "male" && p.flags[dutyKey])

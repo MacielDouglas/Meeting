@@ -30,13 +30,13 @@ const d = createDecipheriv("aes-256-gcm", key, Buffer.from(iv, "base64"));
 d.setAuthTag(Buffer.from(tag, "base64"));
 const week = JSON.parse(
   Buffer.concat([d.update(Buffer.from(data, "base64")), d.final()]).toString("utf8"),
-);
-console.log(week.weekStart, week.midweek, week.weekend);`;
+);`;
 
 export function PublicShareSection({ initial }: PublicShareSectionProps) {
   const router = useRouter();
   const [active, setActive] = useState(initial.active);
   const [createdAt, setCreatedAt] = useState(initial.createdAt);
+  const [expiresAt, setExpiresAt] = useState(initial.expiresAt);
   const [created, setCreated] = useState<CreatedShare | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +65,7 @@ export function PublicShareSection({ initial }: PublicShareSectionProps) {
     setCreated({ token: result.token, url: result.url });
     setActive(true);
     setCreatedAt(new Date().toISOString());
+    setExpiresAt(result.expiresAt ?? null);
     router.refresh();
   }
 
@@ -82,6 +83,7 @@ export function PublicShareSection({ initial }: PublicShareSectionProps) {
     setCreated(null);
     setActive(false);
     setCreatedAt(null);
+    setExpiresAt(null);
     router.refresh();
   }
 
@@ -137,6 +139,9 @@ export function PublicShareSection({ initial }: PublicShareSectionProps) {
           <p className="text-sm">
             {es.enlaceActivoDesde}{" "}
             {createdAt ? new Date(createdAt).toLocaleDateString("es-ES") : "—"}
+            {expiresAt
+              ? ` · ${es.enlaceValidoHasta} ${new Date(expiresAt).toLocaleDateString("es-ES")}`
+              : ""}
           </p>
           <div className="flex flex-wrap gap-2">
             <Button type="button" size="sm" onClick={handleCreate} disabled={busy}>

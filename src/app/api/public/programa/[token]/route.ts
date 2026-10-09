@@ -1,7 +1,7 @@
 import { hashShareToken, isShareTokenFormat } from "@/features/sharing/domain/share-token";
 import { encryptSharePayload } from "@/features/sharing/domain/share-crypto";
 import { buildPublicWeekPayload } from "@/features/sharing/application/share-payload";
-import { findShareOrganizationIdByHash } from "@/features/sharing/application/share-queries";
+import { findValidShareOrganizationIdByHash } from "@/features/sharing/application/share-queries";
 import {
   clientIpFromHeaders,
   isPublicShareRateLimited,
@@ -19,7 +19,7 @@ function notFound(): Response {
  * O token é o segredo compartilhado: a chave AES-256-GCM é SHA-256(token) e
  * o corpo é sempre um envelope novo `{ v, alg, iv, tag, data }` (base64).
  * Sem o token, o corpo é opaco — nem o transporte nem caches veem o programa.
- * Sem validade: enquanto o owner não revogar. Revogado → 404.
+ * Vale 90 dias; expirado ou revogado → 404.
  * Rate limit (60 req/min por IP): trava adivinhação online.
  */
 export async function GET(
@@ -37,7 +37,7 @@ export async function GET(
 
   let organizationId: string | null;
   try {
-    organizationId = await findShareOrganizationIdByHash(hashShareToken(token));
+    organizationId = await findValidShareOrganizationIdByHash(hashShareToken(token));
   } catch {
     return Response.json({ error: "No se pudo cargar el programa." }, { status: 500 });
   }

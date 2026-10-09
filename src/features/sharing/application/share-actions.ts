@@ -16,9 +16,14 @@ export interface ShareActionResult {
   /** Token em claro: exibido uma única vez, nunca persistido. */
   token?: string;
   url?: string;
+  /** ISO da expiração (90 dias a partir da criação). */
+  expiresAt?: string;
 }
 
 const CONGREGATION_ORG_SLUG = "congregation";
+
+/** Validade do enlace público: 90 dias (rotação gera um novo). */
+export const PUBLIC_SHARE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 const SHARE_TABLES_MISSING_ERROR =
   "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
@@ -57,7 +62,7 @@ async function ensureShareOrganization(): Promise<string> {
 
 /**
  * Cria (ou substitui) o token do enlace público. Só um ativo por vez:
- * gerar um novo invalida o anterior. Sem validade — vale até revogar.
+ * gerar um novo invalida o anterior. Vale 90 dias; expirado → rota 404.
  */
 export async function createPublicShareToken(): Promise<ShareActionResult> {
   let ownerId: string;
@@ -75,6 +80,7 @@ export async function createPublicShareToken(): Promise<ShareActionResult> {
   }
   for (let attempt = 0; attempt < 5; attempt++) {
     const token = generateShareToken();
+    const expiresAt = new Date(Date.now() + PUBLIC_SHARE_TTL_MS);
     try {
       await db.delete(publicShares).where(eq(publicShares.organizationId, organizationId));
       await db.insert(publicShares).values({
@@ -82,9 +88,10 @@ export async function createPublicShareToken(): Promise<ShareActionResult> {
         organizationId,
         tokenHash: hashShareToken(token),
         createdBy: ownerId,
+        expiresAt,
       });
       revalidatePath("/administracion");
-      return { ok: true, token, url: publicShareUrl(token) };
+      return { ok: true, token, url: publicShareUrl(token), expiresAt: expiresAt.toISOString() };
     } catch (error) {
       if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
       const message = error instanceof Error ? error.message : String(error);

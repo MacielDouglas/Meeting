@@ -109,6 +109,13 @@ describe("GET /api/public/programa/[token]", () => {
     expect(await response.json()).toEqual({ error: "Not found." });
   });
 
+  it("responde 404 quando o token expirou (mesmo 404 de desconhecido)", async () => {
+    mockDb.enqueue([{ organizationId: "org-1", expiresAt: new Date(Date.now() - 1000) }]);
+    const response = await get(TOKEN);
+    expect(response.status).toBe(404);
+    expect(await response.json()).toEqual({ error: "Not found." });
+  });
+
   it("responde 200 com envelope cifrado que só o token abre", async () => {
     givenFullWeek();
     const response = await get(TOKEN);

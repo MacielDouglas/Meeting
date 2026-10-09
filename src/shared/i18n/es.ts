@@ -26,6 +26,7 @@ export const es = {
   onlineMessage: "En línea",
   offlineTitle: "Sin conexión",
   offlineDescription: "Verifica tu conexión para ver el programa actualizado.",
+  offlineGuardado: "Disponible sin conexión",
   weekLabel: "Semana",
   home: "Inicio",
   menu: "Menú",
@@ -547,6 +548,7 @@ export const es = {
   rotarEnlace: "Generar uno nuevo",
   revocarEnlace: "Revocar enlace",
   enlaceActivoDesde: "Enlace activo desde",
+  enlaceValidoHasta: "Válido hasta",
   enlaceInactivo: "Sin enlace activo.",
   enlaceAvisoUnico:
     "Copia el token ahora: solo se muestra una vez. Quien tenga el enlace y el token puede descifrar la semana.",

@@ -10,8 +10,10 @@ import {
   cleaningPrograms,
 } from "@/features/cleaning/infrastructure/cleaning-program-schema";
 import { cleaningSectors } from "@/features/cleaning/infrastructure/cleaning-schema";
+import { getPersonUserId } from "@/features/people/application/queries";
 import { persons } from "@/features/people/infrastructure/person-schema";
 import { getDb } from "@/shared/lib/db";
+import { likeContains } from "@/shared/lib/validation";
 
 export interface CleaningProgramItem {
   id: string;
@@ -117,6 +119,7 @@ export async function getPersonCleaningHistory(
   personId: string,
   limit = 10,
 ): Promise<PersonCleaningHistory[]> {
+  await requirePrivilegedUser();
   const map = await getManyPersonCleaningHistories([personId], limit);
   return map.get(personId) ?? [];
 }
@@ -173,7 +176,9 @@ export async function listPersonCleaningInRange(
   startDate: string,
   endDate: string,
 ): Promise<PersonCleaningItem[]> {
-  await requireAuthenticatedUser();
+  const me = await requireAuthenticatedUser();
+  // Só os próprios dados; terceiros exigem owner/admin.
+  if ((await getPersonUserId(personId)) !== me.id) await requirePrivilegedUser();
   const db = getDb();
   const rows = await db
     .select({
@@ -217,7 +222,7 @@ export async function listEligiblePersons(
   if (options?.allowYoung === false) conditions.push(eq(persons.young, false));
   const search = options?.search?.trim();
   if (search) {
-    const pattern = `%${search.replace(/[%_\\]/g, "")}%`;
+    const pattern = likeContains(search);
     const searchCondition = or(ilike(persons.firstName, pattern), ilike(persons.lastName, pattern));
     if (searchCondition) conditions.push(searchCondition);
   }
