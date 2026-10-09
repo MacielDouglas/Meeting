@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useDeferredValue, useMemo, useState } from "react";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChevronRight } from "react-icons/fa";
 import {
   listMeetingPersons,
   type MeetingPerson,
@@ -18,6 +18,7 @@ import {
   PublicTalkPicker,
   type PublicTalkSelection,
 } from "@/features/meetings/presentation/PublicTalkPicker-client";
+import { SegmentedControl } from "@/shared/components/SegmentedControl-client";
 import {
   Dialog,
   DialogClose,
@@ -92,6 +93,11 @@ function roleLabels(capability?: string) {
     return { main: es.conductor, helper: es.lector, withoutHelper: es.continuarSinLector };
   }
   return { main: es.titular, helper: es.ayudante, withoutHelper: es.continuarSinAyudante };
+}
+
+/** Normaliza nome temporário: colapsa espaços, apara e limita a 160. */
+function normalizeTempName(value: string): string {
+  return value.replace(/\s+/g, " ").trim().slice(0, 160);
 }
 
 function formatLastAssignment(iso: string | null): string {
@@ -269,7 +275,7 @@ export function MeetingAssignModal({
 
   /** Nome temporário como titular: avança ao ajudante ou encena direto. */
   function handleUseTempTitular() {
-    const name = titularTempInput.trim().slice(0, 160);
+    const name = normalizeTempName(titularTempInput);
     if (name.length < 2) return;
     if (withHelperFlow) {
       setSelectedTitular(null);
@@ -307,7 +313,7 @@ export function MeetingAssignModal({
 
   /** Nome temporário como ajudante: mantém o titular já escolhido. */
   function handleUseTempHelper() {
-    const name = helperTempInput.trim().slice(0, 160);
+    const name = normalizeTempName(helperTempInput);
     if (name.length < 2) return;
     const base =
       selectedTitular != null
@@ -409,17 +415,21 @@ export function MeetingAssignModal({
         )}
         {isMinistry && (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{es.sala}:</span>
-            {(["A", "B", "C"] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => handleClassroomStage(option)}
-                className={`h-11 w-12 rounded-lg text-xs font-semibold ${room === option ? "bg-accent/10 text-foreground ring-1 ring-accent" : "bg-secondary text-muted-foreground"}`}
-              >
-                {option}
-              </button>
-            ))}
+            <span id="sala-label" className="shrink-0 text-xs text-muted-foreground">
+              {es.sala}:
+            </span>
+            <div className="min-w-0 flex-1">
+              <SegmentedControl
+                options={[
+                  { value: "A", label: "A" },
+                  { value: "B", label: "B" },
+                  { value: "C", label: "C" },
+                ]}
+                value={room}
+                onChange={(value) => handleClassroomStage(value as "A" | "B" | "C")}
+                ariaLabel={es.salaDemostracion}
+              />
+            </div>
           </div>
         )}
         {isPublicTalk &&
@@ -444,7 +454,7 @@ export function MeetingAssignModal({
         )}
 
         {withHelperFlow && (
-          <ol className="flex gap-2" aria-label="Etapas de la designación">
+          <ol className="flex gap-2" aria-label={es.etapasDesignacion}>
             <li
               className={`flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-medium ${step === "titular" ? "bg-secondary text-foreground" : "text-muted-foreground"}`}
               aria-current={step === "titular" ? "step" : undefined}
@@ -460,7 +470,7 @@ export function MeetingAssignModal({
           </ol>
         )}
 
-        {allowPerson && step === "titular" && (
+        {allowPerson && step === "titular" && !isPublicTalk && (
           <div className="flex flex-col gap-2">
             <input
               value={titularSearchInput}
@@ -470,22 +480,16 @@ export function MeetingAssignModal({
               maxLength={60}
               className="h-11 rounded-lg bg-secondary px-3 text-sm outline-none focus:border focus:border-ring"
             />
-            <div className="flex rounded-xl bg-secondary p-1">
-              <button
-                type="button"
-                onClick={() => setOrderBy("name")}
-                className={`h-8 flex-1 rounded-lg font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "name" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {es.ordenAlfabetico}
-              </button>
-              <button
-                type="button"
-                onClick={() => setOrderBy("rotation")}
-                className={`h-8 flex-1 rounded-lg font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 ${orderBy === "rotation" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {es.rotacion}
-              </button>
-            </div>
+            <SegmentedControl
+              small
+              options={[
+                { value: "name", label: es.ordenAlfabetico },
+                { value: "rotation", label: es.rotacion },
+              ]}
+              value={orderBy}
+              onChange={(value) => setOrderBy(value as "name" | "rotation")}
+              ariaLabel={es.ordenarPor}
+            />
             {titularQuery.isPending ? (
               <p className="text-sm text-muted-foreground">{es.cargandoPersonas}</p>
             ) : titularQuery.isError ? (
@@ -534,7 +538,7 @@ export function MeetingAssignModal({
                     input={titularTempInput}
                     onInput={setTitularTempInput}
                     onUse={handleUseTempTitular}
-                    inputLabel={`Escribe el ${labels.main.toLowerCase()}…`}
+                    inputLabel={es.escribeNombreTemporal}
                   />
                 )}
               </>
@@ -557,7 +561,7 @@ export function MeetingAssignModal({
               <button
                 type="button"
                 onClick={handleBackToTitular}
-                className="h-9 shrink-0 rounded-lg bg-background px-3 font-display text-xs font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="h-11 shrink-0 rounded-lg bg-background px-4 font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {es.cambiar}
               </button>
@@ -631,7 +635,7 @@ export function MeetingAssignModal({
                   input={helperTempInput}
                   onInput={setHelperTempInput}
                   onUse={handleUseTempHelper}
-                  inputLabel={`Escribe el ${labels.helper.toLowerCase()}…`}
+                  inputLabel={es.escribeNombreTemporal}
                 />
               </>
             )}
@@ -652,17 +656,11 @@ export function MeetingAssignModal({
           </p>
         ) : null}
 
+        {!isPublicTalk && !staged && allowPerson && (
+          <p className="text-center text-xs text-muted-foreground">{es.eligeParaContinuar}</p>
+        )}
+
         <DialogFooter>
-          {withHelperFlow && step === "helper" && (
-            <button
-              type="button"
-              onClick={handleBackToTitular}
-              className="flex min-h-[52px] flex-1 items-center justify-center gap-1 rounded-xl bg-secondary px-3 font-display text-base font-semibold text-secondary-foreground transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              <FaChevronLeft aria-hidden size={12} />
-              {es.volver}
-            </button>
-          )}
           <DialogClose className="mt-0 min-h-[52px] flex-1 text-base font-semibold">
             {es.cancel}
           </DialogClose>

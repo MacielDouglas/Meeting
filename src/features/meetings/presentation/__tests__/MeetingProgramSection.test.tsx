@@ -113,6 +113,9 @@ describe("MeetingProgramSection", () => {
     expect(await screen.findByText(/1\. Jehová disciplina a su pueblo/)).toBeInTheDocument();
     expect(screen.getByText(/2\. Busquemos perlas escondidas/)).toBeInTheDocument();
     expect(screen.getByText(/3\. Lectura de la Biblia/)).toBeInTheDocument();
+    // Vaga em caixa normal, à esquerda, sem uppercase.
+    expect(screen.getAllByText(es.sinAsignar).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/SIN ASIGNAR/)).not.toBeInTheDocument();
   });
 
   it("en semana de asamblea muestra el aviso en lugar de programar", async () => {

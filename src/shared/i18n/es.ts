@@ -238,6 +238,10 @@ export const es = {
   nombreTemporalHint:
     "Si no está en la lista ni en la organización, escribe el nombre aquí. Queda guardado solo en esta parte.",
   usarNombre: "Usar nombre",
+  escribeNombreTemporal: "Escribe el nombre temporal…",
+  ordenarPor: "Ordenar por",
+  salaDemostracion: "Sala de la demostración",
+  etapasDesignacion: "Etapas de la designación",
   elegido: "Elegido",
   temporal: "Temporal",
   sala: "Sala",
@@ -406,8 +410,7 @@ export const es = {
   tipoReunion: "Tipo de reunión",
   exportar: "Exportar",
   asignadas: "asignadas",
-  todas: "Todas las partes",
-  filtrarPartes: "Filtrar partes",
+  eligeParaContinuar: "Elige una persona para continuar",
   todoAsignado: "Todo asignado para esta semana",
   verTodas: "Ver todas las partes",
   reintentar: "Reintentar",
@@ -469,7 +472,6 @@ export const es = {
   modoEdicionHint: "Activa para asignar partes y editar oradores",
   editarReunion: "Editar la reunión",
   activaAsignarPartes: "Activa asignar partes",
-  verReunion: "Ver reunión",
   activaModoEdicion: "Activa el modo edición para hacer cambios.",
   // Limpeza / calendário
   mesAnterior: "Mes anterior",

@@ -15,6 +15,7 @@ import {
   MEETING_PDF_FILE_PREFIXES,
   MEETING_PDF_LABELS_ES,
 } from "@/features/meetings/pdf/meeting-pdf-i18n";
+import { SegmentedControl } from "@/shared/components/SegmentedControl-client";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -25,7 +26,6 @@ import {
   DialogTitle,
 } from "@/shared/components/ui/dialog";
 import { es } from "@/shared/i18n/es";
-import { cn } from "@/shared/lib/utils";
 
 const MONTH_NAMES_ES = [
   "Enero",
@@ -207,28 +207,19 @@ export function PdfExportModal({
           <p className="font-display text-sm font-medium text-muted-foreground">{es.eligeRango}</p>
         </DialogHeader>
 
-        <fieldset className="flex rounded-xl bg-secondary p-1">
-          <legend className="sr-only">{es.crearPdf}</legend>
-          {(["midweek", "weekend"] as const).map((option) => (
-            <button
-              key={option}
-              type="button"
-              onClick={() => {
-                setActiveKind(option);
-                setRangeStart(null);
-                setRangeEnd(null);
-              }}
-              className={cn(
-                "h-8 flex-1 rounded-lg font-display text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
-                activeKind === option
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {option === "midweek" ? es.entreSemana : es.finSemana}
-            </button>
-          ))}
-        </fieldset>
+        <SegmentedControl
+          options={[
+            { value: "midweek", label: es.entreSemana },
+            { value: "weekend", label: es.finSemana },
+          ]}
+          value={activeKind}
+          onChange={(value) => {
+            setActiveKind(value as "midweek" | "weekend");
+            setRangeStart(null);
+            setRangeEnd(null);
+          }}
+          ariaLabel={es.tipoReunion}
+        />
 
         <MonthlyCalendar
           year={year}

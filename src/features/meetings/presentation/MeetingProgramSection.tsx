@@ -855,15 +855,6 @@ export function MeetingProgramSection({
     total: assignmentStats.total,
   };
 
-  // Presidente sai da lista e vira a linha "Presidente · Nome" do cabeçalho,
-  // como nas imagens (clicável em modo edição, só leitura nos demais).
-  const presidentPart = displayPartsWithSections.find((part) => part.key === "president") ?? null;
-  const presidentDisplay = presidentPart ? partDisplay.get(presidentPart.id) : undefined;
-  const presidentName =
-    presidentDisplay && presidentDisplay.line1 !== "—" ? presidentDisplay.line1 : "";
-  const presidentInteractive =
-    canEdit && programId !== null && presidentPart !== null && !presidentPart.id.startsWith("tpl-");
-
   // Contador "X/Y asignadas" sob o toggle do topo (só com edição ligada).
   useEffect(() => {
     try {
@@ -896,7 +887,7 @@ export function MeetingProgramSection({
             <button
               type="button"
               onClick={handleGoToday}
-              className="mt-1 inline-flex h-8 min-w-12 items-center justify-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="mt-1 inline-flex min-h-11 min-w-12 items-center justify-center rounded-xl bg-secondary px-4 font-display text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/70 focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {es.hoy}
             </button>
@@ -940,7 +931,7 @@ export function MeetingProgramSection({
                   active ? "font-medium text-foreground" : "text-muted-foreground"
                 }`}
               >
-                {active ? option.line : es.verReunion}
+                {option.line}
               </span>
             </button>
           );
@@ -990,38 +981,22 @@ export function MeetingProgramSection({
       )}
 
       {canEdit && !blocked && programId !== null && !loading && assignmentStats.total > 0 && (
-        <fieldset className="flex rounded-xl bg-secondary p-1">
-          <legend className="sr-only">{es.filtrarPartes}</legend>
-          {(
-            [
-              { value: "all", label: es.todas },
-              {
-                value: "vacant",
-                label: `${es.sinAsignar} (${assignmentStats.total - assignmentStats.assigned})`,
-              },
-            ] as const
-          ).map((option) => {
-            const active = vacantOnly ? option.value === "vacant" : option.value === "all";
-            const disabled =
-              option.value === "vacant" && assignmentStats.total - assignmentStats.assigned === 0;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={active}
-                disabled={disabled}
-                onClick={() => setVacantOnly(option.value === "vacant")}
-                className={`h-8 flex-1 rounded-lg font-display text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
-                  active
-                    ? "bg-background font-semibold text-foreground shadow-sm"
-                    : "font-medium text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </fieldset>
+        <div>
+          <button
+            type="button"
+            aria-pressed={vacantOnly}
+            disabled={assignmentStats.total - assignmentStats.assigned === 0}
+            onClick={() => setVacantOnly((current) => !current)}
+            className={`inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 font-display text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 ${
+              vacantOnly
+                ? "border-accent/40 bg-accent/10 text-accent"
+                : "border-input text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span aria-hidden className="h-2 w-2 rounded-full bg-danger" />
+            {es.sinAsignar} ({assignmentStats.total - assignmentStats.assigned})
+          </button>
+        </div>
       )}
 
       {loading ? (
@@ -1063,32 +1038,8 @@ export function MeetingProgramSection({
         </Card>
       ) : (
         <Card className="flex flex-col overflow-visible border-0 bg-session p-0 text-session-fg shadow-none">
-          <div className="flex justify-end">
-            {presidentInteractive && presidentPart ? (
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => setEditing(presidentPart)}
-                className="rounded-lg text-right text-sm transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-70"
-                aria-label={`${es.asignar} Presidente`}
-              >
-                <span className="font-bold text-session-fg">Presidente · </span>
-                <span className={`font-bold ${presidentName ? "text-accent" : "text-danger"}`}>
-                  {presidentName || es.sinAsignar.toUpperCase()}
-                </span>
-              </button>
-            ) : (
-              <p className="text-right text-sm">
-                <span className="font-bold text-session-fg">Presidente · </span>
-                {presidentName && (
-                  <span className="font-bold text-session-fg">{presidentName}</span>
-                )}
-              </p>
-            )}
-          </div>
           <div aria-busy={saving} className="flex flex-col divide-y divide-session-line">
             {displayPartsWithSections.map((part, index) => {
-              if (part.key === "president") return null;
               const meta = sectionMetaOf(part.section);
               const SectionIcon = SECTION_ICONS[part.section] ?? FaBookOpen;
               const display = partDisplay.get(part.id);
@@ -1124,13 +1075,12 @@ export function MeetingProgramSection({
                 <>
                   <span className="flex w-11 shrink-0 flex-col items-start gap-0.5 pt-0.5">
                     {isDirty && (
-                      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning">
-                        <span className="sr-only">{es.sinGuardar}</span>
-                      </span>
+                      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning" />
                     )}
                     <span className="text-xs font-medium tabular-nums text-muted-foreground">
                       {part.startTime}
                     </span>
+                    {isDirty && <span className="sr-only">{es.sinGuardar}</span>}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span
@@ -1144,20 +1094,26 @@ export function MeetingProgramSection({
                         {infoBits.join(" · ")}
                       </span>
                     )}
-                    {showNames && (
-                      <span className="mt-0.5 block text-right">
-                        <span
-                          className={`block truncate text-sm font-bold ${hasAssignee ? nameTone : "text-danger"}`}
-                        >
-                          {hasAssignee ? display.line1 : es.sinAsignar.toUpperCase()}
-                        </span>
-                        {display.line2 && (
-                          <span className={`block truncate text-xs ${nameTone} opacity-90`}>
-                            {display.line2}
+                    {showNames &&
+                      (hasAssignee ? (
+                        <span className="mt-0.5 block text-right">
+                          <span className={`block text-sm font-bold break-words ${nameTone}`}>
+                            {display.line1}
                           </span>
-                        )}
-                      </span>
-                    )}
+                          {display.line2 && (
+                            <span className={`block text-xs break-words ${nameTone} opacity-90`}>
+                              {display.line2}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span className="mt-1 flex justify-start">
+                          <span className="inline-flex items-center gap-1.5 rounded-md bg-danger-soft px-1.5 py-0.5 text-xs font-semibold text-danger-on-soft">
+                            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+                            {es.sinAsignar}
+                          </span>
+                        </span>
+                      ))}
                   </span>
                   {interactive ? (
                     <span
@@ -1172,20 +1128,20 @@ export function MeetingProgramSection({
               return (
                 <div key={part.id}>
                   {part.showSection && assignmentStats.headerVisible.get(index) !== false && (
-                    <div className={`flex items-center gap-3 py-4 ${index === 0 ? "" : "mt-1"}`}>
+                    <h3 className="sticky top-0 z-10 flex items-center gap-2 border-b border-session-line bg-session/95 py-2 backdrop-blur">
                       <span
-                        className="section-emblem grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-white"
+                        className="section-emblem grid h-6 w-6 shrink-0 place-items-center rounded-lg text-white"
                         style={{ backgroundColor: meta.color }}
                       >
-                        <SectionIcon aria-hidden size={30} />
+                        <SectionIcon aria-hidden size={14} />
                       </span>
                       <span
-                        className="section-label font-display text-2xl font-semibold leading-tight tracking-tight"
+                        className="section-label font-display text-sm font-semibold tracking-tight"
                         style={{ "--section-color": meta.color } as CSSProperties}
                       >
                         {meta.label}
                       </span>
-                    </div>
+                    </h3>
                   )}
                   {interactive ? (
                     <button
@@ -1193,14 +1149,14 @@ export function MeetingProgramSection({
                       disabled={saving}
                       onClick={() => setEditing(part)}
                       aria-label={`${es.asignar} ${display.title}`}
-                      className="flex w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg disabled:opacity-70"
+                      className="flex min-h-11 w-full items-start gap-3 py-3 text-left transition-colors hover:bg-session-hover focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-session-fg disabled:opacity-70"
                     >
                       {rowContent}
                     </button>
                   ) : (
                     <article
                       aria-label={`${display.title} — ${names}`}
-                      className="flex w-full items-start gap-3 py-3"
+                      className="flex min-h-11 w-full items-start gap-3 py-3"
                     >
                       {rowContent}
                     </article>

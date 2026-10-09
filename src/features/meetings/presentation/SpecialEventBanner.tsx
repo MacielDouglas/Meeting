@@ -30,8 +30,8 @@ interface SpecialEventBannerProps {
 }
 
 /**
- * Aviso chamativo do evento especial: tipo, título, datas, horário,
- * notas e chamada. Sem interatividade (serve no server e no client).
+ * Aviso tonal do evento especial: tipo, título, datas, horário, notas e
+ * chamada. Sem interatividade (serve no server e no client).
  */
 export function SpecialEventBanner({
   event,
@@ -44,29 +44,22 @@ export function SpecialEventBanner({
   return (
     <section
       aria-label={`${typeLabel(event.type)}: ${event.title}`}
-      className="relative overflow-hidden rounded-2xl bg-accent text-accent-ink shadow-[0_16px_40px_-16px_rgb(0_0_0/0.45)] print:bg-white print:text-black print:shadow-none print:ring-1 print:ring-black"
+      className="rounded-2xl border border-accent/20 bg-accent/10 text-foreground shadow-sm print:bg-white print:text-black print:shadow-none print:ring-1 print:ring-black"
     >
-      <Icon
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -top-6 -right-6 opacity-15",
-          compact ? "h-24 w-24" : "h-36 w-36",
-        )}
-      />
       <div className={cn("relative flex flex-col gap-2", compact ? "p-4" : "p-5 sm:p-6")}>
         <p
           className={cn(
-            "inline-flex w-fit items-center gap-1.5 rounded-full bg-accent-ink/15 font-display font-semibold tracking-wide",
+            "inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/25 bg-accent/10 font-display font-semibold tracking-wide",
             compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs",
           )}
         >
-          <Icon aria-hidden size={compact ? 12 : 14} />
+          <Icon aria-hidden size={compact ? 12 : 14} className="text-accent" />
           {typeLabel(event.type)}
         </p>
         <h2
           className={cn(
             "font-display font-semibold tracking-tight text-balance",
-            compact ? "text-xl" : "text-2xl sm:text-3xl",
+            compact ? "text-lg" : "text-xl",
           )}
         >
           {event.title}
