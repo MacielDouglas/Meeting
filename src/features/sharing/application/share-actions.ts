@@ -28,9 +28,44 @@ export const PUBLIC_SHARE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const SHARE_TABLES_MISSING_ERROR =
   "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
 
+function sqlStateCode(error: unknown): string | null {
+  if (typeof error !== "object" || error === null) return null;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : null;
+}
+
+function errorText(error: unknown): string {
+  const direct = error instanceof Error ? error.message : String(error);
+  if (typeof error === "object" && error !== null) {
+    const cause = (error as { cause?: unknown }).cause;
+    if (cause instanceof Error) return `${direct} ${cause.message}`;
+  }
+  return direct;
+}
+
+/**
+ * Violação de unicidade (colisão de hash do token): gera outro token e tenta
+ * de novo. O driver Neon expõe o SQLSTATE em `code` (`23505`); a mensagem
+ * (contém "unique"/"duplicate key") cobre outros formatos.
+ */
+function isUniqueViolationError(error: unknown): boolean {
+  if (sqlStateCode(error) === "23505") return true;
+  const message = errorText(error);
+  return message.includes("unique") || message.includes("duplicate key");
+}
+
 function isMissingTableError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error);
-  return message.includes("public_share") || message.includes("does not exist");
+  // SQLSTATE do Postgres (o driver Neon expõe em `code`): 42P01 = tabela
+  // ausente, 42703 = coluna ausente (ex.: `expires_at` sem a migração 0018).
+  // Sem o código, casa pela mensagem de relação/coluna inexistente.
+  if (sqlStateCode(error) === "42P01" || sqlStateCode(error) === "42703") return true;
+  const message = errorText(error);
+  return (
+    /relation "[^"]*" does not exist/i.test(message) ||
+    /column "[^"]*".*does not exist/i.test(message) ||
+    /no such (table|column)/i.test(message) ||
+    message.includes("expires_at")
+  );
 }
 
 function publicShareUrl(token: string): string {
@@ -71,32 +106,46 @@ export async function createPublicShareToken(): Promise<ShareActionResult> {
   } catch {
     return { ok: false, error: "Solo el owner puede generar el enlace." };
   }
-  const db = getDb();
   let organizationId: string;
   try {
     organizationId = await ensureShareOrganization();
-  } catch {
+  } catch (error) {
+    console.error("[share] falha ao preparar organização do enlace", error);
     return { ok: false, error: "No se pudo preparar la organización." };
   }
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const token = generateShareToken();
-    const expiresAt = new Date(Date.now() + PUBLIC_SHARE_TTL_MS);
-    try {
-      await db.delete(publicShares).where(eq(publicShares.organizationId, organizationId));
-      await db.insert(publicShares).values({
-        id: randomUUID(),
-        organizationId,
-        tokenHash: hashShareToken(token),
-        createdBy: ownerId,
-        expiresAt,
-      });
-      revalidatePath("/administracion");
+  try {
+    const db = getDb();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const token = generateShareToken();
+      const expiresAt = new Date(Date.now() + PUBLIC_SHARE_TTL_MS);
+      try {
+        await db.delete(publicShares).where(eq(publicShares.organizationId, organizationId));
+        await db.insert(publicShares).values({
+          id: randomUUID(),
+          organizationId,
+          tokenHash: hashShareToken(token),
+          createdBy: ownerId,
+          expiresAt,
+        });
+      } catch (error) {
+        // Colisão de hash (quase impossível): tenta outro token. Tabela ou
+        // coluna ausente: orienta a migrar. Qualquer outra falha cai no catch
+        // externo: loga e devolve erro amigável em vez de 500.
+        if (isUniqueViolationError(error)) continue;
+        if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
+        throw error;
+      }
+      try {
+        revalidatePath("/administracion");
+      } catch (error) {
+        // O enlace já foi criado; o cache se resolve no próximo acesso.
+        console.error("[share] falha ao revalidar /administracion após criar enlace", error);
+      }
       return { ok: true, token, url: publicShareUrl(token), expiresAt: expiresAt.toISOString() };
-    } catch (error) {
-      if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes("unique")) throw error;
     }
+  } catch (error) {
+    console.error("[share] falha ao criar enlace público", error);
+    return { ok: false, error: "No se pudo generar el enlace. Inténtalo de nuevo." };
   }
   return { ok: false, error: "No se pudo generar el enlace. Inténtalo de nuevo." };
 }
@@ -108,14 +157,19 @@ export async function revokePublicShareToken(): Promise<ShareActionResult> {
   } catch {
     return { ok: false, error: "Solo el owner puede revocar el enlace." };
   }
-  const db = getDb();
   try {
+    const db = getDb();
     const organizationId = await ensureShareOrganization();
     await db.delete(publicShares).where(eq(publicShares.organizationId, organizationId));
   } catch (error) {
     if (isMissingTableError(error)) return { ok: false, error: SHARE_TABLES_MISSING_ERROR };
+    console.error("[share] falha ao revogar enlace público", error);
     return { ok: false, error: "No se pudo revocar el enlace." };
   }
-  revalidatePath("/administracion");
+  try {
+    revalidatePath("/administracion");
+  } catch (error) {
+    console.error("[share] falha ao revalidar /administracion após revogar enlace", error);
+  }
   return { ok: true };
 }

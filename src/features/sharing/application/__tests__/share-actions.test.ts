@@ -32,6 +32,7 @@ const owner = {
 beforeEach(() => {
   mockDb.reset();
   vi.resetAllMocks();
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 describe("share-actions (owner)", () => {
@@ -94,6 +95,59 @@ describe("share-actions (owner)", () => {
       ok: false,
       error:
         "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.",
+    });
+  });
+
+  it("orienta a migrar pelo código SQLSTATE do Neon (42P01) em vez de 500", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueueRejection(
+      Object.assign(new Error('relation "public_share" does not exist'), { code: "42P01" }),
+    );
+    const result = await createPublicShareToken();
+    expect(result).toEqual({
+      ok: false,
+      error:
+        "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.",
+    });
+  });
+
+  it("retenta com outro token em colisão unique detectada pelo código 23505", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueue([]); // delete anterior
+    mockDb.enqueueRejection(
+      Object.assign(
+        new Error(
+          'duplicate key value violates unique constraint "public_share_token_hash_unique"',
+        ),
+        { code: "23505" },
+      ),
+    );
+    mockDb.enqueue([]); // delete (retentativa)
+    mockDb.enqueue([]); // insert (retentativa)
+    const result = await createPublicShareToken();
+    expect(result.ok).toBe(true);
+    expect(result.token).toMatch(/^[A-Za-z0-9]{32}$/);
+  });
+
+  it("nunca estoura 500 ao criar: falha inesperada vira erro amigável", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueueRejection(new Error("Error connecting to database: fetch failed"));
+    await expect(createPublicShareToken()).resolves.toEqual({
+      ok: false,
+      error: "No se pudo generar el enlace. Inténtalo de nuevo.",
+    });
+  });
+
+  it("nunca estoura 500 ao revogar: falha inesperada vira erro amigável", async () => {
+    vi.mocked(requireOwnerUser).mockResolvedValue(owner);
+    mockDb.enqueue([{ id: "org-1" }]);
+    mockDb.enqueueRejection(new Error("permission denied for table public_share"));
+    await expect(revokePublicShareToken()).resolves.toEqual({
+      ok: false,
+      error: "No se pudo revocar el enlace.",
     });
   });
 });

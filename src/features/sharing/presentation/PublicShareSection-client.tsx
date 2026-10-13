@@ -56,17 +56,22 @@ export function PublicShareSection({ initial }: PublicShareSectionProps) {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const result = await createPublicShareToken();
-    setBusy(false);
-    if (!result.ok || !result.token || !result.url) {
-      setError(result.error ?? es.errorGuardar);
-      return;
+    try {
+      const result = await createPublicShareToken();
+      if (!result.ok || !result.token || !result.url) {
+        setError(result.error ?? es.errorGuardar);
+        return;
+      }
+      setCreated({ token: result.token, url: result.url });
+      setActive(true);
+      setCreatedAt(new Date().toISOString());
+      setExpiresAt(result.expiresAt ?? null);
+      router.refresh();
+    } catch {
+      setError(es.errorGuardar);
+    } finally {
+      setBusy(false);
     }
-    setCreated({ token: result.token, url: result.url });
-    setActive(true);
-    setCreatedAt(new Date().toISOString());
-    setExpiresAt(result.expiresAt ?? null);
-    router.refresh();
   }
 
   async function handleRevoke() {
@@ -74,17 +79,22 @@ export function PublicShareSection({ initial }: PublicShareSectionProps) {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const result = await revokePublicShareToken();
-    setBusy(false);
-    if (!result.ok) {
-      setError(result.error ?? es.errorExcluir);
-      return;
+    try {
+      const result = await revokePublicShareToken();
+      if (!result.ok) {
+        setError(result.error ?? es.errorExcluir);
+        return;
+      }
+      setCreated(null);
+      setActive(false);
+      setCreatedAt(null);
+      setExpiresAt(null);
+      router.refresh();
+    } catch {
+      setError(es.errorExcluir);
+    } finally {
+      setBusy(false);
     }
-    setCreated(null);
-    setActive(false);
-    setCreatedAt(null);
-    setExpiresAt(null);
-    router.refresh();
   }
 
   return (
