@@ -6,7 +6,6 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireOwnerUser } from "@/features/auth/application/session";
 import {
-  detectLanguageFromFilename,
   inspectJwpubFile,
   type ParsedWatchtowerArticle,
   parseJwpub,
@@ -402,5 +401,3 @@ export async function deleteAllByLanguage(input: unknown) {
   revalidate();
   return { ok: true };
 }
-
-export { detectLanguageFromFilename };

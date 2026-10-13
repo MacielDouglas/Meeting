@@ -23,7 +23,7 @@ export interface ShareActionResult {
 const CONGREGATION_ORG_SLUG = "congregation";
 
 /** Validade do enlace público: 90 dias (rotação gera um novo). */
-export const PUBLIC_SHARE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
+const PUBLIC_SHARE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
 const SHARE_TABLES_MISSING_ERROR =
   "Tabla de enlaces no creada en la base de datos. Ejecuta `npm run db:push` y recarga la página.";
