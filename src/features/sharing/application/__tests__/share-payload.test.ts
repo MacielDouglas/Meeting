@@ -13,7 +13,7 @@ beforeEach(() => {
 });
 
 describe("buildPublicWeekPayload (limpeza)", () => {
-  it("inclui a limpeza confirmada da semana", async () => {
+  it("inclui a limpeza da semana (confirmada e rascunho), exceto arquivada", async () => {
     mockDb.enqueue([{ congregationName: "Congregación Este" }]);
     mockDb.enqueue([]); // sem programa entre semana
     mockDb.enqueue([]); // sem programa de fim de semana
@@ -26,6 +26,7 @@ describe("buildPublicWeekPayload (limpeza)", () => {
         task: "Barrer y trapear",
         taskEs: "Barrer y trapear ES",
         personName: "Luis Gómez",
+        status: "confirmed",
       },
       {
         date: "2026-10-04",
@@ -34,6 +35,16 @@ describe("buildPublicWeekPayload (limpeza)", () => {
         task: null,
         taskEs: null,
         personName: "Ana Torres",
+        status: "draft",
+      },
+      {
+        date: "2026-10-03",
+        sectorName: "Grupo 3",
+        sectorNameEs: null,
+        task: null,
+        taskEs: null,
+        personName: "Pedro Ruiz",
+        status: "archived",
       },
     ]);
     const payload = await buildPublicWeekPayload(new Date("2026-09-30T12:00:00Z"));

@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, lte, ne, or } from "drizzle-orm";
 import {
   cleaningAssignments,
   cleaningPrograms,
@@ -154,10 +154,10 @@ export async function buildPublicWeekPayload(
     duties = [];
   }
 
-  // Limpeza: só programas confirmados (nunca rascunhos), na semana.
-  // A tarefa vem do setor (mesmo tipo do programa). Setor padrão casa por
-  // `key`, setor customizado (key nula) casa por `id` — igual à troca manual.
-  // Setor ausente vira "".
+  // Limpeza: tudo exceto programas arquivados (rascunho entra, igual à
+  // tela de Designações), só na semana. A tarefa vem do setor (mesmo tipo
+  // do programa). Setor padrão casa por `key`, setor customizado (key nula)
+  // casa por `id` — igual à troca manual. Setor ausente vira "".
   let cleaning: PublicShareCleaning[] = [];
   try {
     const rows = await db
@@ -168,6 +168,7 @@ export async function buildPublicWeekPayload(
         task: cleaningSectors.task,
         taskEs: cleaningSectors.taskEs,
         personName: cleaningAssignments.personName,
+        status: cleaningPrograms.status,
       })
       .from(cleaningAssignments)
       .innerJoin(cleaningPrograms, eq(cleaningPrograms.id, cleaningAssignments.programId))
@@ -183,18 +184,22 @@ export async function buildPublicWeekPayload(
       )
       .where(
         and(
-          eq(cleaningPrograms.status, "confirmed"),
+          ne(cleaningPrograms.status, "archived"),
           gte(cleaningAssignments.assignmentDate, weekStart),
           lte(cleaningAssignments.assignmentDate, weekEnd),
         ),
       )
       .orderBy(asc(cleaningAssignments.assignmentDate), asc(cleaningAssignments.sortOrder));
-    cleaning = rows.map((row) => ({
-      ...row,
-      sectorNameEs: row.sectorNameEs ?? "",
-      task: row.task ?? "",
-      taskEs: row.taskEs ?? "",
-    }));
+    cleaning = rows
+      .filter((row) => row.status !== "archived")
+      .map((row) => ({
+        date: row.date,
+        sectorName: row.sectorName,
+        sectorNameEs: row.sectorNameEs ?? "",
+        task: row.task ?? "",
+        taskEs: row.taskEs ?? "",
+        personName: row.personName,
+      }));
   } catch {
     cleaning = [];
   }
