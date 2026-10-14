@@ -363,6 +363,16 @@ export async function parseWorkbookJwpub(
   try {
     const loaded = (await loadPub(tempPath)) as unknown as LibWeek[];
     rawWeeks = Array.isArray(loaded) ? loaded.slice(0, MAX_WORKBOOK_WEEKS) : [];
+  } catch (error) {
+    // Erro cru da lib (ex.: TypeError em edição com HTML novo) não ajuda o
+    // usuário: loga o detalhe no servidor e devolve mensagem amigável.
+    console.error("[content] falha ao extrair semanas da apostila", {
+      filename: safeName,
+      error,
+    });
+    throw new Error(
+      "No se pudo extraer el contenido de la guía. Verifica que el archivo sea una Guía de actividades (.jwpub) válida.",
+    );
   } finally {
     await rm(tempDir, { recursive: true, force: true });
   }
