@@ -1,6 +1,6 @@
 import { hashShareToken, isShareTokenFormat } from "@/features/sharing/domain/share-token";
 import { encryptSharePayload } from "@/features/sharing/domain/share-crypto";
-import { buildPublicWeekPayload } from "@/features/sharing/application/share-payload";
+import { buildPublicRangePayload } from "@/features/sharing/application/share-payload";
 import { findValidShareOrganizationIdByHash } from "@/features/sharing/application/share-queries";
 import {
   clientIpFromHeaders,
@@ -13,8 +13,13 @@ function notFound(): Response {
 }
 
 /**
- * Enlace público da semana, criptografado de ponta a ponta.
+ * Enlace público da programação, criptografado de ponta a ponta.
  * GET /api/public/programa/[token] (token alfanumérico de 32 caracteres).
+ *
+ * Envia a semana anterior à da solicitação + a semana atual (ambas vão
+ * sempre, mesmo vazias) + todas as futuras já cadastradas (teto de 26).
+ * O corpo é `{ generatedAt, congregationName, weeks: [...] }` cifrado num
+ * envelope novo `{ v, alg, iv, tag, data }` (base64) a cada acesso.
  *
  * O token é o segredo compartilhado: a chave AES-256-GCM é SHA-256(token) e
  * o corpo é sempre um envelope novo `{ v, alg, iv, tag, data }` (base64).
@@ -45,7 +50,7 @@ export async function GET(
 
   let plaintext: string;
   try {
-    const payload = await buildPublicWeekPayload();
+    const payload = await buildPublicRangePayload();
     plaintext = JSON.stringify(payload);
   } catch {
     return Response.json({ error: "No se pudo cargar el programa." }, { status: 500 });

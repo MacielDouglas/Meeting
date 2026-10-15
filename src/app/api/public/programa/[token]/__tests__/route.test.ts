@@ -1,5 +1,5 @@
 import { mockDb } from "@test/mock-db";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET } from "@/app/api/public/programa/[token]/route";
 import { decryptSharePayload } from "@/features/sharing/domain/share-crypto";
 
@@ -59,11 +59,16 @@ function assignmentRow(programId: string, overrides: Record<string, unknown> = {
   };
 }
 
-function givenFullWeek(): void {
-  // Ordem de consultas da rota: enlace → ajustes → midweek → weekend →
-  // atribuições midweek → atribuições weekend → apoio.
+function givenRange(): void {
+  // Semana de referência fixa: atual 2026-10-12, anterior 2026-10-05.
+  // Ordem de consultas: enlace → ajustes → semanas futuras → anterior
+  // (vazia: 2 programas + apoio + limpeza) → atual (casca vazia) →
+  // cadastrada (completa).
   mockDb.enqueue([{ organizationId: "org-1" }]);
   mockDb.enqueue([{ congregationName: "Congregación Este" }]);
+  mockDb.enqueue([{ weekStart: "2026-09-28" }]);
+  mockDb.enqueueMany([[], [], [], []]);
+  mockDb.enqueueMany([[], [], [], []]);
   mockDb.enqueue([programRow("midweek", "2026-09-28")]);
   mockDb.enqueue([programRow("weekend", "2026-09-28")]);
   mockDb.enqueue([assignmentRow("prog-midweek")]);
@@ -85,11 +90,19 @@ function givenFullWeek(): void {
       personName: "Luis Gómez",
     },
   ]);
+  mockDb.enqueue([]);
 }
 
 beforeEach(() => {
   mockDb.reset();
   vi.resetAllMocks();
+  // A rota calcula anterior/atual pela data real: fixa para determinismo.
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date("2026-10-15T12:00:00Z"));
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 describe("GET /api/public/programa/[token]", () => {
@@ -117,7 +130,7 @@ describe("GET /api/public/programa/[token]", () => {
   });
 
   it("responde 200 com envelope cifrado que só o token abre", async () => {
-    givenFullWeek();
+    givenRange();
     const response = await get(TOKEN);
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store, must-revalidate");
@@ -128,15 +141,23 @@ describe("GET /api/public/programa/[token]", () => {
 
     const payload = JSON.parse(decryptSharePayload(TOKEN, envelope));
     expect(payload.congregationName).toBe("Congregación Este");
-    expect(payload.midweek.assignments[0].personName).toBe("Ana Torres");
-    expect(payload.weekend.assignments[0].title).toBe("Discurso público");
-    expect(payload.duties[0]).toMatchObject({ dutyKey: "sound", personName: "Luis Gómez" });
+    // Anterior (vazia) + atual (casca vazia) + cadastrada.
+    expect(payload.weeks).toHaveLength(3);
+    expect(payload.weeks[0].weekStart).toBe("2026-10-05");
+    expect(payload.weeks[0].midweek).toBeNull();
+    expect(payload.weeks[1].weekStart).toBe("2026-10-12");
+    expect(payload.weeks[1].midweek).toBeNull();
+    const current = payload.weeks[2];
+    expect(current.weekStart).toBe("2026-09-28");
+    expect(current.midweek.assignments[0].personName).toBe("Ana Torres");
+    expect(current.weekend.assignments[0].title).toBe("Discurso público");
+    expect(current.duties[0]).toMatchObject({ dutyKey: "sound", personName: "Luis Gómez" });
     // Ids internos não vazam no enlace público.
     expect(JSON.stringify(payload)).not.toContain("person-1");
   });
 
   it("o corpo cifrado é opaco sem o token", async () => {
-    givenFullWeek();
+    givenRange();
     const response = await get(TOKEN);
     const raw = await response.text();
     expect(raw).not.toContain("Ana Torres");

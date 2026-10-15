@@ -61,6 +61,27 @@ export interface PublicWeekPayload {
   cleaning: PublicShareCleaning[];
 }
 
+/**
+ * Enlace público estendido: semana anterior à da solicitação + todas as
+ * futuras já cadastradas (teto de semanas à frente, além da anterior que
+ * vai sempre — mesmo vazia). O consumidor espelha exatamente este envio.
+ */
+export interface PublicRangePayload {
+  generatedAt: string;
+  congregationName: string;
+  weeks: PublicWeekPayload[];
+}
+
+/** Teto de semanas futuras no enlace (a anterior vai sempre, fora do teto). */
+export const PUBLIC_RANGE_FUTURE_WEEKS = 26;
+
+function addDaysISO(dateISO: string, days: number): string {
+  const [year, month, day] = dateISO.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 async function loadMeeting(
   kind: "midweek" | "weekend",
   weekStart: string,
@@ -106,19 +127,84 @@ export async function buildPublicWeekPayload(
   reference: Date = new Date(),
 ): Promise<PublicWeekPayload> {
   const { weekStart, weekEnd } = getWeekRange(reference);
-  const db = getDb();
+  const generatedAt = new Date().toISOString();
+  const congregationName = await readCongregationName();
+  const week = await loadWeek(weekStart, weekEnd);
+  return { weekStart, weekEnd, generatedAt, congregationName, ...week };
+}
 
-  let congregationName = "";
+/**
+ * Intervalo do enlace público: semana anterior à da solicitação (sempre,
+ * mesmo sem programa salvo) + semana atual (sempre, vazia quando ainda sem
+ * programa) + futuras com programa cadastrado, limitadas a
+ * PUBLIC_RANGE_FUTURE_WEEKS à frente. Traz tudo o que está salvo
+ * (rascunho e confirmado); só limpeza arquivada fica de fora, como na semana.
+ */
+export async function buildPublicRangePayload(
+  reference: Date = new Date(),
+): Promise<PublicRangePayload> {
+  const { weekStart } = getWeekRange(reference);
+  const generatedAt = new Date().toISOString();
+  const congregationName = await readCongregationName();
+  const futureWeekStarts = await readFutureWeekStarts(weekStart);
+  const previousWeekStart = addDaysISO(weekStart, -7);
+  const weekStarts = [
+    previousWeekStart,
+    ...futureWeekStarts.filter((start) => start !== previousWeekStart),
+  ];
+  // A semana atual vai sempre (vazia quando ainda sem programa): o
+  // consumidor ancora a página nela e espelha exatamente este envio.
+  if (!weekStarts.includes(weekStart)) weekStarts.splice(1, 0, weekStart);
+  const weeks: PublicWeekPayload[] = [];
+  for (const start of weekStarts) {
+    const end = addDaysISO(start, 6);
+    const week = await loadWeek(start, end);
+    weeks.push({ weekStart: start, weekEnd: end, generatedAt, congregationName, ...week });
+  }
+  return { generatedAt, congregationName, weeks };
+}
+
+/** Semanas com programa salvo a partir de `fromWeekStart` (crescente, com teto). */
+async function readFutureWeekStarts(fromWeekStart: string): Promise<string[]> {
+  try {
+    const rows = await getDb()
+      .selectDistinct({ weekStart: meetingPrograms.weekStart })
+      .from(meetingPrograms)
+      .where(gte(meetingPrograms.weekStart, fromWeekStart))
+      .orderBy(asc(meetingPrograms.weekStart))
+      .limit(PUBLIC_RANGE_FUTURE_WEEKS);
+    const starts = new Set<string>();
+    for (const row of rows) {
+      if (typeof row.weekStart === "string" && row.weekStart !== "") starts.add(row.weekStart);
+    }
+    // O teto já vai no SQL; o fatiamento aqui é rede de segurança.
+    return [...starts].slice(0, PUBLIC_RANGE_FUTURE_WEEKS);
+  } catch {
+    return [];
+  }
+}
+
+async function readCongregationName(): Promise<string> {
+  const db = getDb();
   try {
     const settings = await db
       .select({ congregationName: meetingSettings.congregationName })
       .from(meetingSettings)
       .limit(1);
-    congregationName = settings[0]?.congregationName ?? "";
+    return settings[0]?.congregationName ?? "";
   } catch {
-    congregationName = "";
+    return "";
   }
+}
 
+interface LoadedWeek {
+  midweek: PublicShareMeeting | null;
+  weekend: PublicShareMeeting | null;
+  duties: PublicShareDuty[];
+  cleaning: PublicShareCleaning[];
+}
+
+async function loadWeek(weekStart: string, weekEnd: string): Promise<LoadedWeek> {
   let midweek: PublicShareMeeting | null = null;
   let weekend: PublicShareMeeting | null = null;
   try {
@@ -133,7 +219,7 @@ export async function buildPublicWeekPayload(
 
   let duties: PublicShareDuty[] = [];
   try {
-    const rows = await db
+    const rows = await getDb()
       .select({
         date: dutyAssignments.assignmentDate,
         meetingKind: dutyAssignments.meetingKind,
@@ -160,7 +246,7 @@ export async function buildPublicWeekPayload(
   // casa por `id` — igual à troca manual. Setor ausente vira "".
   let cleaning: PublicShareCleaning[] = [];
   try {
-    const rows = await db
+    const rows = await getDb()
       .select({
         date: cleaningAssignments.assignmentDate,
         sectorName: cleaningAssignments.sectorName,
@@ -204,14 +290,5 @@ export async function buildPublicWeekPayload(
     cleaning = [];
   }
 
-  return {
-    weekStart,
-    weekEnd,
-    generatedAt: new Date().toISOString(),
-    congregationName,
-    midweek,
-    weekend,
-    duties,
-    cleaning,
-  };
+  return { midweek, weekend, duties, cleaning };
 }
