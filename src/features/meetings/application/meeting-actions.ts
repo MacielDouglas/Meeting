@@ -273,6 +273,10 @@ export async function updateMeetingAssignment(
         helperName = `${helper.firstName} ${helper.lastName}`;
       }
     }
+    // Dirigente e leitor (titular e ajudante) nunca são a mesma pessoa.
+    if (personId && helperId && personId === helperId) {
+      return { ok: false, error: "El titular y el ayudante deben ser personas distintas." };
+    }
     await db
       .update(meetingAssignments)
       .set({ personId, personName, helperPersonId: helperId, helperPersonName: helperName })
@@ -470,6 +474,19 @@ export async function saveStagedChanges(
       }
       if (item.helperPersonId) {
         if (!names.has(item.helperPersonId)) return fail(item.label, "Ayudante no encontrado.");
+      }
+      // Dirigente e leitor (titular e ajudante) nunca são a mesma pessoa —
+      // vale o estado final (encenado + já salvo). Nome livre zera o titular.
+      const effectiveTitular =
+        item.speakerName !== undefined
+          ? null
+          : item.personId !== undefined
+            ? item.personId
+            : existing.personId;
+      const effectiveHelper =
+        item.helperPersonId !== undefined ? item.helperPersonId : existing.helperPersonId;
+      if (effectiveTitular && effectiveHelper && effectiveTitular === effectiveHelper) {
+        return fail(item.label, "El titular y el ayudante deben ser personas distintas.");
       }
       const patch: AssignmentPatch = {};
       // Nome temporário aparado; vazio equivale a ausente.

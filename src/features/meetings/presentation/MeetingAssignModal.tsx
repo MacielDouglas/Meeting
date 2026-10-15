@@ -6,6 +6,7 @@ import { FaChevronRight } from "react-icons/fa";
 import {
   listMeetingPersons,
   type MeetingPerson,
+  type MeetingRotationScope,
 } from "@/features/meetings/application/meeting-person-queries";
 import { listOutsideSpeakers } from "@/features/meetings/application/outside-speaker-queries";
 import {
@@ -95,6 +96,29 @@ function roleLabels(capability?: string) {
   return { main: es.titular, helper: es.ayudante, withoutHelper: es.continuarSinAyudante };
 }
 
+/**
+ * Rodízio por função direto do histórico salvo: presidente (por tipo de
+ * reunião), dirigente e leitor (titular/ajudante da parte de estudo).
+ * Quem nunca exerceu aparece primeiro; depois, do mais antigo ao mais novo.
+ */
+function rotationScopeFor(
+  capability: string | undefined,
+  holder: "person" | "helper",
+): MeetingRotationScope | undefined {
+  switch (capability) {
+    case "president":
+      return holder === "person" ? { partKeys: ["president"], kinds: ["midweek"] } : undefined;
+    case "weekendPresident":
+      return holder === "person" ? { partKeys: ["president"], kinds: ["weekend"] } : undefined;
+    case "watchtowerStudy":
+      return { partKeys: ["watchtower-study"], holder };
+    case "congregationStudy":
+      return { partKeys: ["congregation-study"], holder };
+    default:
+      return undefined;
+  }
+}
+
 /** Normaliza nome temporário: colapsa espaços, apara e limita a 160. */
 function normalizeTempName(value: string): string {
   return value.replace(/\s+/g, " ").trim().slice(0, 160);
@@ -179,7 +203,11 @@ export function MeetingAssignModal({
   const [selectedTitular, setSelectedTitular] = useState<MeetingPerson | null>(null);
   const [titularSearchInput, setTitularSearchInput] = useState("");
   const [helperSearchInput, setHelperSearchInput] = useState("");
-  const [orderBy, setOrderBy] = useState<"name" | "rotation">("name");
+  // Funções com rodízio próprio já abrem ordenadas do mais antigo ao mais
+  // novo (quem nunca exerceu primeiro); as demais seguem alfabéticas.
+  const [orderBy, setOrderBy] = useState<"name" | "rotation">(() =>
+    rotationScopeFor(capability, "person") ? "rotation" : "name",
+  );
   const [songNumber, setSongNumber] = useState("");
   const [songError, setSongError] = useState<string | null>(null);
   // Nome temporário (fora da lista e da organização): só fica na parte.
@@ -208,14 +236,17 @@ export function MeetingAssignModal({
   const helperSearch = useDeferredValue(helperSearchInput.trim());
   const titularField = capabilityField(capability);
   const helperField = helperCapabilityField(capability);
+  const titularScope = rotationScopeFor(capability, "person");
+  const helperScope = rotationScopeFor(capability, "helper");
 
   const titularQuery = useQuery({
-    queryKey: ["meeting-persons", titularField, titularSearch, orderBy],
+    queryKey: ["meeting-persons", titularField, titularSearch, orderBy, titularScope],
     queryFn: () =>
       listMeetingPersons(titularField, {
         search: titularSearch || undefined,
         limit: 60,
         orderBy,
+        rotationScope: titularScope,
       }),
     enabled: allowPerson,
     placeholderData: keepPreviousData,
@@ -243,7 +274,7 @@ export function MeetingAssignModal({
 
   // Ajudantes só carregam na etapa 2, já com o titular escolhido.
   const helperQuery = useQuery({
-    queryKey: ["meeting-persons", helperField, helperSearch, orderBy, "helpers"],
+    queryKey: ["meeting-persons", helperField, helperSearch, orderBy, helperScope, "helpers"],
     queryFn: () =>
       listMeetingPersons(helperField, {
         search: helperSearch || undefined,
@@ -251,6 +282,7 @@ export function MeetingAssignModal({
         // a congregação é pequena.
         limit: 200,
         orderBy,
+        rotationScope: helperScope,
       }),
     enabled: withHelperFlow && step === "helper",
     placeholderData: keepPreviousData,

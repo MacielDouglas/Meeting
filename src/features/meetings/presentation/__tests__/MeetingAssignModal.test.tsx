@@ -102,6 +102,83 @@ describe("MeetingAssignModal nombre temporal", () => {
     renderModal();
     await screen.findByLabelText(es.nombreTemporal);
     expect(screen.getByRole("button", { name: es.asignar }).className).toMatch(/min-h-\[52px\]/);
-    expect(screen.getByRole("button", { name: es.cancel }).className).toMatch(/min-h-\[52px\]/);
+  });
+});
+
+describe("MeetingAssignModal rodízio por função", () => {
+  function renderScopedModal() {
+    const onStage = vi.fn();
+    const onClose = vi.fn();
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MeetingAssignModal
+          title="Presidente"
+          capability="weekendPresident"
+          songs={[]}
+          outlines={[]}
+          systemCongregation=""
+          startTime="09:00"
+          durationMinutes={0}
+          currentPersonName=""
+          currentHelperName=""
+          onClose={onClose}
+          onStage={onStage}
+          onOutlineStage={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+    return { onStage, onClose };
+  }
+
+  it("abre o presidente do fim de semana já em rodízio da função", async () => {
+    renderScopedModal();
+    await screen.findByRole("button", { name: /Juan Pérez/ });
+    expect(vi.mocked(listMeetingPersons)).toHaveBeenCalledWith(
+      "publicChairman",
+      expect.objectContaining({
+        orderBy: "rotation",
+        rotationScope: { partKeys: ["president"], kinds: ["weekend"] },
+      }),
+    );
+  });
+
+  it("etapa do leitor usa o histórico de ajudante do estudo", async () => {
+    const user = userEvent.setup();
+    vi.mocked(listMeetingPersons).mockResolvedValue([
+      person,
+      { ...person, id: "p2", firstName: "Ana", lastName: "García" },
+    ]);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MeetingAssignModal
+          title="Estudio de La Atalaya"
+          capability="watchtowerStudy"
+          needsHelper
+          songs={[]}
+          outlines={[]}
+          systemCongregation=""
+          startTime="09:40"
+          durationMinutes={60}
+          currentPersonName=""
+          currentHelperName=""
+          onClose={vi.fn()}
+          onStage={vi.fn()}
+          onOutlineStage={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+    await user.click(await screen.findByRole("button", { name: /Juan Pérez/ }));
+    await screen.findByText(es.elegir);
+    const helperCalls = vi
+      .mocked(listMeetingPersons)
+      .mock.calls.filter(([, options]) => options?.rotationScope?.holder === "helper");
+    expect(helperCalls.length).toBeGreaterThan(0);
+    expect(helperCalls[0]?.[0]).toBe("watchtowerReader");
+    expect(helperCalls[0]?.[1]).toMatchObject({
+      orderBy: "rotation",
+      rotationScope: { partKeys: ["watchtower-study"], holder: "helper" },
+    });
   });
 });

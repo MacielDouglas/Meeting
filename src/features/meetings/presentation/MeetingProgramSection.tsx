@@ -369,19 +369,14 @@ export function MeetingProgramSection({
 
   // Programa salvo via TanStack Query: cache entre montagens (staleTime 1h),
   // dedupe e invalidação explícita; loadToken força uma chave nova no Reintentar.
-  // O rascunho de sessionStorage viaja junto para restaurar na primeira carga.
+  // O rascunho (sessionStorage) é lido na hora de aplicar, nunca viaja no
+  // cache — ver o ajuste durante o render abaixo.
   const programQuery = useQuery({
     queryKey: ["meeting-program", kind, weekStart, loadToken],
     // Programa muda só por ação explícita (refresh invalida): 1h sem refetch
     // ao remontar/navegar poupa rede em conexão lenta.
     staleTime: 60 * 60 * 1000,
-    queryFn: async () => {
-      const [result, draft] = await Promise.all([
-        getMeetingProgram(kind, weekStart),
-        Promise.resolve(readStoredDraft(draftStorageKey(kind, weekStart))),
-      ]);
-      return { result, draft };
-    },
+    queryFn: () => getMeetingProgram(kind, weekStart),
   });
   const queryClient = useQueryClient();
   const loading = programQuery.isPending;
@@ -389,7 +384,7 @@ export function MeetingProgramSection({
 
   // Programa/atribuições derivam dos dados da query (não há estado espelho).
   const programData = programQuery.data;
-  const result = programData?.result ?? null;
+  const result = programData ?? null;
   const saved = result?.assignments ?? null;
   const programId = result?.program.id ?? null;
   const programException = {
@@ -406,12 +401,21 @@ export function MeetingProgramSection({
     // Sincroniza o discurso com o programa salvo (ou volta a "Nenhum" em
     // semana sem programa, sem carregar escolha de outra semana).
     setOutlineId(result?.program.outlineId ?? "");
-    setPending(programData.draft ? programData.draft.pending : {});
-    setPendingOutlineId(programData.draft ? programData.draft.outlineId : null);
+    // O rascunho é lido AQUI (storage ao vivo), nunca de snapshot no cache:
+    // o refetch do refresh lia o storage antes do efeito de limpeza
+    // pós-save descarregar, e o snapshot obsoleto ressuscitava a sujeira
+    // ao voltar de data (segundo Salvar fantasma).
+    const liveDraft = readStoredDraft(draftStorageKey(kind, weekStart));
+    setPending(liveDraft ? liveDraft.pending : {});
+    setPendingOutlineId(liveDraft ? liveDraft.outlineId : null);
   }
 
   // Espelha o rascunho em sessionStorage; voltar à semana o restaura.
   useEffect(() => {
+    // Antes de aplicar os dados da semana, o storage pode guardar um rascunho
+    // ainda não restaurado (ex.: reload com edição encenada): apagar aqui
+    // destruiria a rede de segurança antes do ajuste durante o render lê-la.
+    if (appliedLoadKey !== loadKey) return;
     const key = draftStorageKey(kind, weekStart);
     try {
       if (Object.keys(pending).length === 0 && pendingOutlineId === null) {
@@ -425,7 +429,7 @@ export function MeetingProgramSection({
     } catch {
       /* armazenamento indisponível: segue sem a rede de segurança */
     }
-  }, [pending, pendingOutlineId, kind, weekStart]);
+  }, [pending, pendingOutlineId, kind, weekStart, appliedLoadKey, loadKey]);
 
   // Leitura estrita: ver nunca escreve. Criação e sincronização do modelo
   // exigem ação explícita do organizador (botões abaixo).
@@ -791,6 +795,9 @@ export function MeetingProgramSection({
     // Invalida a chave da semana: refetch devolve dado fresco e o efeito de
     // aplicação atualiza programa/atribuições sem mexer na encenação.
     await queryClient.invalidateQueries({ queryKey: ["meeting-program", kind, weekStart] });
+    // O rodízio por função lê o histórico salvo: sem invalidar, o modal
+    // reabriria com a ordem antiga (cache de 1h) mesmo após designar e salvar.
+    await queryClient.invalidateQueries({ queryKey: ["meeting-persons"] });
   }
 
   // Calcula `showSection` fora do JSX de forma pura: a primeira parte de

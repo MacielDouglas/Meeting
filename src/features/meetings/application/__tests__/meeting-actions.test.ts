@@ -362,6 +362,33 @@ describe("updateMeetingAssignment", () => {
     expect(mockDb.pending).toBe(0);
   });
 
+  it("recusa titular e ajudante iguais (dirigente ≠ leitor)", async () => {
+    mockDb.enqueueMany([
+      [assignmentRow()],
+      [{ id: "p1", firstName: "Juan", lastName: "Pérez" }],
+      [{ id: "p1", firstName: "Juan", lastName: "Pérez" }],
+    ]);
+    await expect(updateMeetingAssignment("asg-1", "p1", "p1")).resolves.toEqual({
+      ok: false,
+      error: "El titular y el ayudante deben ser personas distintas.",
+    });
+    expect(mockDb.calls.some((call) => call.fn === "update")).toBe(false);
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("recusa titular igual ao ajudante já salvo", async () => {
+    mockDb.enqueueMany([
+      [assignmentRow({ helperPersonId: "p1", helperPersonName: "Juan Pérez" })],
+      [{ id: "p1", firstName: "Juan", lastName: "Pérez" }],
+    ]);
+    await expect(updateMeetingAssignment("asg-1", "p1")).resolves.toEqual({
+      ok: false,
+      error: "El titular y el ayudante deben ser personas distintas.",
+    });
+    expect(mockDb.calls.some((call) => call.fn === "update")).toBe(false);
+    expect(mockDb.pending).toBe(0);
+  });
+
   it("permite designación vacía sin consultar personas", async () => {
     mockDb.enqueue([assignmentRow()]);
     await expect(updateMeetingAssignment("asg-1", null)).resolves.toEqual({ ok: true });
@@ -613,6 +640,23 @@ describe("saveStagedChanges", () => {
     expect(patches[2]).toEqual({ lastAssignmentAt: expect.any(Date) });
     const whereIn = mockDb.calls.filter((call) => call.fn === "where").map((call) => call.args[0]);
     expect(whereIn.length).toBeGreaterThanOrEqual(3);
+    expect(mockDb.pending).toBe(0);
+  });
+
+  it("recusa titular e ajudante iguais no lote (dirigente ≠ leitor)", async () => {
+    mockDb.enqueueMany([
+      [{ id: "p1", firstName: "Juan", lastName: "Pérez" }],
+      [assignmentRow({ id: "asg-1" })],
+    ]);
+    const result = await saveStagedChanges([
+      { assignmentId: "asg-1", label: "Estudio", personId: "p1", helperPersonId: "p1" },
+    ]);
+    expect(result).toEqual({
+      ok: false,
+      failedLabel: "Estudio",
+      error: "El titular y el ayudante deben ser personas distintas.",
+    });
+    expect(mockDb.calls.some((call) => call.fn === "update")).toBe(false);
     expect(mockDb.pending).toBe(0);
   });
 
