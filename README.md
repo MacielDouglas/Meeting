@@ -83,6 +83,24 @@ Cada feature segue as mesmas camadas: `domain/` (regras puras, testadas) → `ap
 4. Segurança no server: Drizzle, `better-auth` e actions não vazam para o client; o client recebe apenas flags (`canManage`, `currentUserId`).
 5. Zero supressão de lint (`biome-ignore` / `eslint-disable`) — corrige-se a causa raiz.
 
+```mermaid
+flowchart LR
+  UI["RSC page.tsx + ilhas client<br/>Tailwind + Radix"] --> SA["Server Actions + queries Drizzle"]
+  SA --> DB[("Postgres Neon")]
+  SA --> JW["Parser .jwpub (mwb, w, sjj, S-34)"]
+  SA --> ALG["Limpeza: 8 passadas + fairness 90d"]
+  UI --> PWA["Serwist + IndexedDB offline"]
+```
+
+### API / Actions
+
+| Área | Entrada | Regras |
+|---|---|---|
+| `getWeeklySchedule` / `getMyWeek` | `weekStart–weekEnd` | sessão server-side, client recebe só flags |
+| `assign-cleaning` | setores + histórico 90d | família atômica, fallbacks com aviso |
+| `POST /api/reunioes/ical` | semana | feed público da agenda |
+| `/reunioes/imprimir` | semana | A4 baixa tinta |
+
 ## Rodando local
 
 Requisitos: Node 20+ e um banco PostgreSQL (ex.: Neon).
